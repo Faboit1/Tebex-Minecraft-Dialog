@@ -30,4 +30,9 @@ public class InfoCommand extends SubCommand {
     public String getDescription() {
         return "Gets information about this server's connected store.";
     }
+
+    @Override
+    public boolean allowedByDefault() {
+        return true;
+    }
 }

@@ -4,6 +4,7 @@ import com.mojang.brigadier.context.CommandContext;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.plugin.manager.CommandManager;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
@@ -26,11 +27,20 @@ public class HelpCommand extends SubCommand {
                  .getCommands()
                  .stream()
                  .sorted(Comparator.comparing(SubCommand::getName))
-                 .forEach(subCommand -> source.sendMessage(Text.of(" §8- §f/tebex " + subCommand.getName() + "§f" + (!subCommand.getUsage().isBlank() ? " §3" + subCommand.getUsage() + " " : " ") + "§7§o(" + subCommand.getDescription() + ")")));
+                 .forEach(subCommand -> {
+                     if (Permissions.check(source, subCommand.getPermission(), subCommand.allowedByDefault()) || source.hasPermissionLevel(4)) {
+                         source.sendMessage(Text.of(" §8- §f/tebex " + subCommand.getName() + "§f" + (!subCommand.getUsage().isBlank() ? " §3" + subCommand.getUsage() + " " : " ") + "§7§o(" + subCommand.getDescription() + ")"));
+                     }
+                 });
     }
 
     @Override
     public String getDescription() {
         return "Shows this help page.";
+    }
+
+    @Override
+    public boolean allowedByDefault() {
+        return true;
     }
 }

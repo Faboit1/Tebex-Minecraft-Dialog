@@ -36,4 +36,9 @@ public class GoalsCommand extends SubCommand {
     public String getDescription() {
         return "Shows active and completed community goals.";
     }
+
+    @Override
+    public boolean allowedByDefault() {
+        return true;
+    }
 }

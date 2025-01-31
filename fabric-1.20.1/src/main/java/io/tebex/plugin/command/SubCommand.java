@@ -29,6 +29,10 @@ public abstract class SubCommand {
         return permission;
     }
 
+    public boolean allowedByDefault() {
+        return false;
+    }
+
     public abstract String getDescription();
     public String getUsage() {
         return "";

@@ -34,6 +34,9 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:${fabricVersion}")
 
     compileOnly("dev.dejvokep:boosted-yaml:1.3")
+
+    modImplementation("me.lucko:fabric-permissions-api:0.3.1")
+    include("me.lucko:fabric-permissions-api:0.3.1")
 }
 
 

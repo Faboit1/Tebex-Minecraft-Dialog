@@ -9,6 +9,7 @@ import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.BuyCommand;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.plugin.command.sub.*;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
@@ -40,7 +41,7 @@ public class CommandManager {
     }
 
     public void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-        LiteralArgumentBuilder<ServerCommandSource> baseCommand = literal("tebex").executes(context -> {
+        LiteralArgumentBuilder<ServerCommandSource> baseCommand = literal("tebex").requires(Permissions.require("tebex.base", true)).executes(context -> {
             final ServerCommandSource source = context.getSource();
             source.sendMessage(Text.of("§8[Tebex] §7Welcome to Tebex!"));
             source.sendMessage(Text.of("§8[Tebex] §7This server is running version §fv" + platform.getVersion() + "§7."));
@@ -54,10 +55,10 @@ public class CommandManager {
         }
 
         commands.forEach(command -> {
-            LiteralArgumentBuilder<ServerCommandSource> subCommand = literal(command.getName());
+            LiteralArgumentBuilder<ServerCommandSource> subCommand = literal(command.getName()).requires(Permissions.require(command.getPermission(), command.allowedByDefault()).or(source -> source.hasPermissionLevel(4)));
 
             if(command.getName().equalsIgnoreCase("secret")) {
-                baseCommand.then(subCommand.then(argument("key", StringArgumentType.string()).executes(context -> {
+                baseCommand.requires(source -> source.hasPermissionLevel(4)).then(subCommand.then(argument("key", StringArgumentType.string()).executes(context -> {
                     command.execute(context);
                     return 1;
                 })));

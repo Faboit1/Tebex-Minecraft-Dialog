@@ -20,7 +20,6 @@ public class SecretCommand extends SubCommand {
     @Override
     public void execute(CommandContext<ServerCommandSource> context) {
         final ServerCommandSource source = context.getSource();
-
         String serverToken = context.getArgument("key", String.class);
         TebexPlugin platform = getPlatform();
 

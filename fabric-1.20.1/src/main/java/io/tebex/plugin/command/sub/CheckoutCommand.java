@@ -43,4 +43,9 @@ public class CheckoutCommand extends SubCommand {
     public String getUsage() {
         return "<packageId>";
     }
+
+    @Override
+    public boolean allowedByDefault() {
+        return true;
+    }
 }
