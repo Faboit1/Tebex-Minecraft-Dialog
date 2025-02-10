@@ -86,7 +86,10 @@ public class TebexPlugin implements Platform, DedicatedServerModInitializer {
         // Initialise Managers.
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> new CommandManager(this).register(dispatcher));
 
-        ServerLifecycleEvents.SERVER_STOPPING.register(server -> Multithreading.shutdown());
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            Multithreading.shutdown();
+            sdk.shutdown();
+        });
     }
 
     private void onEnable() {
