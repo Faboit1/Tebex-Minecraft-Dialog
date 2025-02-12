@@ -19,6 +19,10 @@ public class TebexRequest {
     private final Request.Builder request;
     private final OkHttpClient client;
 
+    public static ExecutorService getExecutor() {
+        return EXECUTOR;
+    }
+
     /**
      * Constructs an TebexRequest instance with a specified endpoint and OkHttpClient.
      *

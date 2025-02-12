@@ -57,7 +57,7 @@ public class Multithreading {
     }
 
     public static void shutdown() {
-        POOL.shutdown();
-        RUNNABLE_POOL.shutdown();
+        POOL.shutdownNow();
+        RUNNABLE_POOL.shutdownNow();
     }
 }
