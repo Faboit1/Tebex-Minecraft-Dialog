@@ -1,7 +1,7 @@
 package io.tebex.sdk.exception;
 
 /**
- * Represents an exception thrown when the server hasn't properly set up Analyse.
+ * Represents an exception thrown when the server hasn't properly set up Tebex.
  */
 public class ServerNotSetupException extends Throwable {
 

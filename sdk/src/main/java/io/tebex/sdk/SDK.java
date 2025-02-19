@@ -16,7 +16,6 @@ import io.tebex.sdk.request.response.ServerInformation;
 import io.tebex.sdk.triage.PluginEvent;
 import io.tebex.sdk.util.Pagination;
 import okhttp3.OkHttpClient;
-import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 import java.io.IOException;
@@ -678,7 +677,7 @@ public class SDK {
     }
 
     /**
-     * Sends the current server telemetry to the Analyse API.
+     * Sends the current server telemetry to the Tebex API.
      *
      * @return A CompletableFuture that indicates whether the operation was successful.
      */

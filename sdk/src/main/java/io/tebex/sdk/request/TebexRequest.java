@@ -14,13 +14,13 @@ import java.util.concurrent.Executors;
  * A class for constructing and executing HTTP requests using the OkHttp library.
  */
 public class TebexRequest {
-    private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("analyse-#%1$d").build());
+    private static final ExecutorService EXECUTOR = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("tebex-#%1$d").build());
 
     private final Request.Builder request;
     private final OkHttpClient client;
 
-    public static ExecutorService getExecutor() {
-        return EXECUTOR;
+    public static void shutdownNow() {
+        EXECUTOR.shutdownNow();
     }
 
     /**

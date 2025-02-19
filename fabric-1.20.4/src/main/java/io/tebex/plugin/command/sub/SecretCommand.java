@@ -23,14 +23,14 @@ public class SecretCommand extends SubCommand {
         String serverToken = context.getArgument("key", String.class);
         TebexPlugin platform = getPlatform();
 
-        SDK analyse = platform.getSDK();
-        ServerPlatformConfig analyseConfig = platform.getPlatformConfig();
-        YamlDocument configFile = analyseConfig.getYamlDocument();
+        SDK sdk = platform.getSDK();
+        ServerPlatformConfig config = platform.getPlatformConfig();
+        YamlDocument configFile = config.getYamlDocument();
 
-        analyse.setSecretKey(serverToken);
+        sdk.setSecretKey(serverToken);
 
         platform.getSDK().getServerInformation().thenAccept(serverInformation -> {
-            analyseConfig.setSecretKey(serverToken);
+            config.setSecretKey(serverToken);
             configFile.set("server.secret-key", serverToken);
 
             try {
