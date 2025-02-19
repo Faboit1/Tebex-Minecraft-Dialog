@@ -59,11 +59,9 @@ public class SDK {
     }
 
     public void shutdown() {
-        Tebex.get().info("Shutting down http client");
         HTTP_CLIENT.connectionPool().evictAll();
         HTTP_CLIENT.dispatcher().executorService().shutdownNow();
-
-        TebexRequest.getExecutor().shutdownNow();
+        TebexRequest.shutdownNow();
     }
 
     /**

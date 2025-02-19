@@ -4,9 +4,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.event.JoinListener;
-import io.tebex.plugin.gui.TebexBuyScreenHandler;
 import io.tebex.plugin.manager.CommandManager;
-import io.tebex.plugin.util.Multithreading;
+import io.tebex.sdk.util.Multithreading;
+import io.tebex.sdk.util.TickScheduler;
 import io.tebex.sdk.SDK;
 import io.tebex.sdk.Tebex;
 import io.tebex.sdk.obj.Category;
@@ -19,17 +19,12 @@ import io.tebex.sdk.platform.config.ServerPlatformConfig;
 import io.tebex.sdk.request.response.ServerInformation;
 import io.tebex.sdk.util.CommandResult;
 import net.fabricmc.api.DedicatedServerModInitializer;
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.resource.featuretoggle.FeatureSet;
-import net.minecraft.screen.GenericContainerScreenHandler;
-import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,7 +32,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -47,7 +41,7 @@ public class TebexPlugin implements Platform, DedicatedServerModInitializer {
     // Fabric Related
     private static final String MOD_ID = "tebex";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
-    private final String MOD_VERSION = "2.1.0-hotfix.1";
+    private final String MOD_VERSION = "2.1.1";
     private final File MOD_PATH = new File("./mods/" + MOD_ID);
     private MinecraftServer server;
 
@@ -77,18 +71,34 @@ public class TebexPlugin implements Platform, DedicatedServerModInitializer {
             return;
         }
 
+        // Register event hooks
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             this.server = server;
             onEnable();
         });
 
-        // Initialise Managers.
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> new CommandManager(this).register(dispatcher));
-
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             Multithreading.shutdown();
             sdk.shutdown();
         });
+
+        ServerTickEvents.START_SERVER_TICK.register(server -> {
+            fabricTick();
+        });
+
+        // Register commands
+        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated, environment) -> new CommandManager(this).register(dispatcher));
+    }
+
+    private void fabricTick() {
+        List<Runnable> runnableTasks = TickScheduler.tick();
+        for (Runnable runnable : runnableTasks) {
+            try {
+                server.execute(runnable);
+            } catch (Throwable t) {
+                error("Failed to execute runnable task: ", t);
+            }
+        }
     }
 
     private void onEnable() {
@@ -237,20 +247,12 @@ public class TebexPlugin implements Platform, DedicatedServerModInitializer {
 
     @Override
     public void executeBlocking(Runnable runnable) {
-        try {
-            Multithreading.executeBlocking(runnable);
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        TickScheduler.scheduleNow(runnable);
     }
 
     @Override
     public void executeBlockingLater(Runnable runnable, long time, TimeUnit unit) {
-        try {
-            Multithreading.executeBlockingLater(runnable, time, unit);
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        TickScheduler.scheduleLater(runnable, time, unit);
     }
 
     private Optional<ServerPlayerEntity> getPlayer(Object player) {
