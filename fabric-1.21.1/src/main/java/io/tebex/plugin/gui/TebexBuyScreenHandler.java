@@ -3,7 +3,6 @@ package io.tebex.plugin.gui;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.slot.SlotActionType;
@@ -25,8 +24,15 @@ public class TebexBuyScreenHandler extends GenericContainerScreenHandler {
             return;
         }
 
-        if (slotId >= 0 && slotId < this.slots.size()) {
-            ItemStack clickedStack = this.getSlot(slotId).getStack();
+        if (actionType != SlotActionType.PICKUP) { // Ignore non-pickup only actions
+            return;
+        }
+
+        if (slotId > this.getInventory().size()) { // Ignore slot clicks outsize of the buy inventory
+            return;
+        }
+
+        if (slotId >= 0 && slotId < this.getInventory().size()) {
             TebexGuiItem item = guiItems.get(slotId);
             if (item != null && item.getAction() != null) {
                 item.getAction().execute(this);
