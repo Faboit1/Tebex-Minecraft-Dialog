@@ -2,6 +2,8 @@ package io.tebex.sdk.obj;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.time.Instant;
+
 public class ServerEvent {
     @SerializedName("username_id")
     private final String uuid;
@@ -15,12 +17,12 @@ public class ServerEvent {
     @SerializedName("event_date")
     private final String eventDate;
 
-    public ServerEvent(String uuid, String username, String ip, ServerEventType eventType, String eventDate) {
+    public ServerEvent(String uuid, String username, String ip, ServerEventType eventType) {
         this.uuid = uuid;
         this.username = username;
         this.ip = ip;
         this.eventType = eventType.getName();
-        this.eventDate = eventDate;
+        this.eventDate = Instant.now().toString();
     }
 
     public String getUuid() {
