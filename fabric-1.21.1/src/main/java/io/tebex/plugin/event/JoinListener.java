@@ -19,7 +19,7 @@ public class JoinListener {
 
     private void onPlayerJoin(ServerPlayerEntity player) {
         Object playerId = plugin.getPlayerId(player.getName().getString(), player.getUuid());
-        plugin.getServerEvents().add(new ServerEvent(player.getUuid().toString(), player.getName().getString(), player.getIp(), ServerEventType.JOIN, new Date().toString()));
+        plugin.getServerEvents().add(new ServerEvent(player.getUuid().toString(), player.getName().getString(), player.getIp(), ServerEventType.JOIN));
 
         if(! plugin.getQueuedPlayers().containsKey(playerId)) {
             return;
