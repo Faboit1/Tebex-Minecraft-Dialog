@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -247,7 +248,11 @@ public class TebexPlugin implements Platform, DedicatedServerModInitializer {
 
     @Override
     public void executeBlocking(Runnable runnable) {
-        TickScheduler.scheduleNow(runnable);
+        try {
+            Multithreading.executeBlocking(runnable);
+        } catch (InterruptedException | ExecutionException e) {
+            error("Failed to execute blocking task: " + e.getMessage(), e);
+        }
     }
 
     @Override
