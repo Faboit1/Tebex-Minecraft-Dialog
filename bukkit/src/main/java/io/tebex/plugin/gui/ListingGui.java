@@ -33,6 +33,10 @@ public class ListingGui implements InventoryHolder {
     }
 
     public ListingGui rows(int rows) {
+        this.rows = rows;
+
+        // Re-create the inventory after setting a new row count
+        this.inventory = Bukkit.createInventory(this, rows*9, title);
         return this;
     }
 

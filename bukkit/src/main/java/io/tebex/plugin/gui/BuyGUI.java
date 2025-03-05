@@ -52,9 +52,16 @@ public class BuyGUI {
     }
 
     private void openCategoryMenu(Player player, ICategory category) {
+        int configRows = config.getInt("gui.menu.category.rows");
+        int neededRows = (category.getPackages().size() / 9) + 1;
+
+        if (configRows < neededRows) {
+            configRows = neededRows;
+        }
+
         ListingGui subListingGui = new ListingGui()
                 .title(config.getString("gui.menu.category.title").replace("%category%", category.getName()))
-                .rows(config.getInt("gui.menu.category.rows") < 1 ? category.getPackages().size() / 9 + 1 : config.getInt("gui.menu.category.rows"))
+                .rows(configRows)
                 .create();
 
         category.getPackages().sort(Comparator.comparingInt(CategoryPackage::getOrder));
