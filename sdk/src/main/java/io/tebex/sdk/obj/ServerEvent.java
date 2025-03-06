@@ -20,9 +20,23 @@ public class ServerEvent {
     public ServerEvent(String uuid, String username, String ip, ServerEventType eventType) {
         this.uuid = uuid;
         this.username = username;
-        this.ip = ip;
+        this.ip = anonymizeIp(ip);
         this.eventType = eventType.getName();
         this.eventDate = Instant.now().toString();
+    }
+
+    /**
+     * Anonymizes the last octet in a given IP.
+     *
+     * @param ipIn The full IP address, ex. 192.168.1.100
+     * @return An anonymized IP, ex. 192.168.1.x
+     */
+    private String anonymizeIp(String ipIn) {
+        int lastOctetStart = ipIn.lastIndexOf(".");
+        if (lastOctetStart == -1) {
+            return ipIn;
+        }
+        return ipIn.substring(0, lastOctetStart) + ".x";
     }
 
     public String getUuid() {
