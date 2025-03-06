@@ -25,8 +25,15 @@ public class TebexBuyScreenHandler extends GenericContainerScreenHandler {
             return;
         }
 
-        if (slotId >= 0 && slotId < this.slots.size()) {
-            ItemStack clickedStack = this.getSlot(slotId).getStack();
+        if (actionType != SlotActionType.PICKUP) { // Ignore non-pickup only actions
+            return;
+        }
+
+        if (slotId > this.getInventory().size()) { // Ignore slot clicks outsize of the buy inventory
+            return;
+        }
+
+        if (slotId >= 0 && slotId < this.getInventory().size()) {
             TebexGuiItem item = guiItems.get(slotId);
             if (item != null && item.getAction() != null) {
                 item.getAction().execute(this);
