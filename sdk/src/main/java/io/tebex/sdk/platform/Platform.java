@@ -328,7 +328,7 @@ public interface Platform {
 
             List<Integer> completedCommands = new ArrayList<>();
             for (QueuedCommand command : offlineData.getCommands()) {
-                executeBlockingLater(() -> {
+                final Runnable commandRunnable = () -> {
                     info(String.format("Dispatching offline command '%s' for player '%s'.", command.getParsedCommand(), command.getPlayer().getName()));
                     CommandResult offlineCommandResult = dispatchCommand(command.getParsedCommand());
 
@@ -349,7 +349,10 @@ public interface Platform {
                         }
                         warning(String.format("Command `%s` failed to execute: %s", command.getParsedCommand(), extraInfo), solution);
                     }
-                }, command.getDelay(), TimeUnit.SECONDS);
+                };
+                if (command.getDelay() > 0) executeBlockingLater(commandRunnable, command.getDelay(), TimeUnit.SECONDS);
+                else executeBlocking(commandRunnable);
+
                 completedCommands.add(command.getId());
 
                 if(completedCommands.size() % MAX_COMMANDS_PER_BATCH == 0) {
