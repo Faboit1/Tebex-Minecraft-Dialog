@@ -270,7 +270,7 @@ public interface Platform {
                 continue;
             }
 
-            executeBlockingLater(() -> {
+            Runnable commandRunnable = () -> {
                 info(String.format("Dispatching command '%s' for player '%s'", command.getParsedCommand(), playerName));
                 CommandResult commandResult = dispatchCommand(command.getParsedCommand());
 
@@ -295,7 +295,9 @@ public interface Platform {
                     }
                     warning("Command failed to execute: " + extraInfo, solution);
                 }
-            }, command.getDelay(), TimeUnit.SECONDS);
+            };
+            if (command.getDelay() > 0) executeBlockingLater(commandRunnable, command.getDelay(), TimeUnit.SECONDS);
+            else executeBlocking(commandRunnable);
             // At present all queued commands are reported as successful once delivery criteria are met, regardless if dispatching
             // the command worked without errors. We *could* refactor this to only mark commands completed if they were successful, but
             // platform-specific support for actually reporting if a command was successful and why or why not is dubious at best.
