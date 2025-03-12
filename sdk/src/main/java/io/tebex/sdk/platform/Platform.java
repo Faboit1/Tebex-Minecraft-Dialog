@@ -270,7 +270,7 @@ public interface Platform {
                 continue;
             }
 
-            Runnable commandRunnable = () -> {
+            final Runnable commandRunnable = () -> {
                 info(String.format("Dispatching command '%s' for player '%s'", command.getParsedCommand(), playerName));
                 CommandResult commandResult = dispatchCommand(command.getParsedCommand());
 
