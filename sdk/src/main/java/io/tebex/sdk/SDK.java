@@ -456,8 +456,6 @@ public class SDK {
             payload.add("packages", idArray);
         } else if(createCouponRequest.getEffectiveOn() == CreateCouponRequest.EffectiveOn.CATEGORY) {
             payload.add("categories", idArray);
-        } else {
-            throw new RuntimeException("Invalid option selected");
         }
 
         payload.addProperty("discount_type", createCouponRequest.getDiscountType().name().toLowerCase());
