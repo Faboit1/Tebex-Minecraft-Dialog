@@ -3,7 +3,7 @@ package io.tebex.sdk.obj;
 import com.google.gson.annotations.SerializedName;
 
 import java.time.Instant;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 public class ServerEvent {
@@ -25,8 +25,8 @@ public class ServerEvent {
         this.ip = anonymizeIp(ip);
         this.eventType = eventType.getName();
         this.eventDate = Instant.now()
-            .atZone(ZoneId.of("UTC"))
-            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX"));
+                .atZone(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"));
     }
 
     /**
