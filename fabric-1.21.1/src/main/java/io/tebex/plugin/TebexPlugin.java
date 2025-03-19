@@ -42,7 +42,7 @@ public class TebexPlugin implements Platform, DedicatedServerModInitializer {
     // Fabric Related
     private static final String MOD_ID = "tebex";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
-    private final String MOD_VERSION = "2.1.1";
+    private final String MOD_VERSION = "@VERSION@";
     private final File MOD_PATH = new File("./mods/" + MOD_ID);
     private MinecraftServer server;
 

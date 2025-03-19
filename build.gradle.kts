@@ -1,5 +1,18 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
+fun gitCommitHash(): String {
+    return try {
+        val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
+            .redirectErrorStream(true)
+            .start()
+        val result = process.inputStream.bufferedReader().readText().trim()
+        process.waitFor()
+        if (process.exitValue() == 0) result else "unknown"
+    } catch (e: Exception) {
+        "unknown"
+    }
+}
+
 plugins {
     java
     id("com.gradleup.shadow") version "8.3.1"
@@ -8,7 +21,20 @@ plugins {
 defaultTasks("shadowJar")
 
 group = "io.tebex"
-version = "2.2.0"
+version = "2.2.1"
+
+tasks.register("processSources", Copy::class.java) {
+    val props = mapOf("@VERSION@" to rootProject.version)
+    from("src/main/java")
+    into("${layout.buildDirectory}/processedSources") // Destination for processed sources
+    filteringCharset = "UTF-8"
+    expand(props)
+}
+
+tasks.withType<JavaCompile> {
+    dependsOn("processSources")
+    source = fileTree("${layout.buildDirectory}/processedSources")
+}
 
 subprojects {
     plugins.apply("java")
@@ -20,7 +46,7 @@ subprojects {
     }
 
     tasks.named("shadowJar", ShadowJar::class.java) {
-        archiveFileName.set("tebex-${project.name}-${rootProject.version}.jar")
+        archiveFileName.set("tebex-${project.name}-${rootProject.version}-${gitCommitHash()}.jar")
     }
 
     repositories {

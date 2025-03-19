@@ -3,6 +3,19 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 group = rootProject.group
 version = rootProject.version
 
+fun gitCommitHash(): String {
+    return try {
+        val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
+            .redirectErrorStream(true)
+            .start()
+        val result = process.inputStream.bufferedReader().readText().trim()
+        process.waitFor()
+        if (process.exitValue() == 0) result else "unknown"
+    } catch (e: Exception) {
+        "unknown"
+    }
+}
+
 plugins {
     java
     id("com.gradleup.shadow")
@@ -61,7 +74,7 @@ tasks.remapJar {
     val shadowJar = tasks.shadowJar.get()
 
     inputFile.set(shadowJar.archiveFile)
-    archiveFileName.set("tebex-${project.name}-${project.version}.jar")
+    archiveFileName.set("tebex-${project.name}-${rootProject.version}-${gitCommitHash()}.jar")
     archiveClassifier.set(shadowJar.archiveClassifier)
     delete(shadowJar.archiveFile)
 }
