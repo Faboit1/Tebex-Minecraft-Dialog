@@ -114,7 +114,7 @@ public interface Platform {
                 ServerInformation.Store store = serverInformation.getStore();
 
                 info(String.format("Connected to %s - %s server.", server.getName(), store.getGameType()));
-
+                PLUGIN_EVENTS.add(new PluginEvent(this, EnumEventLevel.INFO, "Server init"));
                 setSetup(true);
                 configure();
             }).exceptionally(ex -> {
