@@ -34,8 +34,8 @@ subprojects {
         maven("https://repo.opencollab.dev/main/") {
             name = "opencollab-snapshot-repo"
         }
-        maven("https://nexus.velocitypowered.com/repository/maven-public/") {
-            name = "velocity-repo"
+        maven("https://repo.papermc.io/repository/maven-public/") {
+            name = "paper-repo"
         }
         maven("https://repo.extendedclip.com/content/repositories/placeholderapi/") {
             name = "extendedclip-repo"
