@@ -49,14 +49,24 @@ public class TebexCommand implements SimpleCommand {
     public List<String> suggest(Invocation invocation) {
         String[] args = invocation.arguments();
 
-        if(args.length == 1) {
-            return commandManager.getCommands()
-                    .keySet()
-                    .stream()
-                    .filter(s -> s.startsWith(args[0]))
-                    .collect(Collectors.toList());
+        if(args.length <= 1) {
+            return this.suggestions(invocation.source());
         }
 
         return ImmutableList.of();
+    }
+
+    @Override
+    public boolean hasPermission(Invocation invocation) {
+        return !this.suggestions(invocation.source()).isEmpty();
+    }
+
+    private List<String> suggestions(CommandSource source) {
+        return commandManager.getCommands()
+            .values()
+            .stream()
+            .filter(command -> source.hasPermission(command.getPermission()))
+            .map(SubCommand::getName)
+            .collect(Collectors.toList());
     }
 }
