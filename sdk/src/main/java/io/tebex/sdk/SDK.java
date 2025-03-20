@@ -63,13 +63,19 @@ public class SDK {
         TebexRequest.shutdownNow();
     }
 
+    public boolean isKeyUnset() {
+        synchronized(this) {
+            return secretKey == null || secretKey.trim().isEmpty();
+        }
+    }
+
     /**
      * Retrieves information about the server.
      *
      * @return A CompletableFuture that contains the ServerInformation object.
      */
     public CompletableFuture<ServerInformation> getServerInformation() {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<ServerInformation> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -112,7 +118,7 @@ public class SDK {
      * @return A CompletableFuture that contains the DuePlayersResponse object.
      */
     public CompletableFuture<DuePlayersResponse> getDuePlayers() {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<DuePlayersResponse> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -150,7 +156,7 @@ public class SDK {
      * @return A CompletableFuture that contains the OfflineCommandsResponse object.
      */
     public CompletableFuture<OfflineCommandsResponse> getOfflineCommands() {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<OfflineCommandsResponse> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -203,7 +209,7 @@ public class SDK {
      * @return A CompletableFuture that contains a list of QueuedCommand objects.
      */
     public CompletableFuture<List<QueuedCommand>> getOnlineCommands(QueuedPlayer player) {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<List<QueuedCommand>> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -254,7 +260,7 @@ public class SDK {
      * @return A CompletableFuture that returns true if the commands were deleted successfully.
      */
     public CompletableFuture<Boolean> deleteCommands(List<Integer> ids) {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<Boolean> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -283,7 +289,7 @@ public class SDK {
      * @return A CompletableFuture that returns a list of CommunityGoal objects.
      */
     public CompletableFuture<List<CommunityGoal>> getCommunityGoals() {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<List<CommunityGoal>> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -313,7 +319,7 @@ public class SDK {
      * @return A CompletableFuture that contains the CommunityGoal object.
      */
     public CompletableFuture<CommunityGoal> getCommunityGoal(int communityGoalId) {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<CommunityGoal> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -344,7 +350,7 @@ public class SDK {
      * @return A CompletableFuture that contains the CheckoutUrl object.
      */
     public CompletableFuture<CheckoutUrl> createCheckoutUrl(int packageId, String username) {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<CheckoutUrl> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -376,7 +382,7 @@ public class SDK {
      * @return A CompletableFuture that returns a PaginatedResponse of Coupon objects.
      */
     public CompletableFuture<PaginatedResponse<Coupon>> getCoupons() {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<PaginatedResponse<Coupon>> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -410,7 +416,7 @@ public class SDK {
      * @return A CompletableFuture that contains the Coupon object.
      */
     public CompletableFuture<Coupon> getCoupon(int id) {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<Coupon> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -439,7 +445,7 @@ public class SDK {
      * @return A CompletableFuture that contains the new Coupon object.
      */
     public CompletableFuture<Coupon> createCoupon(CreateCouponRequest createCouponRequest) {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<Coupon> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -516,7 +522,7 @@ public class SDK {
      * @return A CompletableFuture that contains a List of Category objects.
      */
     public CompletableFuture<List<Category>> getListing() {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<List<Category>> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -560,7 +566,7 @@ public class SDK {
      * @return A CompletableFuture that returns true if the coupon was deleted successfully.
      */
     public CompletableFuture<Boolean> deleteCoupon(int id) {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<Boolean> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -578,7 +584,7 @@ public class SDK {
     }
 
     public CompletableFuture<Boolean> sendJoinEvents(List<ServerEvent> events) {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<Boolean> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -625,7 +631,7 @@ public class SDK {
      * @return A CompletableFuture that contains the Package object.
      */
     public CompletableFuture<Package> getPackage(int id) {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<Package> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -652,7 +658,7 @@ public class SDK {
      * @return A CompletableFuture that returns a List of Package objects.
      */
     public CompletableFuture<List<Package>> getPackages() {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<List<Package>> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -680,7 +686,7 @@ public class SDK {
      * @return A CompletableFuture that indicates whether the operation was successful.
      */
     public CompletableFuture<Boolean> sendTelemetry() {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<Boolean> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -725,7 +731,7 @@ public class SDK {
      * @return A CompletableFuture that indicates whether the operation was successful.
      */
     public CompletableFuture<Boolean> createBan(String playerUUID, String ip, String reason) {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<Boolean> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
@@ -753,7 +759,7 @@ public class SDK {
      * @return A CompletableFuture containing the relevant PlayerLookupInfo.
      */
     public CompletableFuture<PlayerLookupInfo> getPlayerLookupInfo(String username) {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<Boolean> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return null;
@@ -831,7 +837,7 @@ public class SDK {
     }
 
     public CompletableFuture<Boolean> sendPluginEvents() {
-        if (getSecretKey() == null) {
+        if (isKeyUnset()) {
             CompletableFuture<Boolean> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
