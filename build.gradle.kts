@@ -21,7 +21,7 @@ plugins {
 defaultTasks("shadowJar")
 
 group = "io.tebex"
-version = "2.2.1"
+version = "2.3.0"
 
 tasks.register("processSources", Copy::class.java) {
     val props = mapOf("@VERSION@" to rootProject.version)
@@ -82,28 +82,6 @@ subprojects {
 
         filesNotMatching("**/*.zip") {
             expand(props)
-        }
-    }
-}
-
-val fabric1204Project = project(":fabric-1.20.4")
-fabric1204Project.configure<JavaPluginExtension> {
-    sourceSets {
-        getByName("main") {
-            java {
-                srcDir("src/main/kotlin")
-            }
-        }
-    }
-}
-
-val fabric1201Project = project(":fabric-1.20.1")
-fabric1201Project.configure<JavaPluginExtension> {
-    sourceSets {
-        getByName("main") {
-            java {
-                srcDir("src/main/kotlin")
-            }
         }
     }
 }
