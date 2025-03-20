@@ -876,7 +876,7 @@ public class SDK {
                                 try {
                                     platform.debug(responseBody.string());
                                 } catch (IOException e) {
-                                    e.printStackTrace();
+                                    platform.debug("");
                                 }
                             } else {
                                 platform.debug("Empty response when sending plugin event");
@@ -894,12 +894,15 @@ public class SDK {
                         } else {
                             return _batchPluginEvents(events, offset + batchSize, batchSize); // Proceed with the next batch
                         }
-                    } else {
+                    } else { // Did not receive a successful response
+                        // dump events to prevent unlimited growth
+                        platform.PLUGIN_EVENTS.clear();
                         return CompletableFuture.completedFuture(false);
                     }
                 }).exceptionally(e -> {
+                    // any API exception will cause queued events to be dumped
+                    platform.PLUGIN_EVENTS.clear();
                     platform.debug("Failed to send plugin events due to exception. " + e.getMessage());
-                    e.printStackTrace();
                     return false;
                 });
     }

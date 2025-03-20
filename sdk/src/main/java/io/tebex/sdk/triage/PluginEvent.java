@@ -59,6 +59,11 @@ public class PluginEvent {
         this.eventLevel = level;
         this.eventMessage = message;
         this.trace = "";
+
+        if (platform.isSetup()) {
+            this.serverId = String.valueOf(platform.getStoreServer().getId());
+            this.storeId = String.valueOf(platform.getStore().getId());
+        }
     }
 
     public PluginEvent onStore(ServerInformation.Store store) {
