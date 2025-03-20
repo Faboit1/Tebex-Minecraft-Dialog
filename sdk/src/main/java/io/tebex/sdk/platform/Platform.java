@@ -530,7 +530,6 @@ public interface Platform {
     }
 
     default void refreshListings() {
-        getSDK().getServerInformation().thenAccept(this::setStoreInfo);
         getSDK().getListing().thenAccept(this::setStoreCategories);
     }
 

@@ -32,7 +32,8 @@ public class SecretCommand extends SubCommand {
         platform.getSDK().getServerInformation().thenAccept(serverInformation -> {
             config.setSecretKey(serverToken);
             configFile.set("server.secret-key", serverToken);
-
+            platform.setStoreInfo(serverInformation);
+            
             try {
                 configFile.save();
             } catch (IOException e) {
