@@ -35,13 +35,13 @@ public class SecretCommand extends SubCommand {
         platform.getSDK().getServerInformation().thenAccept(serverInformation -> {
             config.setSecretKey(serverToken);
             configFile.set("server.secret-key", serverToken);
+            platform.setStoreInfo(serverInformation);
 
             try {
                 configFile.save();
             } catch (IOException e) {
                 sender.sendMessage("§b[Tebex] §7Failed to save config: " + e.getMessage());
             }
-
 
             platform.loadServerPlatformConfig(configFile);
             platform.reloadConfig();
