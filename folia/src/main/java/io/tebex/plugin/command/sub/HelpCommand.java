@@ -1,6 +1,7 @@
 package io.tebex.plugin.command.sub;
 
 import dev.dejvokep.boostedyaml.YamlDocument;
+import io.tebex.plugin.FoliaPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.plugin.gui.BuyGUI;
@@ -14,7 +15,7 @@ import java.util.Comparator;
 
 public class HelpCommand extends SubCommand {
     private final CommandManager commandManager;
-    public HelpCommand(TebexPlugin platform, CommandManager commandManager) {
+    public HelpCommand(FoliaPlatform platform, CommandManager commandManager) {
         super(platform, "help", "tebex.admin");
         this.commandManager = commandManager;
     }

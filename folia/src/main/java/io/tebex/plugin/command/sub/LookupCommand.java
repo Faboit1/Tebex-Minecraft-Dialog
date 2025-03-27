@@ -1,5 +1,6 @@
 package io.tebex.plugin.command.sub;
 
+import io.tebex.plugin.FoliaPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.sdk.obj.PlayerLookupInfo;
@@ -9,13 +10,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class LookupCommand extends SubCommand {
-    public LookupCommand(TebexPlugin platform) {
+    public LookupCommand(FoliaPlatform platform) {
         super(platform, "lookup", "tebex.lookup");
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        TebexPlugin platform = getPlatform();
+        FoliaPlatform platform = getPlatform();
 
         if (!platform.isSetup()) {
             sender.sendMessage("§b[Tebex] §7This server is not connected to a webstore. Use /tebex secret to set your store key.");

@@ -1,5 +1,6 @@
 package io.tebex.plugin.gui;
 
+import io.tebex.plugin.FoliaPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.util.MaterialUtil;
 import io.tebex.sdk.obj.Category;
@@ -19,12 +20,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class BuyGUI {
-    private final TebexPlugin platform;
+    private final FoliaPlatform platform;
     private final FileConfiguration config;
 
-    public BuyGUI(TebexPlugin platform) {
+    public BuyGUI(FoliaPlatform platform) {
         this.platform = platform;
-        this.config = platform.getConfig();
+        this.config = platform.getPlugin().getConfig();
     }
 
     public void open(Player player) {

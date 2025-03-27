@@ -1,5 +1,6 @@
 package io.tebex.plugin.command;
 
+import io.tebex.plugin.FoliaPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.gui.BuyGUI;
 import org.bukkit.ChatColor;
@@ -8,9 +9,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class BuyCommand extends Command {
-    private final TebexPlugin platform;
+    private final FoliaPlatform platform;
 
-    public BuyCommand(String command, TebexPlugin platform) {
+    public BuyCommand(String command, FoliaPlatform platform) {
         super(command);
         this.platform = platform;
     }

@@ -1,17 +1,18 @@
 package io.tebex.plugin.command.sub;
 
+import io.tebex.plugin.FoliaPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import org.bukkit.command.CommandSender;
 
 public class InfoCommand extends SubCommand {
-    public InfoCommand(TebexPlugin platform) {
+    public InfoCommand(FoliaPlatform platform) {
         super(platform, "info", "tebex.info");
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        TebexPlugin platform = getPlatform();
+        FoliaPlatform platform = getPlatform();
 
         if (platform.isSetup()) {
             sender.sendMessage("§b[Tebex] §7Information for this server:");

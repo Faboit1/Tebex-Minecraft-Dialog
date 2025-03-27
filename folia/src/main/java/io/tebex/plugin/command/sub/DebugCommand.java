@@ -1,6 +1,7 @@
 package io.tebex.plugin.command.sub;
 
 import dev.dejvokep.boostedyaml.YamlDocument;
+import io.tebex.plugin.FoliaPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.sdk.platform.config.ServerPlatformConfig;
@@ -10,15 +11,15 @@ import org.bukkit.command.CommandSender;
 import java.io.IOException;
 
 public class DebugCommand extends SubCommand {
-    public DebugCommand(TebexPlugin platform) {
+    public DebugCommand(FoliaPlatform platform) {
         super(platform, "debug", "tebex.debug");
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        TebexPlugin platform = getPlatform();
+        FoliaPlatform platform = getPlatform();
 
-        ServerPlatformConfig config = platform.getPlatformConfig();
+        ServerPlatformConfig config = (ServerPlatformConfig) platform.getPlatformConfig();
         YamlDocument configFile = config.getYamlDocument();
 
         if (args.length != 1) {

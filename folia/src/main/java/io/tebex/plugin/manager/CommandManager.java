@@ -2,6 +2,7 @@ package io.tebex.plugin.manager;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import io.tebex.plugin.FoliaPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.plugin.command.TebexCommand;
@@ -11,10 +12,10 @@ import org.bukkit.command.PluginCommand;
 import java.util.Map;
 
 public class CommandManager {
-    private final TebexPlugin platform;
+    private final FoliaPlatform platform;
     private final Map<String, SubCommand> commands;
 
-    public CommandManager(TebexPlugin platform) {
+    public CommandManager(FoliaPlatform platform) {
         this.platform = platform;
         this.commands = Maps.newHashMap();
     }
@@ -38,7 +39,7 @@ public class CommandManager {
         });
 
         TebexCommand tebexCommand = new TebexCommand(this);
-        PluginCommand pluginCommand = platform.getCommand("tebex");
+        PluginCommand pluginCommand = platform.getPlugin().getCommand("tebex");
 
         if(pluginCommand == null) {
             throw new RuntimeException("Tebex command not found.");
@@ -52,7 +53,7 @@ public class CommandManager {
         return commands;
     }
 
-    public TebexPlugin getPlatform() {
+    public FoliaPlatform getPlatform() {
         return platform;
     }
 }

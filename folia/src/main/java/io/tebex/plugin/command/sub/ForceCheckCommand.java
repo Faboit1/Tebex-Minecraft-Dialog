@@ -1,13 +1,14 @@
 package io.tebex.plugin.command.sub;
 
+import io.tebex.plugin.FoliaPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import org.bukkit.command.CommandSender;
 
 public class ForceCheckCommand extends SubCommand {
-    private final TebexPlugin platform;
+    private final FoliaPlatform platform;
 
-    public ForceCheckCommand(TebexPlugin platform) {
+    public ForceCheckCommand(FoliaPlatform platform) {
         super(platform, "forcecheck", "tebex.forcecheck");
         this.platform = platform;
     }

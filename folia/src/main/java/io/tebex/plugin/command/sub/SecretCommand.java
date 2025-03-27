@@ -1,6 +1,7 @@
 package io.tebex.plugin.command.sub;
 
 import dev.dejvokep.boostedyaml.YamlDocument;
+import io.tebex.plugin.FoliaPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.plugin.gui.BuyGUI;
@@ -12,7 +13,7 @@ import org.bukkit.command.CommandSender;
 import java.io.IOException;
 
 public class SecretCommand extends SubCommand {
-    public SecretCommand(TebexPlugin platform) {
+    public SecretCommand(FoliaPlatform platform) {
         super(platform, "secret", "tebex.setup");
     }
 
@@ -24,10 +25,10 @@ public class SecretCommand extends SubCommand {
         }
 
         String serverToken = args[0];
-        TebexPlugin platform = getPlatform();
+        FoliaPlatform platform = getPlatform();
 
         SDK sdk = platform.getSDK();
-        ServerPlatformConfig config = platform.getPlatformConfig();
+        ServerPlatformConfig config = (ServerPlatformConfig) platform.getPlatformConfig();
         YamlDocument configFile = config.getYamlDocument();
 
         sdk.setSecretKey(serverToken);
@@ -44,7 +45,7 @@ public class SecretCommand extends SubCommand {
             }
 
             platform.loadServerPlatformConfig(configFile);
-            platform.reloadConfig();
+            platform.getPlugin().reloadConfig();
             platform.setBuyGUI(new BuyGUI(platform));
             platform.refreshListings();
             platform.configure();
