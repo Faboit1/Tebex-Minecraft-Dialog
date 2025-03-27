@@ -5,6 +5,7 @@ import io.tebex.sdk.exception.ServerNotFoundException;
 import io.tebex.sdk.exception.ServerNotSetupException;
 import io.tebex.sdk.obj.Package;
 import io.tebex.sdk.obj.*;
+import io.tebex.sdk.platform.BasePlatform;
 import io.tebex.sdk.platform.Platform;
 import io.tebex.sdk.request.TebexRequest;
 import io.tebex.sdk.request.builder.CreateCouponRequest;
@@ -31,7 +32,7 @@ import java.util.stream.Collectors;
  * The main SDK class for interacting with the Tebex API.
  */
 public class SDK {
-    private Platform platform;
+    private BasePlatform platform;
     private String secretKey;
 
     private static final Gson GSON = new GsonBuilder()
@@ -52,7 +53,7 @@ public class SDK {
      * @param platform  The platform on which the SDK is running.
      * @param secretKey The secret key for authentication.
      */
-    public SDK(Platform platform, String secretKey) {
+    public SDK(BasePlatform platform, String secretKey) {
         this.platform = platform;
         this.secretKey = secretKey;
     }
@@ -843,14 +844,15 @@ public class SDK {
             return future;
         }
 
-        if (platform.PLUGIN_EVENTS.isEmpty()) {
+        ArrayList<PluginEvent> events = platform.getPluginEvents();
+        if (events.isEmpty()) {
             CompletableFuture<Boolean> future = new CompletableFuture<>();
             future.complete(true);
             return future;
         }
 
-        platform.debug("Sending " + platform.PLUGIN_EVENTS.size() + " plugin events...");
-        return _batchPluginEvents(platform.PLUGIN_EVENTS, 0, 100);
+        platform.debug("Sending " + events.size() + " plugin events...");
+        return _batchPluginEvents(events, 0, 100);
     }
 
     private CompletableFuture<Boolean> _batchPluginEvents(List<PluginEvent> events, int offset, int batchSize) {
@@ -889,19 +891,19 @@ public class SDK {
                     // If successfully sent, clear events that were sent
                     if (logsResponse.isSuccessful()) {
                         if (offset + batchSize >= events.size()) {
-                            platform.PLUGIN_EVENTS.clear();
+                            platform.clearPluginEvents();
                             return CompletableFuture.completedFuture(true);
                         } else {
                             return _batchPluginEvents(events, offset + batchSize, batchSize); // Proceed with the next batch
                         }
                     } else { // Did not receive a successful response
                         // dump events to prevent unlimited growth
-                        platform.PLUGIN_EVENTS.clear();
+                        platform.clearPluginEvents();
                         return CompletableFuture.completedFuture(false);
                     }
                 }).exceptionally(e -> {
                     // any API exception will cause queued events to be dumped
-                    platform.PLUGIN_EVENTS.clear();
+                    platform.clearPluginEvents();
                     platform.debug("Failed to send plugin events due to exception. " + e.getMessage());
                     return false;
                 });

@@ -86,28 +86,6 @@ subprojects {
     }
 }
 
-//val fabric1211Project = project(":fabric-1.21.1")
-//fabric1211Project.configure<JavaPluginExtension> {
-//    sourceSets {
-//        getByName("main") {
-//            java {
-//                srcDir("src/main/kotlin")
-//            }
-//        }
-//    }
-//}
-//
-//val fabric1214Project = project(":fabric-1.21.4")
-//fabric1214Project.configure<JavaPluginExtension> {
-//    sourceSets {
-//        getByName("main") {
-//            java {
-//                srcDir("src/main/kotlin")
-//            }
-//        }
-//    }
-//}
-
 val fabric1215Project = project(":fabric-1.21.5")
 fabric1215Project.configure<JavaPluginExtension> {
     sourceSets {
