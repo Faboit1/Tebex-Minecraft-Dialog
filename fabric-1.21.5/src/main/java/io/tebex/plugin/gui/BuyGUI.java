@@ -19,6 +19,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.*;
 import net.minecraft.util.Identifier;
 
+import java.net.URI;
 import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.List;
@@ -119,7 +120,7 @@ public class BuyGUI {
             platform.getSDK().createCheckoutUrl(categoryPackage.getId(), player.getName().getString()).thenAccept(checkout -> {
                 player.sendMessage(Text.of("§aYou can checkout here: "), false);
                 player.sendMessage(MutableText.of(PlainTextContent.of("§a"+checkout.getUrl())).setStyle(Style.EMPTY.withClickEvent(
-                        new ClickEvent(ClickEvent.Action.OPEN_URL, checkout.getUrl()))), false);
+                        new ClickEvent.OpenUrl(URI.create(checkout.getUrl())))));
             }).exceptionally(ex -> {
                 player.sendMessage(Text.of("§cFailed to create checkout URL. Please contact an administrator."), false);
                 platform.error("Failed to create checkout URL for a user.", ex);

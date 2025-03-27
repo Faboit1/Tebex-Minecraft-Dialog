@@ -199,7 +199,7 @@ public class TebexPlugin extends BasePlatform implements DedicatedServerModIniti
         ServerPlayerEntity player = getPlayer(playerId).orElse(null);
         if (player == null) return -1;
 
-        DefaultedList<ItemStack> inv = player.getInventory().main;
+        DefaultedList<ItemStack> inv = player.getInventory().getMainStacks();
         return (int) inv.stream()
                 .filter(obj -> obj == null || obj.isEmpty())
                 .count();
