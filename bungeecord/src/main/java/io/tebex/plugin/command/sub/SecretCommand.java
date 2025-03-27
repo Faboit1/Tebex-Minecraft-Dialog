@@ -1,6 +1,7 @@
 package io.tebex.plugin.command.sub;
 
 import dev.dejvokep.boostedyaml.YamlDocument;
+import io.tebex.plugin.BungeePlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.sdk.SDK;
@@ -11,7 +12,7 @@ import net.md_5.bungee.api.CommandSender;
 import java.io.IOException;
 
 public class SecretCommand extends SubCommand {
-    public SecretCommand(TebexPlugin platform) {
+    public SecretCommand(BungeePlatform platform) {
         super(platform, "secret", "tebex.setup");
     }
 
@@ -23,10 +24,10 @@ public class SecretCommand extends SubCommand {
         }
 
         String serverToken = args[0];
-        TebexPlugin platform = getPlatform();
+        BungeePlatform platform = getPlatform();
 
         SDK sdk = platform.getSDK();
-        ProxyPlatformConfig config = platform.getPlatformConfig();
+        ProxyPlatformConfig config = (ProxyPlatformConfig) platform.getPlatformConfig();
         YamlDocument configFile = config.getYamlDocument();
 
         sdk.setSecretKey(serverToken);

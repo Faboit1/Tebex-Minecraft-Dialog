@@ -21,7 +21,7 @@ public class DebugCommand extends SubCommand {
         final ServerCommandSource source = context.getSource();
         TebexPlugin platform = getPlatform();
 
-        ServerPlatformConfig config = platform.getPlatformConfig();
+        ServerPlatformConfig config = (ServerPlatformConfig) platform.getPlatformConfig();
         YamlDocument configFile = config.getYamlDocument();
 
         String input = context.getArgument("trueOrFalse", String.class);

@@ -1,21 +1,22 @@
 package io.tebex.plugin.command.sub;
 
 import dev.dejvokep.boostedyaml.YamlDocument;
+import io.tebex.plugin.BukkitPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.sdk.platform.config.ServerPlatformConfig;
 import org.bukkit.command.CommandSender;
 
 public class ReportCommand extends SubCommand {
-    public ReportCommand(TebexPlugin platform) {
+    public ReportCommand(BukkitPlatform platform) {
         super(platform, "report", "tebex.report");
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        TebexPlugin platform = getPlatform();
+        BukkitPlatform platform = getPlatform();
 
-        ServerPlatformConfig config = platform.getPlatformConfig();
+        ServerPlatformConfig config = (ServerPlatformConfig) platform.getPlatformConfig();
         YamlDocument configFile = config.getYamlDocument();
 
         if (args.length < 1) {

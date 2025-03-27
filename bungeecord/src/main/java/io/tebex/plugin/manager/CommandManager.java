@@ -2,6 +2,7 @@ package io.tebex.plugin.manager;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import io.tebex.plugin.BungeePlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.plugin.command.TebexCommand;
@@ -14,10 +15,10 @@ import net.md_5.bungee.api.plugin.PluginManager;
 import java.util.Map;
 
 public class CommandManager {
-    private final TebexPlugin platform;
+    private final BungeePlatform platform;
     private final Map<String, SubCommand> commands;
 
-    public CommandManager(TebexPlugin platform) {
+    public CommandManager(BungeePlatform platform) {
         this.platform = platform;
         this.commands = Maps.newHashMap();
     }
@@ -34,15 +35,15 @@ public class CommandManager {
 
         TebexCommand tebexCommand = new TebexCommand(this, "tebex");
 
-        PluginManager pluginManager = platform.getProxy().getPluginManager();
-        pluginManager.registerCommand(platform, tebexCommand);
+        PluginManager pluginManager = platform.getPlugin().getProxy().getPluginManager();
+        pluginManager.registerCommand(platform.getPlugin(), tebexCommand);
     }
 
     public Map<String, SubCommand> getCommands() {
         return commands;
     }
 
-    public TebexPlugin getPlatform() {
+    public BungeePlatform getPlatform() {
         return platform;
     }
 }

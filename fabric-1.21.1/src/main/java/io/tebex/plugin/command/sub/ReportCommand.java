@@ -17,7 +17,7 @@ public class ReportCommand extends SubCommand {
     public void execute(CommandContext<ServerCommandSource> context) {
         TebexPlugin platform = getPlatform();
 
-        ServerPlatformConfig config = platform.getPlatformConfig();
+        ServerPlatformConfig config = (ServerPlatformConfig) platform.getPlatformConfig();
         YamlDocument configFile = config.getYamlDocument();
 
         String message = context.getArgument("message", String.class);

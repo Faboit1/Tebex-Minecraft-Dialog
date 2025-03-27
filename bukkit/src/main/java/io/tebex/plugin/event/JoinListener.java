@@ -1,5 +1,6 @@
 package io.tebex.plugin.event;
 
+import io.tebex.plugin.BukkitPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.sdk.obj.QueuedPlayer;
 import io.tebex.sdk.obj.ServerEvent;
@@ -12,22 +13,22 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import java.util.Date;
 
 public class JoinListener implements Listener {
-    private final TebexPlugin plugin;
+    private final BukkitPlatform platform;
 
-    public JoinListener(TebexPlugin plugin) {
-        this.plugin = plugin;
+    public JoinListener(BukkitPlatform platform) {
+        this.platform = platform;
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        Object playerId = plugin.getPlayerId(player.getName(), player.getUniqueId());
-        plugin.getServerEvents().add(new ServerEvent(player.getUniqueId().toString(), player.getName(), player.getAddress().getAddress().getHostAddress(), ServerEventType.JOIN));
+        Object playerId = platform.getPlayerId(player.getName(), player.getUniqueId());
+        platform.getServerEvents().add(new ServerEvent(player.getUniqueId().toString(), player.getName(), player.getAddress().getAddress().getHostAddress(), ServerEventType.JOIN));
 
-        if(! plugin.getQueuedPlayers().containsKey(playerId)) {
+        if(! platform.getQueuedPlayers().containsKey(playerId)) {
             return;
         }
 
-        plugin.handleOnlineCommands(new QueuedPlayer(plugin.getQueuedPlayers().get(playerId), player.getName(), player.getUniqueId().toString()));
+        platform.handleOnlineCommands(new QueuedPlayer(platform.getQueuedPlayers().get(playerId), player.getName(), player.getUniqueId().toString()));
     }
 }

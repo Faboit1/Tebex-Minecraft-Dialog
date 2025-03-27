@@ -24,7 +24,7 @@ public class SecretCommand extends SubCommand {
         TebexPlugin platform = getPlatform();
 
         SDK sdk = platform.getSDK();
-        ServerPlatformConfig config = platform.getPlatformConfig();
+        ServerPlatformConfig config = (ServerPlatformConfig) platform.getPlatformConfig();
         YamlDocument configFile = config.getYamlDocument();
 
         sdk.setSecretKey(serverToken);

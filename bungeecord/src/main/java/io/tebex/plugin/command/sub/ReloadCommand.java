@@ -1,6 +1,7 @@
 package io.tebex.plugin.command.sub;
 
 import dev.dejvokep.boostedyaml.YamlDocument;
+import io.tebex.plugin.BungeePlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import net.md_5.bungee.api.CommandSender;
@@ -8,13 +9,13 @@ import net.md_5.bungee.api.CommandSender;
 import java.io.IOException;
 
 public class ReloadCommand extends SubCommand {
-    public ReloadCommand(TebexPlugin platform) {
+    public ReloadCommand(BungeePlatform platform) {
         super(platform, "reload", "tebex.admin");
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        TebexPlugin platform = getPlatform();
+        BungeePlatform platform = getPlatform();
         try {
             YamlDocument configYaml = platform.initPlatformConfig();
             platform.loadServerPlatformConfig(configYaml);

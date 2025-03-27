@@ -1,5 +1,6 @@
 package io.tebex.plugin.command.sub;
 
+import io.tebex.plugin.BungeePlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.plugin.manager.CommandManager;
@@ -10,7 +11,7 @@ import java.util.Comparator;
 public class HelpCommand extends SubCommand {
     private final CommandManager commandManager;
 
-    public HelpCommand(TebexPlugin platform, CommandManager commandManager) {
+    public HelpCommand(BungeePlatform platform, CommandManager commandManager) {
         super(platform, "help", "tebex.admin");
         this.commandManager = commandManager;
     }

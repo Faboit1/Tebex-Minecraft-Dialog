@@ -1,5 +1,6 @@
 package io.tebex.plugin.command.sub;
 
+import io.tebex.plugin.BukkitPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.sdk.obj.CheckoutUrl;
@@ -8,13 +9,13 @@ import org.bukkit.command.CommandSender;
 import java.util.concurrent.ExecutionException;
 
 public class CheckoutCommand extends SubCommand {
-    public CheckoutCommand(TebexPlugin platform) {
+    public CheckoutCommand(BukkitPlatform platform) {
         super(platform, "checkout", "tebex.checkout");
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        TebexPlugin platform = getPlatform();
+        BukkitPlatform platform = getPlatform();
 
         if (!platform.isSetup()) {
             sender.sendMessage("§b[Tebex] §7This server is not connected to a webstore. Use /tebex secret to set your store key.");

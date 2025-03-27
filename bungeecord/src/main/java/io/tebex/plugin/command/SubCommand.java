@@ -1,14 +1,15 @@
 package io.tebex.plugin.command;
 
+import io.tebex.plugin.BungeePlatform;
 import io.tebex.plugin.TebexPlugin;
 import net.md_5.bungee.api.CommandSender;
 
 public abstract class SubCommand {
-    private final TebexPlugin platform;
+    private final BungeePlatform platform;
     private final String name;
     private final String permission;
 
-    public SubCommand(TebexPlugin platform, String name, String permission) {
+    public SubCommand(BungeePlatform platform, String name, String permission) {
         this.platform = platform;
         this.name = name;
         this.permission = permission;
@@ -16,7 +17,7 @@ public abstract class SubCommand {
 
     public abstract void execute(final CommandSender sender, final String[] args);
 
-    public TebexPlugin getPlatform() {
+    public BungeePlatform getPlatform() {
         return platform;
     }
 

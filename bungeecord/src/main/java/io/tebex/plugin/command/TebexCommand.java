@@ -21,7 +21,7 @@ public class TebexCommand extends Command {
     public void execute(CommandSender sender, String[] args) {
         if(args.length == 0) {
             sender.sendMessage("§8[Tebex] §7Welcome to Tebex!");
-            sender.sendMessage("§8[Tebex] §7This server is running version §fv" + commandManager.getPlatform().getDescription().getVersion() + "§7.");
+            sender.sendMessage("§8[Tebex] §7This server is running version §fv" + commandManager.getPlatform().getPlugin().getDescription().getVersion() + "§7.");
             return;
         }
 

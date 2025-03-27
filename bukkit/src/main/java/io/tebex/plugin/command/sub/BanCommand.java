@@ -1,5 +1,6 @@
 package io.tebex.plugin.command.sub;
 
+import io.tebex.plugin.BukkitPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import org.bukkit.command.CommandSender;
@@ -7,13 +8,13 @@ import org.bukkit.command.CommandSender;
 import java.util.concurrent.ExecutionException;
 
 public class BanCommand extends SubCommand {
-    public BanCommand(TebexPlugin platform) {
+    public BanCommand(BukkitPlatform platform) {
         super(platform, "ban", "tebex.ban");
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        TebexPlugin platform = getPlatform();
+        BukkitPlatform platform = getPlatform();
 
         if (args.length < 1) { // require username at minimum
             sender.sendMessage("§b[Tebex] §7Invalid command usage. Use /tebex " + this.getName() + " " + getUsage());

@@ -1,5 +1,6 @@
 package io.tebex.plugin.command.sub;
 
+import io.tebex.plugin.BukkitPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.sdk.obj.CheckoutUrl;
@@ -9,13 +10,13 @@ import org.bukkit.entity.Player;
 import java.util.concurrent.ExecutionException;
 
 public class SendLinkCommand extends SubCommand {
-    public SendLinkCommand(TebexPlugin platform) {
+    public SendLinkCommand(BukkitPlatform platform) {
         super(platform, "sendlink", "tebex.sendlink");
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        TebexPlugin platform = getPlatform();
+        BukkitPlatform platform = getPlatform();
 
         if (args.length != 2) {
             sender.sendMessage("§b[Tebex] §7Invalid command usage. Use /tebex " + this.getName() + " " + getUsage());

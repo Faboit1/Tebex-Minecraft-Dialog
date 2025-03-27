@@ -27,7 +27,7 @@ public class DebugCommand extends SubCommand {
 
         TebexPlugin platform = getPlatform();
 
-        ProxyPlatformConfig config = platform.getPlatformConfig();
+        ProxyPlatformConfig config = (ProxyPlatformConfig) platform.getPlatformConfig();
         YamlDocument configFile = config.getYamlDocument();
 
         if (StringUtil.isTruthy(args[0])) {

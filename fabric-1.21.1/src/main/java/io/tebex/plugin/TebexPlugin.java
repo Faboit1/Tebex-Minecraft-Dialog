@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.event.JoinListener;
 import io.tebex.plugin.manager.CommandManager;
+import io.tebex.sdk.platform.BasePlatform;
 import io.tebex.sdk.util.Multithreading;
 import io.tebex.sdk.util.TickScheduler;
 import io.tebex.sdk.SDK;
@@ -38,24 +39,14 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TebexPlugin implements Platform, DedicatedServerModInitializer {
+public class TebexPlugin extends BasePlatform implements DedicatedServerModInitializer {
     // Fabric Related
     private static final String MOD_ID = "tebex";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
     private final String MOD_VERSION = "@VERSION@";
     private final File MOD_PATH = new File("./mods/" + MOD_ID);
+
     private MinecraftServer server;
-
-    private SDK sdk;
-    private ServerPlatformConfig config;
-    private boolean setup;
-    private PlaceholderManager placeholderManager;
-    private Map<Object, Integer> queuedPlayers;
-    private YamlDocument configYaml;
-
-    private ServerInformation storeInformation;
-    private List<Category> storeCategories;
-    private List<ServerEvent> serverEvents;
 
     /**
      * Starts the Fabric platform.
@@ -172,92 +163,20 @@ public class TebexPlugin implements Platform, DedicatedServerModInitializer {
     }
 
     @Override
-    public SDK getSDK() {
-        return sdk;
-    }
-
-    @Override
     public File getDirectory() {
         return MOD_PATH;
     }
 
     @Override
-    public boolean isSetup() {
-        return setup;
-    }
-
-    @Override
-    public void setSetup(boolean setup) {
-        this.setup = setup;
-    }
-
-    @Override
     public boolean isOnlineMode() {
-        return getPlatformConfig().isProxyMode() || server.isOnlineMode();
-    }
-
-    public List<Category> getStoreCategories() {
-        return storeCategories;
-    }
-
-    public ServerInformation getStoreInformation() {
-        return storeInformation;
-    }
-
-    public List<ServerEvent> getServerEvents() {
-        return serverEvents;
-    }
-
-    @Override
-    public void configure() {
-        setup = true;
-        performCheck();
-        sdk.sendTelemetry();
-    }
-
-    @Override
-    public void halt() {
-        setup = false;
-    }
-
-    @Override
-    public PlaceholderManager getPlaceholderManager() {
-        return placeholderManager;
-    }
-
-    @Override
-    public Map<Object, Integer> getQueuedPlayers() {
-        return queuedPlayers;
+        ServerPlatformConfig serverConfig = (ServerPlatformConfig) getPlatformConfig();
+        return serverConfig.isProxyMode() || server.isOnlineMode();
     }
 
     @Override
     public CommandResult dispatchCommand(String command) {
         server.getCommandManager().execute(server.getCommandSource().getDispatcher().parse(command, server.getCommandSource()), command);
         return CommandResult.from(true); // we assume success because the command manager does not report any result
-    }
-
-    @Override
-    public void executeAsync(Runnable runnable) {
-        Multithreading.runAsync(runnable);
-    }
-
-    @Override
-    public void executeAsyncLater(Runnable runnable, long time, TimeUnit unit) {
-        Multithreading.executeAsyncLater(runnable, time, unit);
-    }
-
-    @Override
-    public void executeBlocking(Runnable runnable) {
-        try {
-            Multithreading.executeBlocking(runnable);
-        } catch (InterruptedException | ExecutionException e) {
-            error("Failed to execute blocking task: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void executeBlockingLater(Runnable runnable, long time, TimeUnit unit) {
-        TickScheduler.scheduleLater(runnable, time, unit);
     }
 
     private Optional<ServerPlayerEntity> getPlayer(Object player) {
@@ -292,11 +211,6 @@ public class TebexPlugin implements Platform, DedicatedServerModInitializer {
     }
 
     @Override
-    public String getStoreType() {
-        return storeInformation == null ? "" : storeInformation.getStore().getGameType();
-    }
-
-    @Override
     public void log(Level level, String message) {
         if(level == Level.INFO) {
             LOGGER.info(message);
@@ -307,11 +221,6 @@ public class TebexPlugin implements Platform, DedicatedServerModInitializer {
         } else {
             LOGGER.info(message);
         }
-    }
-
-    @Override
-    public ServerPlatformConfig getPlatformConfig() {
-        return config;
     }
 
     @Override
@@ -332,30 +241,5 @@ public class TebexPlugin implements Platform, DedicatedServerModInitializer {
                 System.getProperty("os.arch"),
                 server.isOnlineMode()
         );
-    }
-
-    @Override
-    public String getServerIp() {
-        return this.server.getServerIp();
-    }
-
-    @Override
-    public ServerInformation.Server getStoreServer() {
-        return storeInformation.getServer();
-    }
-
-    @Override
-    public ServerInformation.Store getStore() {
-        return storeInformation.getStore();
-    }
-
-    @Override
-    public void setStoreInfo(ServerInformation info) {
-        this.storeInformation = info;
-    }
-
-    @Override
-    public void setStoreCategories(List<Category> categories) {
-        this.storeCategories = categories;
     }
 }

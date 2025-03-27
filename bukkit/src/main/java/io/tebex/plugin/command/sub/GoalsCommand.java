@@ -1,5 +1,6 @@
 package io.tebex.plugin.command.sub;
 
+import io.tebex.plugin.BukkitPlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.sdk.obj.CommunityGoal;
@@ -9,13 +10,13 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class GoalsCommand extends SubCommand {
-    public GoalsCommand(TebexPlugin platform) {
+    public GoalsCommand(BukkitPlatform platform) {
         super(platform, "goals", "tebex.goals");
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        TebexPlugin platform = getPlatform();
+        BukkitPlatform platform = getPlatform();
 
         try {
             List<CommunityGoal> goals = platform.getSDK().getCommunityGoals().get();

@@ -1,14 +1,15 @@
 package io.tebex.plugin.command.sub;
 
+import io.tebex.plugin.BungeePlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.SubCommand;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 
 public class ForceCheckCommand extends SubCommand {
-    private final TebexPlugin platform;
+    private final BungeePlatform platform;
 
-    public ForceCheckCommand(TebexPlugin platform) {
+    public ForceCheckCommand(BungeePlatform platform) {
         super(platform, "forcecheck", "tebex.forcecheck");
         this.platform = platform;
     }

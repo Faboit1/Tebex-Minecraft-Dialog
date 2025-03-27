@@ -1,5 +1,6 @@
 package io.tebex.plugin.event;
 
+import io.tebex.plugin.BungeePlatform;
 import io.tebex.plugin.TebexPlugin;
 import io.tebex.sdk.obj.QueuedPlayer;
 import net.md_5.bungee.api.event.LoginEvent;
@@ -9,10 +10,10 @@ import net.md_5.bungee.event.EventHandler;
 import java.util.UUID;
 
 public class JoinListener implements Listener {
-    private final TebexPlugin plugin;
+    private final BungeePlatform platform;
 
-    public JoinListener(TebexPlugin plugin) {
-        this.plugin = plugin;
+    public JoinListener(BungeePlatform platform) {
+        this.platform = platform;
     }
 
     @EventHandler
@@ -20,12 +21,12 @@ public class JoinListener implements Listener {
         UUID uuid = event.getConnection().getUniqueId();
         String name = event.getConnection().getName();
 
-        Object playerId = plugin.getPlayerId(name, uuid);
+        Object playerId = platform.getPlayerId(name, uuid);
 
-        if (!plugin.getQueuedPlayers().containsKey(playerId)) {
+        if (!platform.getQueuedPlayers().containsKey(playerId)) {
             return;
         }
 
-        plugin.handleOnlineCommands(new QueuedPlayer(plugin.getQueuedPlayers().get(playerId), name, uuid.toString()));
+        platform.handleOnlineCommands(new QueuedPlayer(platform.getQueuedPlayers().get(playerId), name, uuid.toString()));
     }
 }

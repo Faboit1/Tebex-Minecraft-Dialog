@@ -8,6 +8,8 @@ import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.command.BuyCommand;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.plugin.command.sub.*;
+import io.tebex.sdk.obj.Package;
+import io.tebex.sdk.platform.config.ServerPlatformConfig;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
@@ -48,9 +50,10 @@ public class CommandManager {
             return 1;
         });
 
-        if (platform.getPlatformConfig().isBuyCommandEnabled()) {
+        ServerPlatformConfig config = (ServerPlatformConfig) platform.getPlatformConfig();
+        if (config.isBuyCommandEnabled()) {
             BuyCommand buyCommand = new BuyCommand(platform);
-            dispatcher.register(literal(platform.getPlatformConfig().getBuyCommandName()).executes(buyCommand::execute));
+            dispatcher.register(literal(config.getBuyCommandName()).executes(buyCommand::execute));
         }
 
         commands.forEach(command -> {
