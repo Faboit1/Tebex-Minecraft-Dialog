@@ -102,14 +102,12 @@ public final class TebexPlugin extends JavaPlugin implements Platform {
         registerEvents(new JoinListener(this));
         registerEvents(new InventoryClickListener());
 
-        getServer().getScheduler().runTaskTimerAsynchronously(this, this::refreshListings, 0, 20 * 60 * 5);
+        getServer().getGlobalRegionScheduler().runAtFixedRate(this, task -> refreshListings(), 1, 5 * 60 * 20);
 
         // every 10 minutes clear the plugin event queue
-        getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
-            this.getSDK().sendPluginEvents();
-        }, 0, 60 * 20 * 10);
+        getServer().getGlobalRegionScheduler().runAtFixedRate(this, task -> this.getSDK().sendPluginEvents(), 1, 60 * 20 * 10);
 
-        getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
+        getServer().getGlobalRegionScheduler().runAtFixedRate(this, task -> {
             List<ServerEvent> runEvents = Lists.newArrayList(serverEvents.subList(0, Math.min(serverEvents.size(), 750)));
             if (runEvents.isEmpty()) return;
             if (!this.isSetup()) return;
@@ -123,7 +121,7 @@ public final class TebexPlugin extends JavaPlugin implements Platform {
                         debug("Failed to send join events: " + throwable.getMessage());
                         return null;
                     });
-        }, 0, 20 * 60);
+        }, 1, 60 * 20);
 
         registerBuyCommand();
     }
@@ -318,28 +316,30 @@ public final class TebexPlugin extends JavaPlugin implements Platform {
     public void executeAsync(Runnable runnable) {
         if (!isEnabled()) return;
 
-        getServer().getScheduler().runTaskAsynchronously(this, runnable);
+        getServer().getGlobalRegionScheduler().execute(this, runnable);
     }
 
     @Override
     public void executeAsyncLater(Runnable runnable, long time, TimeUnit unit) {
         if (!isEnabled()) return;
 
-        getServer().getScheduler().runTaskLaterAsynchronously(this, runnable, unit.toMillis(time) / 50);
+        long ticks = unit.toMillis(time) / 50;
+        getServer().getGlobalRegionScheduler().runDelayed(this, task -> runnable.run(), ticks);
     }
 
     @Override
     public void executeBlocking(Runnable runnable) {
         if (!isEnabled()) return;
 
-        getServer().getScheduler().runTask(this, runnable);
+        getServer().getGlobalRegionScheduler().execute(this, runnable);
     }
 
     @Override
     public void executeBlockingLater(Runnable runnable, long time, TimeUnit unit) {
         if (!isEnabled()) return;
 
-        getServer().getScheduler().runTaskLater(this, runnable, unit.toMillis(time) / 50);
+        long ticks = unit.toMillis(time) / 50;
+        getServer().getGlobalRegionScheduler().runDelayed(this, task -> runnable.run(), ticks);
     }
 
     public Player getPlayer(Object player) {

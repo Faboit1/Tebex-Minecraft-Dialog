@@ -89,7 +89,7 @@ subprojects {
     }
 }
 
-project(":bukkit") {
+project(":folia") {
     java {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(21))

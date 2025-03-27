@@ -41,7 +41,7 @@ public class TebexItemBuilder {
         meta.setLore(lore);
         meta.addItemFlags(flags);
         if (isEnchanted) {
-            meta.addEnchant(Enchantment.PROTECTION_FIRE, 1, false);
+            meta.addEnchant(Enchantment.FIRE_PROTECTION, 1, false);
         }
         stack.setItemMeta(meta);
         return stack;

@@ -13,5 +13,6 @@ mv fabric-1.20.1/build/libs/tebex*.jar build/libs/
 mv fabric-1.20.4/build/libs/tebex*.jar build/libs/
 mv fabric-1.21.1/build/libs/tebex*.jar build/libs/
 mv fabric-1.21.4/build/libs/tebex*.jar build/libs/
+mv folia/build/libs/tebex*.jar build/libs/
 mv velocity/build/libs/tebex*.jar build/libs/
 mv sdk/build/libs/tebex*.jar build/libs/
