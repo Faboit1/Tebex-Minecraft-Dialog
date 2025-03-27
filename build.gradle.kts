@@ -40,7 +40,9 @@ subprojects {
     plugins.apply("java")
     plugins.apply("com.gradleup.shadow")
     java {
-        toolchain.languageVersion.set(JavaLanguageVersion.of(8))
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(8))
+        }
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
@@ -51,6 +53,7 @@ subprojects {
 
     repositories {
         mavenCentral()
+        maven("https://repo.papermc.io/repository/maven-public/")
         maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/") {
             name = "spigotmc-repo"
         }
@@ -83,6 +86,16 @@ subprojects {
         filesNotMatching("**/*.zip") {
             expand(props)
         }
+    }
+}
+
+project(":folia") {
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 
