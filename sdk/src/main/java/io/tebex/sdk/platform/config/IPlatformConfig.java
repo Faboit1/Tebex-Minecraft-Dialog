@@ -8,7 +8,9 @@ import dev.dejvokep.boostedyaml.YamlDocument;
 public interface IPlatformConfig {
     int getConfigVersion();
     String getSecretKey();
+    void setSecretKey(String key);
     boolean isAutoReportEnabled();
     boolean isVerbose();
+    void setVerbose(boolean verbose);
     YamlDocument getYamlDocument();
 }

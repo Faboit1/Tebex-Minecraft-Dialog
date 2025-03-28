@@ -1,5 +1,6 @@
 package io.tebex.sdk;
 
+import io.tebex.sdk.commands.TebexCommands;
 import io.tebex.sdk.platform.Platform;
 
 /**
@@ -24,6 +25,7 @@ public class Tebex {
      */
     public static void init(Platform platform) {
         Tebex.platform = platform;
+        TebexCommands.setPlatform(platform);
     }
 
     /**

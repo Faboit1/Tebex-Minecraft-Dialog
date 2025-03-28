@@ -1,6 +1,5 @@
 package io.tebex.plugin;
 
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -8,29 +7,21 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.util.ProxyVersion;
-import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.event.JoinListener;
 import io.tebex.plugin.manager.CommandManager;
-import io.tebex.sdk.SDK;
 import io.tebex.sdk.Tebex;
-import io.tebex.sdk.obj.Category;
-import io.tebex.sdk.placeholder.PlaceholderManager;
 import io.tebex.sdk.platform.BasePlatform;
-import io.tebex.sdk.platform.Platform;
 import io.tebex.sdk.platform.PlatformTelemetry;
 import io.tebex.sdk.platform.PlatformType;
 import io.tebex.sdk.platform.config.ProxyPlatformConfig;
-import io.tebex.sdk.platform.config.ServerPlatformConfig;
-import io.tebex.sdk.request.response.ServerInformation;
 import io.tebex.sdk.util.CommandResult;
+import net.kyori.adventure.text.Component;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -183,5 +174,12 @@ public class TebexPlugin extends BasePlatform {
                 System.getProperty("os.arch"),
                 proxy.getConfiguration().isOnlineMode()
         );
+    }
+
+    @Override
+    public void sendPlayerMessage(String playerName, String message) {
+        getPlayer(playerName).ifPresent(p -> {
+            p.sendMessage(Component.text(message));
+        });
     }
 }

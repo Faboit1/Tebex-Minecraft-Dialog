@@ -1,12 +1,9 @@
 package io.tebex.plugin;
 
-import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.gui.BuyGUI;
-import io.tebex.sdk.SDK;
 import io.tebex.sdk.platform.BasePlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
 import io.tebex.sdk.platform.PlatformType;
-import io.tebex.sdk.platform.config.ServerPlatformConfig;
 import io.tebex.sdk.util.CommandResult;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -16,7 +13,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -138,16 +134,12 @@ public class FoliaPlatform extends BasePlatform {
         );
     }
 
-    public void setPlatformConfigYaml(YamlDocument configYaml) {
-        this.configYaml = configYaml;
-    }
-
-    public void setConfig(ServerPlatformConfig serverPlatformConfig) {
-        this.config = serverPlatformConfig;
-    }
-
-    public void setSecretKey(String key) {
-        this.sdk = new SDK(this, key);
+    @Override
+    public void sendPlayerMessage(String playerName, String message) {
+        Player player = plugin.getPlayer(playerName);
+        if (player != null){
+            player.sendMessage(message);
+        }
     }
 
     public BuyGUI getBuyGUI() {

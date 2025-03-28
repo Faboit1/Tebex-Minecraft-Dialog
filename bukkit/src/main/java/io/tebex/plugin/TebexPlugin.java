@@ -1,36 +1,20 @@
 package io.tebex.plugin;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.command.BuyCommand;
+import io.tebex.plugin.command.TebexCommandExecutor;
 import io.tebex.plugin.event.InventoryClickListener;
-import io.tebex.plugin.event.JoinListener;
-import io.tebex.plugin.gui.BuyGUI;
-import io.tebex.plugin.manager.CommandManager;
+import io.tebex.plugin.event.PlayerJoinListener;
 import io.tebex.plugin.placeholder.BukkitNamePlaceholder;
-import io.tebex.sdk.SDK;
 import io.tebex.sdk.Tebex;
-import io.tebex.sdk.obj.Category;
 import io.tebex.sdk.obj.ServerEvent;
 import io.tebex.sdk.placeholder.PlaceholderManager;
-import io.tebex.sdk.placeholder.defaults.UuidPlaceholder;
-import io.tebex.sdk.platform.BasePlatform;
-import io.tebex.sdk.platform.Platform;
-import io.tebex.sdk.platform.PlatformTelemetry;
-import io.tebex.sdk.platform.PlatformType;
 import io.tebex.sdk.platform.config.ServerPlatformConfig;
-import io.tebex.sdk.request.response.ServerInformation;
-import io.tebex.sdk.util.CommandResult;
-import io.tebex.sdk.util.FileUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.command.CommandException;
 import org.bukkit.command.CommandMap;
-import org.bukkit.entity.Player;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Listener;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -39,11 +23,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
+import java.util.Objects;
+import java.util.Properties;
 
 /**
  * The Bukkit platform.
@@ -70,17 +52,25 @@ public final class TebexPlugin extends JavaPlugin {
         platform.init(); // uses loaded key to set current store and cache the available packages
 
         // Bukkit specific registration
-        PlaceholderManager placeholderManager = platform.getPlaceholderManager();
-        new CommandManager(platform).register();
-        registerBuyCommand();
-        registerEvents(new JoinListener(platform));
+        TebexCommandExecutor tebexCommands = new TebexCommandExecutor();
+        PluginCommand pluginCommand = platform.getPlugin().getCommand("tebex");
+        if (pluginCommand == null) {
+            throw new RuntimeException("Tebex command not found.");
+        }
+        pluginCommand.setExecutor(tebexCommands);
+        pluginCommand.setTabCompleter(tebexCommands);
+
+        registerBuyCommandIfEnabled();
+        registerEvents(new PlayerJoinListener(platform));
         registerEvents(new InventoryClickListener());
+
+        PlaceholderManager placeholderManager = platform.getPlaceholderManager();
         placeholderManager.register(new BukkitNamePlaceholder(placeholderManager));
 
         // Refresh store listings every 5 minutes
         getServer().getScheduler().runTaskTimerAsynchronously(this, platform::refreshListings, 0, 20 * 60 * 5);
 
-        // every 10 minutes clear the plugin event queue
+        // Every 10 minutes clear the plugin event queue
         getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
             platform.getSDK().sendPluginEvents();
         }, 0, 60 * 20 * 10);
@@ -180,7 +170,7 @@ public final class TebexPlugin extends JavaPlugin {
         }
     }
 
-    public void registerBuyCommand() {
+    public void registerBuyCommandIfEnabled() {
         try {
             final Field bukkitCommandMap = Bukkit.getServer().getClass().getDeclaredField("commandMap");
 

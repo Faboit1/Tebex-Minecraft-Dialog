@@ -63,6 +63,13 @@ public abstract class BasePlatform implements Platform {
     }
 
     public final void init() {
+        sdk = new SDK(this, config.getSecretKey());
+        placeholderManager = new PlaceholderManager();
+        queuedPlayers = Maps.newConcurrentMap();
+        storeCategories = new ArrayList<>();
+        serverEvents = new ArrayList<>();
+        placeholderManager.register(new UuidPlaceholder(placeholderManager));
+
         if (getPlatformConfig().getSecretKey() != null && !getPlatformConfig().getSecretKey().isEmpty()) {
             getSDK().getServerInformation().thenAccept(serverInformation -> {
                 ServerInformation.Server server = serverInformation.getServer();
@@ -440,6 +447,7 @@ public abstract class BasePlatform implements Platform {
         PLUGIN_EVENTS.add(event);
     }
 
+    @Override
     public final SDK getSDK() {
         return sdk;
     }
@@ -554,17 +562,22 @@ public abstract class BasePlatform implements Platform {
         } catch (IOException e) {
             warning("Failed to load configuration: " + e.getMessage(),
                     "Check that your configuration is valid and in the proper format and reload the plugin. You may delete `Tebex/config.yml` and a new configuration will be generated.");
-            return;
         }
+    }
 
-        // Initialise SDK.
-        sdk = new SDK(this, config.getSecretKey());
-        placeholderManager = new PlaceholderManager();
-        queuedPlayers = Maps.newConcurrentMap();
-        storeCategories = new ArrayList<>();
-        serverEvents = new ArrayList<>();
+    @Override
+    public void reloadConfig() {
+        //TODO
+    }
 
-        placeholderManager.register(new UuidPlaceholder(placeholderManager));
+    @Override
+    public void saveConfig(IPlatformConfig platformConfig) {
+        try {
+            this.config = (ServerPlatformConfig) platformConfig;
+            this.config.getYamlDocument().save();
+        } catch (Exception e) {
+            error("Failed to save configuration: " + e.getMessage(), e);
+        }
     }
 
     public void clearSelectedPluginEvents(List<ServerEvent> events) {

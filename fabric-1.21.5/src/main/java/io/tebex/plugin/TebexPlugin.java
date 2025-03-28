@@ -2,23 +2,19 @@ package io.tebex.plugin;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.event.JoinListener;
 import io.tebex.plugin.manager.CommandManager;
-import io.tebex.sdk.platform.BasePlatform;
-import io.tebex.sdk.util.Multithreading;
-import io.tebex.sdk.util.TickScheduler;
 import io.tebex.sdk.SDK;
 import io.tebex.sdk.Tebex;
-import io.tebex.sdk.obj.Category;
 import io.tebex.sdk.obj.ServerEvent;
 import io.tebex.sdk.placeholder.PlaceholderManager;
-import io.tebex.sdk.platform.Platform;
+import io.tebex.sdk.platform.BasePlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
 import io.tebex.sdk.platform.PlatformType;
 import io.tebex.sdk.platform.config.ServerPlatformConfig;
-import io.tebex.sdk.request.response.ServerInformation;
 import io.tebex.sdk.util.CommandResult;
+import io.tebex.sdk.util.Multithreading;
+import io.tebex.sdk.util.TickScheduler;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -26,14 +22,17 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -241,5 +240,12 @@ public class TebexPlugin extends BasePlatform implements DedicatedServerModIniti
                 System.getProperty("os.arch"),
                 server.isOnlineMode()
         );
+    }
+
+    @Override
+    public void sendPlayerMessage(String playerName, String message) {
+        getPlayer(playerName).ifPresent(player -> {
+            player.sendMessage(Text.of(message));
+        });
     }
 }

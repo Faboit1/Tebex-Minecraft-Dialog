@@ -1,7 +1,6 @@
 package io.tebex.plugin.event;
 
 import io.tebex.plugin.BukkitPlatform;
-import io.tebex.plugin.TebexPlugin;
 import io.tebex.sdk.obj.QueuedPlayer;
 import io.tebex.sdk.obj.ServerEvent;
 import io.tebex.sdk.obj.ServerEventType;
@@ -10,12 +9,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-import java.util.Date;
-
-public class JoinListener implements Listener {
+public class PlayerJoinListener implements Listener {
     private final BukkitPlatform platform;
 
-    public JoinListener(BukkitPlatform platform) {
+    public PlayerJoinListener(BukkitPlatform platform) {
         this.platform = platform;
     }
 

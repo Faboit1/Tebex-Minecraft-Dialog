@@ -50,6 +50,7 @@ public class ServerPlatformConfig implements IPlatformConfig {
         this.checkForUpdates = checkForUpdates;
     }
 
+    @Override
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
     }

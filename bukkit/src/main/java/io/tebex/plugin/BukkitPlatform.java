@@ -147,6 +147,13 @@ public class BukkitPlatform extends BasePlatform {
         );
     }
 
+    @Override
+    public void sendPlayerMessage(String playerName, String message) {
+        Player player = getPlayer(playerName);
+        if (player == null) return;
+        player.sendMessage(message);
+    }
+
     public void setPlatformConfigYaml(YamlDocument configYaml) {
         this.configYaml = configYaml;
     }

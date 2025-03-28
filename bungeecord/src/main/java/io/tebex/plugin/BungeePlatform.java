@@ -4,6 +4,7 @@ import io.tebex.sdk.platform.BasePlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
 import io.tebex.sdk.platform.PlatformType;
 import io.tebex.sdk.util.CommandResult;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.io.File;
@@ -111,6 +112,14 @@ public class BungeePlatform extends BasePlatform {
                 System.getProperty("os.arch"),
                 plugin.getProxy().getConfig().isOnlineMode()
         );
+    }
+
+    @Override
+    public void sendPlayerMessage(String playerName, String message) {
+        ProxiedPlayer player = getPlayer(playerName);
+        if (player != null) {
+            player.sendMessage(TextComponent.fromLegacyText(message));
+        }
     }
 
     public TebexPlugin getPlugin() {

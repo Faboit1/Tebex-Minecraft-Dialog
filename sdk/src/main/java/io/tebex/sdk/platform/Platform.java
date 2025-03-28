@@ -1,6 +1,7 @@
 package io.tebex.sdk.platform;
 
 import dev.dejvokep.boostedyaml.YamlDocument;
+import io.tebex.sdk.SDK;
 import io.tebex.sdk.platform.config.IPlatformConfig;
 import io.tebex.sdk.request.response.ServerInformation;
 import io.tebex.sdk.util.CommandResult;
@@ -14,6 +15,8 @@ import java.util.logging.Level;
  * Implementations should provide functionality specific to their platform, such as Bukkit or Sponge.
  */
 public interface Platform {
+    SDK getSDK();
+
     /**
      * @return The version string of the platform implementation (plugin version).
      */
@@ -83,4 +86,13 @@ public interface Platform {
     PlatformTelemetry getTelemetry();
 
     void load();
+
+    void sendPlayerMessage(String playerName, String message);
+
+    void setStoreInfo(ServerInformation newInfo);
+
+    void reloadConfig();
+
+    void saveConfig(IPlatformConfig platformConfig);
+
 }
