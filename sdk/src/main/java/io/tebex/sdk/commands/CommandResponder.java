@@ -1,0 +1,93 @@
+package io.tebex.sdk.commands;
+
+public class CommandResponder {
+
+    public static void tellFancy(CommandContext context, String message, String... args) {
+        // "Tebex" appears always in cyan from the raw message
+        if (!context.isFromConsole()) {
+            message = message.replaceAll("Tebex", "§bTebex");
+        }
+
+        // Insert args and color them gold
+        for (int i = 0; i < args.length; i++) {
+            String placeholder = "{" + i + "}";
+
+            // underline addresses and append positional arg colored gold
+            if (!context.isFromConsole()) {
+                if (args[i].contains("https://")) {
+                    args[i] = args[i].replace(args[i], "§n" + args[i]);
+                }
+
+                message = message.replace(placeholder, "§6" + args[i] + "§f");
+            } else { // otherwise for the console just replace the positional arg without coloring
+                message = message.replace(placeholder, args[i]);
+            }
+        }
+
+        // Stop before adding a colored prefix if this is a console response
+        if (context.isFromConsole()) {
+            context.tellSender(message);
+            return;
+        }
+
+        // Otherwise append a prefix (cyan), message is white
+        String prefixedFormattedMessage = "§b[Tebex] §f" + message;
+        context.tellSender(prefixedFormattedMessage);
+    }
+
+    public static void tellError(CommandContext context, String message) {
+        if (context.isFromConsole()) {
+            context.tellSender(message);
+            return;
+        }
+
+        // "Tebex" appears always in cyan
+        message = message.replaceAll("Tebex", "§bTebex");
+
+        // Prefix is cyan, message is red
+        String prefixedFormattedErrorMessage = "§b[Tebex] §c" + message;
+        context.tellSender(prefixedFormattedErrorMessage);
+    }
+
+    public static void tellSuccess(CommandContext context, String message, String... args) {
+        if (context.isFromConsole()) {
+            context.tellSender(message);
+            return;
+        }
+
+        // "Tebex" appears always in cyan
+        message = message.replaceAll("Tebex", "§bTebex");
+
+        // Insert args and color them gold
+        for (int i = 0; i < args.length; i++) {
+            String placeholder = "{" + i + "}";
+            message = message.replace(placeholder, "§6" + args[i] + "§f");
+        }
+
+        // Prefix is cyan, message is white
+        String prefixedFormattedMessage = "§b[Tebex] §a" + message;
+
+        context.tellSender(prefixedFormattedMessage);
+    }
+
+    public static void tellOtherFancy(CommandContext context, String message, String... args) {
+        // Insert args and color them gold
+        for (int i = 0; i < args.length; i++) {
+            String placeholder = "{" + i + "}";
+
+            // underline addresses and append positional arg colored gold
+            if (!context.isFromConsole()) {
+                if (args[i].contains("https://")) {
+                    args[i] = args[i].replace(args[i], "§n" + args[i]);
+                }
+
+                message = message.replace(placeholder, "§6" + args[i] + "§f");
+            } else { // otherwise for the console just replace the positional arg without coloring
+                message = message.replace(placeholder, args[i]);
+            }
+        }
+
+        String prefixedFormattedMessage = "§b[Tebex] §f" + message;
+        context.tellTarget(prefixedFormattedMessage);
+    }
+}

@@ -20,7 +20,6 @@ import net.kyori.adventure.text.Component;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -124,19 +123,15 @@ public class TebexPlugin extends BasePlatform {
         executeAsyncLater(runnable, time, unit);
     }
 
-    private Optional<Player> getPlayer(Object player) {
-        if(player == null) return Optional.empty();
+    @Override
+    public <T> T getPlayer(Object uuidOrUsername) {
+        if(uuidOrUsername == null) return null;
 
-        if (isOnlineMode() && !isGeyser() && player instanceof UUID) {
-            return proxy.getPlayer((UUID) player);
+        if (isOnlineMode() && !isGeyser() && uuidOrUsername instanceof UUID) {
+            return (T)proxy.getPlayer(uuidOrUsername.toString());
         }
 
-        return proxy.getPlayer((String) player);
-    }
-
-    @Override
-    public boolean isPlayerOnline(Object player) {
-        return getPlayer(player).isPresent();
+        return (T)proxy.getPlayer((String) uuidOrUsername);
     }
 
     @Override
@@ -178,8 +173,15 @@ public class TebexPlugin extends BasePlatform {
 
     @Override
     public void sendPlayerMessage(String playerName, String message) {
-        getPlayer(playerName).ifPresent(p -> {
-            p.sendMessage(Component.text(message));
-        });
+        Player player = getPlayer(playerName);
+        if (player != null) {
+            player.sendMessage(Component.text(message));
+        }
+    }
+
+    @Override
+    public boolean hasPermission(String username, String permission) {
+        Player player = getPlayer(username);
+        return player != null && player.hasPermission(permission);
     }
 }

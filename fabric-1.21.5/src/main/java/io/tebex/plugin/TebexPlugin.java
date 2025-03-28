@@ -15,6 +15,7 @@ import io.tebex.sdk.platform.config.ServerPlatformConfig;
 import io.tebex.sdk.util.CommandResult;
 import io.tebex.sdk.util.Multithreading;
 import io.tebex.sdk.util.TickScheduler;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -31,7 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -178,24 +178,20 @@ public class TebexPlugin extends BasePlatform implements DedicatedServerModIniti
         return CommandResult.from(true); // we assume success because the command manager does not report any result
     }
 
-    private Optional<ServerPlayerEntity> getPlayer(Object player) {
-        if(player == null) return Optional.empty();
+    @Override
+    public <T> T getPlayer(Object uuidOrUsername) {
+        if(uuidOrUsername == null) return null;
 
-        if (isOnlineMode() && !isGeyser() && player instanceof UUID) {
-            return Optional.ofNullable(server.getPlayerManager().getPlayer((UUID) player));
+        if (isOnlineMode() && !isGeyser() && uuidOrUsername instanceof UUID) {
+            return (T)server.getPlayerManager().getPlayer((UUID) uuidOrUsername);
         }
 
-        return Optional.ofNullable(server.getPlayerManager().getPlayer((String) player));
-    }
-
-    @Override
-    public boolean isPlayerOnline(Object player) {
-        return getPlayer(player).isPresent();
+        return (T)(server.getPlayerManager().getPlayer((String) uuidOrUsername));
     }
 
     @Override
     public int getFreeSlots(Object playerId) {
-        ServerPlayerEntity player = getPlayer(playerId).orElse(null);
+        ServerPlayerEntity player = getPlayer(playerId);
         if (player == null) return -1;
 
         DefaultedList<ItemStack> inv = player.getInventory().getMainStacks();
@@ -244,8 +240,15 @@ public class TebexPlugin extends BasePlatform implements DedicatedServerModIniti
 
     @Override
     public void sendPlayerMessage(String playerName, String message) {
-        getPlayer(playerName).ifPresent(player -> {
+        ServerPlayerEntity player = getPlayer(playerName);
+        if (player != null){
             player.sendMessage(Text.of(message));
-        });
+        }
+    }
+
+    @Override
+    public boolean hasPermission(String username, String permission) {
+        ServerPlayerEntity player = getPlayer(username);
+        return player != null && Permissions.check(player, permission, false);
     }
 }

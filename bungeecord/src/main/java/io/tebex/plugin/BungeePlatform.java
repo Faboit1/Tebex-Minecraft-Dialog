@@ -63,14 +63,15 @@ public class BungeePlatform extends BasePlatform {
         executeAsyncLater(runnable, time, unit);
     }
 
-    private ProxiedPlayer getPlayer(Object player) {
-        if(player == null) return null;
+    @Override
+    public <T> T getPlayer(Object uuidOrUsername) {
+        if(uuidOrUsername == null) return null;
 
-        if (isOnlineMode() && !isGeyser() && player instanceof UUID) {
-            return plugin.getProxy().getPlayer((UUID) player);
+        if (isOnlineMode() && !isGeyser() && uuidOrUsername instanceof UUID) {
+            return (T) plugin.getProxy().getPlayer((UUID) uuidOrUsername);
         }
 
-        return plugin.getProxy().getPlayer((String) player);
+        return (T) plugin.getProxy().getPlayer((String) uuidOrUsername);
     }
 
     @Override
@@ -120,6 +121,12 @@ public class BungeePlatform extends BasePlatform {
         if (player != null) {
             player.sendMessage(TextComponent.fromLegacyText(message));
         }
+    }
+
+    @Override
+    public boolean hasPermission(String username, String permission) {
+        ProxiedPlayer player = getPlayer(username);
+        return player != null && player.hasPermission(permission);
     }
 
     public TebexPlugin getPlugin() {

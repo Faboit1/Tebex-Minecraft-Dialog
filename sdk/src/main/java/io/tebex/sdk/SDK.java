@@ -6,7 +6,6 @@ import io.tebex.sdk.exception.ServerNotSetupException;
 import io.tebex.sdk.obj.Package;
 import io.tebex.sdk.obj.*;
 import io.tebex.sdk.platform.BasePlatform;
-import io.tebex.sdk.platform.Platform;
 import io.tebex.sdk.request.TebexRequest;
 import io.tebex.sdk.request.builder.CreateCouponRequest;
 import io.tebex.sdk.request.interceptor.LoggingInterceptor;
@@ -364,6 +363,18 @@ public class SDK {
         return request("/checkout").withBody(GSON.toJson(payload)).withSecretKey(secretKey).sendAsync().thenApply(response -> {
             if(response.code() == 404) {
                 throw new CompletionException(new ServerNotFoundException());
+            } else if (response.code() == 400) {
+                JsonObject jsonObject = null;
+                try {
+                    jsonObject = GSON.fromJson(response.body().string(), JsonObject.class);
+                } catch (IOException e) {
+                    throw new CompletionException(new IOException("Unable to parse error response: " + e.getMessage()));
+                }
+                if (jsonObject.has("error_message")) {
+                    throw new CompletionException(new IOException(jsonObject.get("error_message").getAsString()));
+                } else {
+                    throw new CompletionException(new IOException("Unexpected status code (" + response.code() + ")"));
+                }
             } else if(response.code() != 201) {
                 throw new CompletionException(new IOException("Unexpected status code (" + response.code() + ")"));
             }

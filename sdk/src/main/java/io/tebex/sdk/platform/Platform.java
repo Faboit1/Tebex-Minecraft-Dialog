@@ -71,9 +71,19 @@ public interface Platform {
     boolean isOnlineMode();
 
     /**
+     * Retrieves a player entity based on the provided UUID or username.
+     *
+     * @param uuidOrUsername The UUID or username of the player to retrieve.
+     * @return The player entity.
+     */
+    <T> T getPlayer(Object uuidOrUsername);
+
+    /**
      * @return True if the player is online.
      */
-    boolean isPlayerOnline(Object player);
+    default boolean isPlayerOnline(Object player) {
+        return getPlayer(player) != null;
+    }
 
     /**
      * @return Number of inventory slots free for the given player
@@ -95,4 +105,5 @@ public interface Platform {
 
     void saveConfig(IPlatformConfig platformConfig);
 
+    boolean hasPermission(String username, String permission);
 }

@@ -25,7 +25,7 @@ public class Tebex {
      */
     public static void init(Platform platform) {
         Tebex.platform = platform;
-        TebexCommands.setPlatform(platform);
+        TebexCommands.register(platform);
     }
 
     /**

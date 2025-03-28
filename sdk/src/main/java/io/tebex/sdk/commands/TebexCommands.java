@@ -4,8 +4,11 @@ import io.tebex.sdk.obj.CommunityGoal;
 import io.tebex.sdk.platform.Platform;
 import io.tebex.sdk.request.response.ServerInformation;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 public class TebexCommands {
     public static final String TEBEX_COMMAND_PREFIX = "tebex";
@@ -26,138 +29,241 @@ public class TebexCommands {
     private static void register(String name, String usage, String description, Consumer<CommandContext> handler) {
         Command command = new Command(name, usage, description, handler);
         commands.put(name, command);
+        platform.log(Level.INFO, "Registered command: '/tebex " + name + "' with permission '" +command.getPermission() + "'");
     }
 
     public static boolean process(CommandContext context) {
-        if (context.fullCommand.startsWith(TEBEX_COMMAND_PREFIX)) {
-            Command command = commands.get(context.commandName);
+        if (context.getFullCommand().startsWith(TEBEX_COMMAND_PREFIX)) {
+            Command command = commands.get(context.getCommandName());
+            if (command == null) {
+                CommandResponder.tellError(context, "Unrecognized command or no permission.");
+                return false;
+            }
+
             Consumer<CommandContext> handler = command.getHandler();
 
+            // Check permissions
+            boolean hasPermission = context.isFromConsole() || TebexCommands.getPlatform().hasPermission(context.getSenderUsername(), command.getPermission());
+            if (!hasPermission) {
+                CommandResponder.tellError(context, "Unrecognized command or no permission.");
+                return false;
+            }
+
             // Check number of args required
-            if (context.arguments.length < command.getNumArgsRequired()) {
-                context.tellSender("Usage: " + command.getUsage());
+            if (context.getArgs().length != command.getNumArgsRequired()) {
+                CommandResponder.tellError(context, "Usage: /tebex " + command.getName() + " " + command.getUsage());
+                return false;
             }
 
             handler.accept(context);
             return true;
         }
-
         return false;
     }
 
-    static {
-        register("ban","<playerName> <reason> <ip>", "Bans a user from the webstore. Unbans can only be made from the store panel.", (ctx) -> {
-            String reason = ctx.arguments[1];
-            String ip = ctx.arguments[2];
-            platform.getSDK().createBan(ctx.targetUUID.toString(), ip, reason).thenAccept((success) -> {
+    public static Platform getPlatform() {
+        return platform;
+    }
+
+    public static Map<String, Command> getAllowedCommands(String username) {
+        Map<String,Command> allowedCommands = new HashMap<>();
+        for (Map.Entry<String, Command> entry : commands.entrySet()) {
+            Command command = entry.getValue();
+
+            // Only show commands the user has permissions for
+            if (!platform.hasPermission(username, command.getPermission())) {
+                continue;
+            }
+
+            allowedCommands.put(entry.getKey(), command);
+        }
+        return allowedCommands;
+    }
+
+    public static void register(Platform platform) {
+        TebexCommands.platform = platform;
+
+        register("ban","<playerName> <reason> <ip>", "Bans a user from the webstore.", (ctx) -> {
+            String name = ctx.getArgs()[0]; // player may be offline, so don't rely on target username which requires successful getPlayer() call
+            String reason = ctx.getArgs()[1];
+            String ip = ctx.getArgs()[2];
+            platform.getSDK().createBan(name, ip, reason).thenAccept((success) -> {
                 if (success) {
-                    ctx.tellSender("User " + ctx.targetUsername + " has been banned successfully.");
+                    CommandResponder.tellSuccess(ctx, "User {0} has been banned successfully.", name);
                 } else {
-                    ctx.tellSender("Failed to ban user " + ctx.targetUsername + ".");
+                    CommandResponder.tellError(ctx, "Failed to ban user.");
                 }
+            }).exceptionally(e -> {
+                CommandResponder.tellError(ctx, "Failed to ban user. " + e.getMessage());
+                return null;
             });
         });
 
 
         register("checkout", "<packageId>", "Creates a payment link for a package.", (ctx) -> {
-            String packageId = ctx.arguments[0];
-            platform.getSDK().createCheckoutUrl(Integer.parseInt(packageId), ctx.targetUsername).thenAccept((url) -> {
-                ctx.tellTarget("Checkout started! Click here to complete payment: " + url.getUrl());
-            });
+            if (ctx.isFromConsole()) {
+                CommandResponder.tellError(ctx, "This command cannot be run from the console.");
+                return;
+            }
+
+            String packageId = ctx.getArgs()[0];
+            int intPackageId = -1;
+            try {
+                intPackageId = Integer.parseInt(packageId);
+            } catch (NumberFormatException e) {
+                CommandResponder.tellError(ctx, "The Package ID must be a number.");
+                return;
+            }
+
+            platform.getSDK().createCheckoutUrl(intPackageId, ctx.getSenderUsername()).thenAccept((url) -> {
+                CommandResponder.tellFancy(ctx, "Checkout started! Click here to complete payment: {0}", url.getUrl());
+            }).exceptionally(e -> {
+                CommandResponder.tellError(ctx, e.getMessage());
+                return null;
+            });;
         });
 
 
         register("debug", "<true/false>", "Enables or disables debug logging.", (ctx) -> {
-            boolean value = Boolean.parseBoolean(ctx.arguments[0]);
-            platform.getPlatformConfig().setVerbose(value);
-            ctx.tellSender("Debug mode set to " + value);
+            String value = ctx.getArgs()[0].toLowerCase();
+            if (!value.equals("true") && !value.equals("false")) {
+                CommandResponder.tellError(ctx, "Specify 'true' or 'false' for debug mode.");
+                return;
+            }
+            boolean debugValue = Boolean.parseBoolean(value);
+            platform.getPlatformConfig().setVerbose(debugValue);
+            CommandResponder.tellFancy(ctx, "Debug mode set to {0}", value);
         });
 
 
         register("forcecheck", "", "Checks immediately for any purchases that need to be delivered.", (ctx) -> {
-            ctx.tellSender("Beginning force check for due commands...");
-            platform.performCheck(false);
-            ctx.tellSender("Check completed.");
+            CommandResponder.tellFancy(ctx, "Beginning force check for due commands...");
+            boolean previousDebugState = platform.getPlatformConfig().isVerbose();
+
+            // Temporarily enable debug logging while a forcecheck runs
+            platform.getPlatformConfig().setVerbose(true);
+            platform.performCheck(false); //TODO completable future
+
+            // Restore previous debug state
+            platform.getPlatformConfig().setVerbose(previousDebugState);
+            CommandResponder.tellSuccess(ctx, "Check completed. See console for details.");
         });
 
 
         register("goals", "", "Shows progress to community goals.", (ctx) -> platform.getSDK().getCommunityGoals().thenAccept((goals) -> {
+            if (goals.isEmpty()) { //TODO cache
+                CommandResponder.tellFancy(ctx, "No community goals available.");
+                return;
+            }
+
+            CommandResponder.tellFancy(ctx, "Community Goals: ");
             for (CommunityGoal goal: goals) {
+
                 if (goal.getStatus() != CommunityGoal.Status.DISABLED) {
-                    ctx.tellSender("Community Goals: ");
-                    ctx.tellSender(String.format("- %s (%.2f/%.2f) [%s]", goal.getName(), goal.getCurrent(), goal.getTarget(), goal.getStatus()));
+                    CommandResponder.tellFancy(ctx, String.format("- %s (%.2f/%.2f) [%s]", goal.getName(), goal.getCurrent(), goal.getTarget(), goal.getStatus()));
                 }
             }
         }));
 
-        register("info", "", "Shows information about the connected Tebex store.", (ctx) -> {
+        register("info", "", "Shows information about the connected store.", (ctx) -> {
             ServerInformation.Store store = platform.getStore();
             ServerInformation.Server server = platform.getStoreServer();
 
-            ctx.tellSender("Information for this server:");
-            ctx.tellSender(server.getName() + " for webstore " + store.getName());
-            ctx.tellSender("Server prices are in " +  store.getCurrency().getIso4217());
-            ctx.tellSender("Webstore domain " +  store.getDomain());
+            CommandResponder.tellFancy(ctx, "Information for this server:");
+            CommandResponder.tellFancy(ctx, "{0} for webstore {1}", server.getName(), store.getName());
+            CommandResponder.tellFancy(ctx, "Server prices are in {0}", store.getCurrency().getIso4217());
+            CommandResponder.tellFancy(ctx, "Webstore URL: {0}", store.getDomain());
         });
 
         register("lookup", "<username>", "Gets user transaction info from your webstore.", (ctx) -> {
-            ctx.tellSender("Performing player lookup for " + ctx.targetUsername + "...");
-            platform.getSDK().getPlayerLookupInfo(ctx.targetUsername).thenAccept((lookupInfo) -> {
-                ctx.tellSender("Username: " + lookupInfo.getLookupPlayer().getUsername());
-                ctx.tellSender("Id: " + lookupInfo.getLookupPlayer().getId());
-                ctx.tellSender("Chargeback Rate: " + lookupInfo.chargebackRate);
-                ctx.tellSender("Bans Total: " + lookupInfo.banCount);
-                ctx.tellSender("Payments: " + lookupInfo.payments.size());
+            String username = ctx.getArgs()[0]; // Use provided username as player is not required to be online / no instance required
+            CommandResponder.tellFancy(ctx, "Performing player lookup for {0}...", username);
+            platform.getSDK().getPlayerLookupInfo(ctx.getTargetUsername()).thenAccept((lookupInfo) -> {
+                CommandResponder.tellFancy(ctx, "Username: {0}", lookupInfo.getLookupPlayer().getUsername());
+                CommandResponder.tellFancy(ctx, "Id: {0}", lookupInfo.getLookupPlayer().getId());
+                CommandResponder.tellFancy(ctx, "Chargeback Rate: {0}%", String.valueOf(lookupInfo.chargebackRate));
+                CommandResponder.tellFancy(ctx, "Bans Total: {0}", String.valueOf(lookupInfo.banCount));
+                CommandResponder.tellFancy(ctx, "Payments: {0}", String.valueOf(lookupInfo.payments.size()));
+            }).exceptionally(e -> {
+                CommandResponder.tellError(ctx, e.getMessage());
+                return null;
             });
         });
 
         register("reload", "", "Reloads the plugin configuration and store connection.", (ctx) -> {
-            ctx.tellSender("Tebex is reloading...");
+            CommandResponder.tellFancy(ctx, "Tebex is reloading...");
             platform.reloadConfig();
             platform.refreshListings();
             platform.getSDK().sendPluginEvents();
             // platform.registerBuyCommand(); //TODO
             //platform.setBuyGUI(new BuyGUI(platform)); //TODO
-            ctx.tellSender("Reload completed.");
+            CommandResponder.tellSuccess(ctx, "Reload completed.");
         });
 
-        register("secret", "<key>", "Connects to your Tebex store.", (ctx) -> {
-            ctx.tellSender("Checking your secret key...");
-
+        register("secret", "<key>", "Connects to your store.", (ctx) -> {
+            CommandResponder.tellFancy(ctx, "Checking your secret key...");
             String oldKey = platform.getPlatformConfig().getSecretKey();
 
             // Set the new key and attempt to query server info. If it works, key is valid and we set in config.
-            platform.getSDK().setSecretKey(ctx.arguments[0]);
+            platform.getSDK().setSecretKey(ctx.getArgs()[0]);
             platform.getSDK().getServerInformation().thenAccept((newInfo) -> {
                 if (newInfo != null) {
-                    platform.getPlatformConfig().setSecretKey(ctx.arguments[0]);
+                    platform.getPlatformConfig().setSecretKey(ctx.getArgs()[0]);
                     platform.saveConfig(platform.getPlatformConfig());
                     platform.setStoreInfo(newInfo);
                     platform.refreshListings();
-                    ctx.tellSender("Successfully connected to your store: " + newInfo.getStore().getName() + " as " + newInfo.getServer().getName());
+                    CommandResponder.tellFancy(ctx, "Successfully connected to your store: {0} as {1}", newInfo.getStore().getName(), newInfo.getServer().getName());
                 }
             }).exceptionally((e) -> {
                 platform.getSDK().setSecretKey(oldKey);
+                CommandResponder.tellError(ctx, "Your secret key was invalid. Please try again.");
                 return null;
             });
         });
 
         register("sendlink", "<packageId> <username>", "Sends a purchase link to a player.", (ctx) -> {
-            platform.getSDK().createCheckoutUrl(Integer.parseInt(ctx.arguments[0]), ctx.targetUsername).thenAccept(checkoutUrl -> {
-                ctx.tellTarget("A checkout link has been created for you. Click here to complete payment: " + checkoutUrl.getUrl());
-                ctx.tellSender("A checkout link has been sent to " + ctx.targetUsername);
+            String packageId = ctx.getArgs()[0];
+            String username = ctx.getArgs()[1];
+
+            if (ctx.getTargetUsername().isEmpty()) { // target will be empty if player was offline / no entity found
+                CommandResponder.tellError(ctx, username + " must be online to receive a package link.");
+                return;
+            }
+
+            platform.getSDK().createCheckoutUrl(Integer.parseInt(ctx.getArgs()[0]), ctx.getTargetUsername()).thenAccept(checkoutUrl -> {
+                CommandResponder.tellSuccess(ctx, "Checkout link sent to " + ctx.getTargetUsername());
+                CommandResponder.tellOtherFancy(ctx, "A checkout link has been created for you. Click here to complete payment: {0}", checkoutUrl.getUrl());
             }).exceptionally(e -> {
-                ctx.tellSender("Failed to create a checkout link for package: " + e.getMessage());
+                CommandResponder.tellError(ctx, "Failed to send checkout link: " + e.getMessage());
                 return null;
             });
         });
 
         register("help", "", "Shows available commands.", (ctx) -> {
-            //TODO
-        });
-    }
+            CommandResponder.tellFancy(ctx, "Available commands:");
 
-    public static Platform getPlatform() {
-        return platform;
+            for (Map.Entry<String, Command> entry : commands.entrySet()) {
+                Command command = entry.getValue();
+
+                // Only show commands the user has permissions for, or all for console
+                boolean hasPermission = ctx.isFromConsole() || TebexCommands.getPlatform().hasPermission(ctx.getSenderUsername(), command.getPermission());
+                if (!hasPermission) {
+                    continue;
+                }
+
+                StringBuilder helpMessage = new StringBuilder();
+                helpMessage.append("/");
+                helpMessage.append(TEBEX_COMMAND_PREFIX);
+                helpMessage.append(" ");
+                helpMessage.append(command.getName());
+                if (!command.getUsage().isEmpty()) {
+                    helpMessage.append(" ");
+                    helpMessage.append(command.getUsage());
+                }
+                helpMessage.append(" | ");
+                helpMessage.append(command.getDescription());
+                CommandResponder.tellFancy(ctx, helpMessage.toString());
+            }
+        });
     }
 }

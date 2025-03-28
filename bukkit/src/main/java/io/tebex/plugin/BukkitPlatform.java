@@ -102,19 +102,15 @@ public class BukkitPlatform extends BasePlatform {
         Bukkit.getServer().getScheduler().runTaskLater(plugin, runnable, unit.toMillis(time) / 50);
     }
 
-    public Player getPlayer(Object player) {
-        if(player == null) return null;
+    @Override
+    public <T> T getPlayer(Object uuidOrUsername) {
+        if(uuidOrUsername == null) return null;
 
-        if (isOnlineMode() && !isGeyser() && player instanceof UUID) {
-            return Bukkit.getServer().getPlayer((UUID) player);
+        if (isOnlineMode() && !isGeyser() && uuidOrUsername instanceof UUID) {
+            return (T) Bukkit.getServer().getPlayer((UUID) uuidOrUsername);
         }
 
-        return Bukkit.getServer().getPlayerExact((String) player);
-    }
-
-    @Override
-    public boolean isPlayerOnline(Object player) {
-        return getPlayer(player) != null;
+        return (T) Bukkit.getServer().getPlayerExact((String) uuidOrUsername);
     }
 
     @Override
@@ -152,6 +148,12 @@ public class BukkitPlatform extends BasePlatform {
         Player player = getPlayer(playerName);
         if (player == null) return;
         player.sendMessage(message);
+    }
+
+    @Override
+    public boolean hasPermission(String username, String permission) {
+        Player player = getPlayer(username);
+        return player != null && player.hasPermission(permission);
     }
 
     public void setPlatformConfigYaml(YamlDocument configYaml) {

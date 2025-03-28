@@ -52,7 +52,7 @@ public final class TebexPlugin extends JavaPlugin {
         platform.init(); // uses loaded key to set current store and cache the available packages
 
         // Bukkit specific registration
-        TebexCommandExecutor tebexCommands = new TebexCommandExecutor();
+        TebexCommandExecutor tebexCommands = new TebexCommandExecutor(platform);
         PluginCommand pluginCommand = platform.getPlugin().getCommand("tebex");
         if (pluginCommand == null) {
             throw new RuntimeException("Tebex command not found.");

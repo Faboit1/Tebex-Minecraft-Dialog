@@ -13,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -59,6 +60,17 @@ public class FoliaPlatform extends BasePlatform {
     }
 
     @Override
+    public <T> T getPlayer(Object uuidOrUsername) {
+        if(uuidOrUsername == null) return null;
+
+        if (isOnlineMode() && !isGeyser() && uuidOrUsername instanceof UUID) {
+            return (T) Bukkit.getServer().getPlayer((UUID) uuidOrUsername);
+        }
+
+        return (T) Bukkit.getServer().getPlayerExact((String) uuidOrUsername);
+    }
+
+    @Override
     public CommandResult dispatchCommand(String command) {
         if (!plugin.isEnabled()) return CommandResult.from(false).withMessage("Store is not enabled.");
         try {
@@ -100,11 +112,6 @@ public class FoliaPlatform extends BasePlatform {
     }
 
     @Override
-    public boolean isPlayerOnline(Object player) {
-        return plugin.getPlayer(player) != null;
-    }
-
-    @Override
     public void log(Level level, String message) {
         plugin.getLogger().log(level, message);
     }
@@ -140,6 +147,12 @@ public class FoliaPlatform extends BasePlatform {
         if (player != null){
             player.sendMessage(message);
         }
+    }
+
+    @Override
+    public boolean hasPermission(String username, String permission) {
+        Player player = getPlayer(username);
+        return player != null && player.hasPermission(permission);
     }
 
     public BuyGUI getBuyGUI() {

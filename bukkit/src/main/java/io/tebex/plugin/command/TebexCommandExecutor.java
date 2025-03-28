@@ -2,9 +2,12 @@ package io.tebex.plugin.command;
 
 import com.google.common.collect.ImmutableList;
 import io.tebex.sdk.commands.CommandContext;
+import io.tebex.sdk.commands.CommandResponder;
 import io.tebex.sdk.commands.TebexCommands;
+import io.tebex.sdk.platform.Platform;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
@@ -13,7 +16,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class TebexCommandExecutor implements TabExecutor {
-    public TebexCommandExecutor() {
+    private final Platform platform;
+
+    public TebexCommandExecutor(Platform platform) {
+        this.platform = platform;
     }
 
     @Override
@@ -25,43 +31,50 @@ public class TebexCommandExecutor implements TabExecutor {
             senderUUID = ((Player) sender).getUniqueId();
         }
 
+        // Check for console
+        boolean isConsole = sender instanceof ConsoleCommandSender;
+
         // Identify any player targets
-        String targetName = null;
-        UUID targetUUID = null;
+        String targetName = "";
+        UUID targetUUID = new UUID(0L,0L);
 
-        // Build the command name (tebex + command)
-        if (args.length == 0) {
-            //FIXME Show Tebex splash
-//            sender.sendMessage("§8[Tebex] §7Welcome to Tebex!");
-//            sender.sendMessage("§8[Tebex] §7This server is running version §fv" + commandManager.getPlatform().getPlugin().getDescription().getVersion() + "§7.");
-//            return true
-        }
-
-        // First argument will be sub-command name
-        StringBuilder permission = new StringBuilder();
-        permission.append(TebexCommands.TEBEX_COMMAND_PREFIX);
-        permission.append(".");
-        permission.append(args[0]);
-
-        if (!sender.hasPermission(permission.toString())) {
-            //FIXME Show no permission
-        }
-
-        // Build the full command and list of arguments
+        // Build the full command and list of arguments, checking if any of the args is a player.
         StringBuilder fullCommand = new StringBuilder(command.getName());
         for (String arg : args) {
+            // Assign the target player if we find their username in the args list
+            if (targetName.isEmpty()) {
+                Player targetPlayer = platform.getPlayer(arg);
+                if (targetPlayer != null) {
+                    targetName = targetPlayer.getName();
+                    targetUUID = targetPlayer.getUniqueId();
+                }
+            }
+
+            // Build the full command by appending the arg to the base command
             fullCommand.append(" ").append(arg);
         }
 
-        // Parse arguments into a context and pass to common command handler
-        CommandContext context = CommandContext.from(senderName, senderUUID, targetName, targetUUID, fullCommand.toString(), args);
+        // Build the command context with the information we have so far for responding.
+        CommandContext context = CommandContext.from(isConsole, senderName, senderUUID, fullCommand.toString(), args);
+        if (targetName != null && !targetName.isEmpty()) {
+            context = context.withTarget(targetName, targetUUID);
+        }
+
+        // Show splash for no args /tebex command
+        if (args.length == 0 && sender.hasPermission("tebex.tebex")) {
+            CommandResponder.tellFancy(context, "Welcome to Tebex!");
+            CommandResponder.tellFancy(context, "This server is running version {0}", "v" + platform.getVersion());
+            return true;
+        }
+
+        // Pass context to the command handler
         return TebexCommands.process(context);
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if(args.length == 1) {
-            return TebexCommands.getCommands()
+            return TebexCommands.getAllowedCommands(sender.getName())
                     .keySet()
                     .stream()
                     .filter(s -> s.startsWith(args[0]))
