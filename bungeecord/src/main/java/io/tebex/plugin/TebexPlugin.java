@@ -24,11 +24,13 @@ public class TebexPlugin extends Plugin {
 
         // Bungee-specific registration
         TebexCommands.setRestrictedToCommands("help", "forcecheck", "reload", "secret", "debug");
-        PlaceholderManager placeholderManager = platform.getPlaceholderManager();
         TebexCommandExecutor tebexCommand = new TebexCommandExecutor(platform);
         PluginManager pluginManager = platform.getPlugin().getProxy().getPluginManager();
         pluginManager.registerCommand(platform.getPlugin(), tebexCommand);
+
+        PlaceholderManager placeholderManager = platform.getPlaceholderManager();
         placeholderManager.registerDefaults();
+
         getProxy().getPluginManager().registerListener(this, new JoinListener(platform));
 
         getProxy().getScheduler().schedule(this, () -> {
