@@ -21,7 +21,7 @@ public class ForceCheckCommand extends SubCommand {
         }
 
         sender.sendMessage("§b[Tebex] §7Performing force check...");
-        getPlatform().performCheck(false);
+        getPlatform().performCheck(false).thenAccept(sender::sendMessage);
     }
 
     @Override

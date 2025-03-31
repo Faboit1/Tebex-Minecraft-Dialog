@@ -92,15 +92,6 @@ public class CommandContext {
         return senderUUID;
     }
 
-    public void tellSender(String message) {
-        if (this.senderIsConsole) {
-            //FIXME proper response for RCON
-            TebexCommands.getPlatform().log(Level.INFO, message);
-        } else {
-            TebexCommands.getPlatform().sendPlayerMessage(senderUsername, message);
-        }
-    }
-
     public void tellTarget(String message) {
         TebexCommands.getPlatform().sendPlayerMessage(targetUsername, message);
     }

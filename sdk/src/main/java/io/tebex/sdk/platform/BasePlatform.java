@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -103,42 +105,50 @@ public abstract class BasePlatform implements Platform {
         performCheck(true);
     }
 
-    public final void performCheck(boolean runAfter) {
-        if(! isSetup()) return;
+    public final CompletableFuture<String[]> performCheck(boolean useRemoteNextCheck) {
+        if(! isSetup()) throw new CompletionException(new ServerNotFoundException());
 
         debug("Checking for due players...");
         getQueuedPlayers().clear();
 
+        CompletableFuture<String[]> forceCheckOutput = new CompletableFuture<>();
         getSDK().getDuePlayers().whenComplete((duePlayersResponse, ex) -> {
+            ArrayList<String> output = new ArrayList<>();
             if (ex != null) {
                 if (ex.getMessage().contains("429")) { // handling for rate limits
                     warning("Failed to get due players: Rate Limit", "We will try again after 5 minutes.", ex);
+                    output.add("Failed to get due players: Rate Limit. We will try again after 5 minutes.");
                     executeAsyncLater(this::performCheck, 5, TimeUnit.MINUTES);
                 } else if (ex.getMessage().contains("403")) {
                     warning("Failed to get due players: Forbidden", "Please check your secret key and run `/tebex.forcecheck` to try again. We will wait 30 minutes before trying again.", ex);
+                    output.add("Failed to get due players: Forbidden. Please check your secret key and run `/tebex.forcecheck` to try again. We will wait 30 minutes before trying again.");
                     executeAsyncLater(this::performCheck, 30, TimeUnit.MINUTES);
                 } else { // unexpected status code
                     warning("Failed to get due players: " + ex.getMessage(), "We will try again at the next due player check.", ex);
+                    output.add("Failed to get due players: '" + ex.getMessage() + "'. We will try again at the next due player check.");
                     executeAsyncLater(this::performCheck, 1, TimeUnit.MINUTES);
                 }
+                forceCheckOutput.complete((String[]) output.toArray());
                 return;
             }
 
-            if (runAfter) {
+            if (useRemoteNextCheck) {
                 int nextCheck = duePlayersResponse == null ? 60 : duePlayersResponse.getNextCheck();
                 executeAsyncLater(this::performCheck, nextCheck, TimeUnit.SECONDS);
             }
 
             List<QueuedPlayer> playerList = duePlayersResponse.getPlayers();
-
             if(! playerList.isEmpty()) {
-                debug("Found " + playerList.size() + " " + StringUtil.pluralise(playerList.size(), "player", "players") + " with pending commands.");
+                String listMessage = "Found " + playerList.size() + " " + StringUtil.pluralise(playerList.size(), "player", "players") + " with pending commands.";
+                debug(listMessage);
                 playerList.forEach(this::handleOnlineCommands);
             }
 
             if(! duePlayersResponse.canExecuteOffline()) return;
             handleOfflineCommands();
         });
+
+        return forceCheckOutput;
     }
 
     public final void handleOnlineCommands(QueuedPlayer player) {

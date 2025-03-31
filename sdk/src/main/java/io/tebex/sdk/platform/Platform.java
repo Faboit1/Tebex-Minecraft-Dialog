@@ -8,6 +8,7 @@ import io.tebex.sdk.util.CommandResult;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 /**
@@ -54,7 +55,7 @@ public interface Platform {
 
     void refreshListings();
 
-    void performCheck(boolean runAfter);
+    CompletableFuture<String[]> performCheck(boolean runAfter);
 
     YamlDocument initPlatformConfig() throws IOException;
 

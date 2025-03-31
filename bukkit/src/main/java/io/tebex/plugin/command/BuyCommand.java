@@ -21,7 +21,6 @@ public class BuyCommand extends Command {
             return true;
         }
 
-        platform.getBuyGUI().open((Player) sender);
         return true;
     }
 }

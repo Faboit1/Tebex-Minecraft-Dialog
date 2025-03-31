@@ -62,13 +62,18 @@ public class TebexCommandExecutor implements TabExecutor {
 
         // Show splash for no args /tebex command
         if (args.length == 0 && sender.hasPermission("tebex.tebex")) {
-            CommandResponder.tellFancy(context, "Welcome to Tebex!");
-            CommandResponder.tellFancy(context, "This server is running version {0}", "v" + platform.getVersion());
+            sender.sendMessage(new String[]{
+                    CommandResponder.formatFancy(context, "Welcome to Tebex!"),
+                    CommandResponder.formatFancy(context,"This server is running version {0}", "v" + platform.getVersion())
+            });
             return true;
         }
 
-        // Pass context to the command handler
-        return TebexCommands.process(context);
+        // Pass context to the command handler, but respond via command sender so it's sent through the appropriate
+        // channels (RCON, Console, Player).
+        return TebexCommands.process(context, (future) -> {
+            future.thenAccept(sender::sendMessage);
+        });
     }
 
     @Override

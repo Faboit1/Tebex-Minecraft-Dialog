@@ -1,6 +1,8 @@
 package io.tebex.sdk.commands;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class Command {
     private final int numArgsRequired;
@@ -8,9 +10,9 @@ public class Command {
     private final String usage;
     private final String description;
     private final String permission;
-    private final Consumer<CommandContext> handler;
+    private final Function<CommandContext, CompletableFuture<String[]>> handler;
 
-    Command (String name, String usage, String description, Consumer<CommandContext> handler) {
+    Command (String name, String usage, String description, Function<CommandContext, CompletableFuture<String[]>> handler) {
         this.name = name;
         this.usage = usage;
         this.description = description;
@@ -41,7 +43,7 @@ public class Command {
         return permission;
     }
 
-    public final Consumer<CommandContext> getHandler() {
+    public final Function<CommandContext, CompletableFuture<String[]>> getHandler() {
         return handler;
     }
 }

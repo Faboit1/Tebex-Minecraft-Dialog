@@ -4,10 +4,13 @@ import io.tebex.sdk.obj.CommunityGoal;
 import io.tebex.sdk.platform.Platform;
 import io.tebex.sdk.request.response.ServerInformation;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.logging.Level;
 
 public class TebexCommands {
@@ -26,36 +29,41 @@ public class TebexCommands {
         TebexCommands.platform = platform;
     }
 
-    private static void register(String name, String usage, String description, Consumer<CommandContext> handler) {
+    private static void register(String name, String usage, String description, Function<CommandContext, CompletableFuture<String[]>> handler) {
         Command command = new Command(name, usage, description, handler);
         commands.put(name, command);
         platform.log(Level.INFO, "Registered command: '/tebex " + name + "' with permission '" +command.getPermission() + "'");
     }
 
-    public static boolean process(CommandContext context) {
+    public static boolean process(CommandContext context, Consumer<CompletableFuture<String[]>> sendMessageConsumer) {
         if (context.getFullCommand().startsWith(TEBEX_COMMAND_PREFIX)) {
             Command command = commands.get(context.getCommandName());
+            CompletableFuture<String[]> response = new CompletableFuture<>();
+
             if (command == null) {
-                CommandResponder.tellError(context, "Unrecognized command or no permission.");
+                response.complete(new String[]{CommandResponder.formatError(context, "Unrecognized command or no permission.")});
+                sendMessageConsumer.accept(response);
                 return false;
             }
 
-            Consumer<CommandContext> handler = command.getHandler();
+            Function<CommandContext, CompletableFuture<String[]>> handler = command.getHandler();
 
             // Check permissions
             boolean hasPermission = context.isFromConsole() || TebexCommands.getPlatform().hasPermission(context.getSenderUsername(), command.getPermission());
             if (!hasPermission) {
-                CommandResponder.tellError(context, "Unrecognized command or no permission.");
+                response.complete(new String[]{CommandResponder.formatError(context, "Unrecognized command or no permission.")});
+                sendMessageConsumer.accept(response);
                 return false;
             }
 
             // Check number of args required
             if (context.getArgs().length != command.getNumArgsRequired()) {
-                CommandResponder.tellError(context, "Usage: /tebex " + command.getName() + " " + command.getUsage());
+                response.complete(new String[]{CommandResponder.formatError(context, "Usage: /tebex " + command.getName() + " " + command.getUsage())});
+                sendMessageConsumer.accept(response);
                 return false;
             }
 
-            handler.accept(context);
+            sendMessageConsumer.accept(handler.apply(context));
             return true;
         }
         return false;
@@ -87,23 +95,27 @@ public class TebexCommands {
             String name = ctx.getArgs()[0]; // player may be offline, so don't rely on target username which requires successful getPlayer() call
             String reason = ctx.getArgs()[1];
             String ip = ctx.getArgs()[2];
+
+            CompletableFuture<String[]> response = new CompletableFuture<>();
             platform.getSDK().createBan(name, ip, reason).thenAccept((success) -> {
                 if (success) {
-                    CommandResponder.tellSuccess(ctx, "User {0} has been banned successfully.", name);
+                    response.complete(new String[] {CommandResponder.formatSuccess(ctx, "User {0} has been banned successfully.", name)});
                 } else {
-                    CommandResponder.tellError(ctx, "Failed to ban user.");
+                    response.complete(new String[] {CommandResponder.formatError(ctx, "Failed to ban user.")});
                 }
             }).exceptionally(e -> {
-                CommandResponder.tellError(ctx, "Failed to ban user. " + e.getMessage());
+                response.complete(new String[] {CommandResponder.formatError(ctx, "Failed to ban user. " + e.getMessage())});
                 return null;
             });
+            return response;
         });
 
 
         register("checkout", "<packageId>", "Creates a payment link for a package.", (ctx) -> {
+            CompletableFuture<String[]> response = new CompletableFuture<>();
             if (ctx.isFromConsole()) {
-                CommandResponder.tellError(ctx, "This command cannot be run from the console.");
-                return;
+                response.complete(new String[] {CommandResponder.formatError(ctx, "This command cannot be run from the console.")});
+                return response;
             }
 
             String packageId = ctx.getArgs()[0];
@@ -111,97 +123,122 @@ public class TebexCommands {
             try {
                 intPackageId = Integer.parseInt(packageId);
             } catch (NumberFormatException e) {
-                CommandResponder.tellError(ctx, "The Package ID must be a number.");
-                return;
+                response.complete(new String[] {CommandResponder.formatError(ctx, "The Package ID must be a number.")});
+                return response;
             }
 
             platform.getSDK().createCheckoutUrl(intPackageId, ctx.getSenderUsername()).thenAccept((url) -> {
-                CommandResponder.tellFancy(ctx, "Checkout started! Click here to complete payment: {0}", url.getUrl());
+                response.complete(new String[] { CommandResponder.formatFancy(ctx, "Checkout started! Click here to complete payment: {0}", url.getUrl())});
             }).exceptionally(e -> {
-                CommandResponder.tellError(ctx, e.getMessage());
+                response.complete(new String[] { CommandResponder.formatError(ctx, e.getMessage())});
                 return null;
-            });;
+            });
+
+            return response;
         });
 
 
         register("debug", "<true/false>", "Enables or disables debug logging.", (ctx) -> {
+            CompletableFuture<String[]> response = new CompletableFuture<>();
             String value = ctx.getArgs()[0].toLowerCase();
             if (!value.equals("true") && !value.equals("false")) {
-                CommandResponder.tellError(ctx, "Specify 'true' or 'false' for debug mode.");
-                return;
+                response.complete(new String[] { CommandResponder.formatError(ctx, "Specify 'true' or 'false' for debug mode.")});
+                return response;
             }
+
             boolean debugValue = Boolean.parseBoolean(value);
             platform.getPlatformConfig().setVerbose(debugValue);
-            CommandResponder.tellFancy(ctx, "Debug mode set to {0}", value);
+            response.complete(new String[] { CommandResponder.formatFancy(ctx, "Debug mode set to {0}", value) } );
+            return response;
         });
 
 
         register("forcecheck", "", "Checks immediately for any purchases that need to be delivered.", (ctx) -> {
-            CommandResponder.tellFancy(ctx, "Beginning force check for due commands...");
             boolean previousDebugState = platform.getPlatformConfig().isVerbose();
-
             // Temporarily enable debug logging while a forcecheck runs
             platform.getPlatformConfig().setVerbose(true);
-            platform.performCheck(false); //TODO completable future
+
+            CompletableFuture<String[]> response = platform.performCheck(false);
 
             // Restore previous debug state
             platform.getPlatformConfig().setVerbose(previousDebugState);
-            CommandResponder.tellSuccess(ctx, "Check completed. See console for details.");
+            response.complete(new String[]{CommandResponder.formatSuccess(ctx, "Check completed. See console for details.")});
+            return response;
         });
 
 
-        register("goals", "", "Shows progress to community goals.", (ctx) -> platform.getSDK().getCommunityGoals().thenAccept((goals) -> {
-            if (goals.isEmpty()) { //TODO cache
-                CommandResponder.tellFancy(ctx, "No community goals available.");
-                return;
-            }
-
-            CommandResponder.tellFancy(ctx, "Community Goals: ");
-            for (CommunityGoal goal: goals) {
-
-                if (goal.getStatus() != CommunityGoal.Status.DISABLED) {
-                    CommandResponder.tellFancy(ctx, String.format("- %s (%.2f/%.2f) [%s]", goal.getName(), goal.getCurrent(), goal.getTarget(), goal.getStatus()));
+        register("goals", "", "Shows progress to community goals.", (ctx) -> {
+            CompletableFuture<String[]> response = new CompletableFuture<>();
+            platform.getSDK().getCommunityGoals().thenAccept((goals) -> {
+                if (goals.isEmpty()) { //TODO cache
+                    response.complete(new String[]{CommandResponder.formatFancy(ctx, "No community goals available.")});
+                    return;
                 }
-            }
-        }));
+
+                ArrayList<String> goalsResponse = new ArrayList<>();
+                goalsResponse.add(CommandResponder.formatFancy(ctx, "Community Goals: "));
+                for (CommunityGoal goal: goals) {
+                    if (goal.getStatus() != CommunityGoal.Status.DISABLED) {
+                        goalsResponse.add(CommandResponder.formatFancy(ctx, String.format("- %s (%.2f/%.2f) [%s]", goal.getName(), goal.getCurrent(), goal.getTarget(), goal.getStatus())));
+                    }
+                }
+                response.complete(goalsResponse.toArray(new String[0]));
+            });
+
+            return response;
+        });
 
         register("info", "", "Shows information about the connected store.", (ctx) -> {
+            CompletableFuture<String[]> response = new CompletableFuture<>();
+
             ServerInformation.Store store = platform.getStore();
             ServerInformation.Server server = platform.getStoreServer();
 
-            CommandResponder.tellFancy(ctx, "Information for this server:");
-            CommandResponder.tellFancy(ctx, "{0} for webstore {1}", server.getName(), store.getName());
-            CommandResponder.tellFancy(ctx, "Server prices are in {0}", store.getCurrency().getIso4217());
-            CommandResponder.tellFancy(ctx, "Webstore URL: {0}", store.getDomain());
+            ArrayList<String> infoResponse = new ArrayList<>();
+            infoResponse.add(CommandResponder.formatFancy(ctx, "Information for this server:"));
+            infoResponse.add(CommandResponder.formatFancy(ctx, "{0} for webstore {1}", server.getName(), store.getName()));
+            infoResponse.add(CommandResponder.formatFancy(ctx, "Server prices are in {0}", store.getCurrency().getIso4217()));
+            infoResponse.add(CommandResponder.formatFancy(ctx, "Webstore URL: {0}", store.getDomain()));
+            response.complete(infoResponse.toArray(new String[0]));
+            return response;
         });
 
         register("lookup", "<username>", "Gets user transaction info from your webstore.", (ctx) -> {
+            CompletableFuture<String[]> response = new CompletableFuture<>();
+
             String username = ctx.getArgs()[0]; // Use provided username as player is not required to be online / no instance required
-            CommandResponder.tellFancy(ctx, "Performing player lookup for {0}...", username);
-            platform.getSDK().getPlayerLookupInfo(ctx.getTargetUsername()).thenAccept((lookupInfo) -> {
-                CommandResponder.tellFancy(ctx, "Username: {0}", lookupInfo.getLookupPlayer().getUsername());
-                CommandResponder.tellFancy(ctx, "Id: {0}", lookupInfo.getLookupPlayer().getId());
-                CommandResponder.tellFancy(ctx, "Chargeback Rate: {0}%", String.valueOf(lookupInfo.chargebackRate));
-                CommandResponder.tellFancy(ctx, "Bans Total: {0}", String.valueOf(lookupInfo.banCount));
-                CommandResponder.tellFancy(ctx, "Payments: {0}", String.valueOf(lookupInfo.payments.size()));
+            platform.getSDK().getPlayerLookupInfo(username).thenAccept((lookupInfo) -> {
+                ArrayList<String> lookupResponse = new ArrayList<>();
+                lookupResponse.add(CommandResponder.formatFancy(ctx, "Username: {0}", lookupInfo.getLookupPlayer().getUsername()));
+                lookupResponse.add(CommandResponder.formatFancy(ctx, "Id: {0}", lookupInfo.getLookupPlayer().getId()));
+                lookupResponse.add(CommandResponder.formatFancy(ctx, "Chargeback Rate: {0}%", String.valueOf(lookupInfo.chargebackRate)));
+                lookupResponse.add(CommandResponder.formatFancy(ctx, "Bans Total: {0}", String.valueOf(lookupInfo.banCount)));
+                lookupResponse.add(CommandResponder.formatFancy(ctx, "Payments: {0}", String.valueOf(lookupInfo.payments.size())));
+                response.complete(lookupResponse.toArray(new String[0]));
             }).exceptionally(e -> {
-                CommandResponder.tellError(ctx, e.getMessage());
+                response.complete(new String[] { CommandResponder.formatError(ctx, e.getMessage())});
                 return null;
             });
+
+            return response;
         });
 
         register("reload", "", "Reloads the plugin configuration and store connection.", (ctx) -> {
-            CommandResponder.tellFancy(ctx, "Tebex is reloading...");
             platform.reloadConfig();
             platform.refreshListings();
             platform.getSDK().sendPluginEvents();
             // platform.registerBuyCommand(); //TODO
             //platform.setBuyGUI(new BuyGUI(platform)); //TODO
-            CommandResponder.tellSuccess(ctx, "Reload completed.");
+
+            CompletableFuture<String[]> response = new CompletableFuture<>();
+            response.complete(new String[]{CommandResponder.formatSuccess(ctx, "Reload completed.")});
+            return response;
         });
 
         register("secret", "<key>", "Connects to your store.", (ctx) -> {
-            CommandResponder.tellFancy(ctx, "Checking your secret key...");
+            CompletableFuture<String[]> response = new CompletableFuture<>();
+
+            platform.sendPlayerMessage(ctx.getSenderUsername(), CommandResponder.formatFancy(ctx, "Checking your secret key..."));
             String oldKey = platform.getPlatformConfig().getSecretKey();
 
             // Set the new key and attempt to query server info. If it works, key is valid and we set in config.
@@ -212,36 +249,51 @@ public class TebexCommands {
                     platform.saveConfig(platform.getPlatformConfig());
                     platform.setStoreInfo(newInfo);
                     platform.refreshListings();
-                    CommandResponder.tellFancy(ctx, "Successfully connected to your store: {0} as {1}", newInfo.getStore().getName(), newInfo.getServer().getName());
+                    response.complete(new String[]{CommandResponder.formatFancy(ctx, "Successfully connected to your store: {0} as {1}", newInfo.getStore().getName(), newInfo.getServer().getName())});
                 }
             }).exceptionally((e) -> {
                 platform.getSDK().setSecretKey(oldKey);
-                CommandResponder.tellError(ctx, "Your secret key was invalid. Please try again.");
+                response.complete(new String[]{CommandResponder.formatError(ctx, "Your secret key was invalid. Please try again.")});
                 return null;
             });
+
+            return response;
         });
 
         register("sendlink", "<packageId> <username>", "Sends a purchase link to a player.", (ctx) -> {
+            CompletableFuture<String[]> response = new CompletableFuture<>();
             String packageId = ctx.getArgs()[0];
             String username = ctx.getArgs()[1];
+            int intPackageId = -1;
 
-            if (ctx.getTargetUsername().isEmpty()) { // target will be empty if player was offline / no entity found
-                CommandResponder.tellError(ctx, username + " must be online to receive a package link.");
-                return;
+            try {
+                intPackageId = Integer.parseInt(packageId);
+            } catch (NumberFormatException e) {
+                response.complete(new String[]{CommandResponder.formatError(ctx, "Package ID must be a number.")});
+                return response;
             }
 
-            platform.getSDK().createCheckoutUrl(Integer.parseInt(ctx.getArgs()[0]), ctx.getTargetUsername()).thenAccept(checkoutUrl -> {
-                CommandResponder.tellSuccess(ctx, "Checkout link sent to " + ctx.getTargetUsername());
+            if (ctx.getTargetUsername().isEmpty()) { // target will be empty if player was offline / no entity found
+                response.complete(new String[]{CommandResponder.formatError(ctx, username + " must be online to receive a package link.")});
+                return response;
+            }
+
+            platform.getSDK().createCheckoutUrl(intPackageId, ctx.getTargetUsername()).thenAccept(checkoutUrl -> {
                 CommandResponder.tellOtherFancy(ctx, "A checkout link has been created for you. Click here to complete payment: {0}", checkoutUrl.getUrl());
+                response.complete(new String[]{CommandResponder.formatSuccess(ctx, "Checkout link sent to " + ctx.getTargetUsername())});
             }).exceptionally(e -> {
-                CommandResponder.tellError(ctx, "Failed to send checkout link: " + e.getMessage());
+                response.complete(new String[]{CommandResponder.formatError(ctx, "Failed to send checkout link: " + e.getMessage())});
                 return null;
             });
+
+            return response;
         });
 
         register("help", "", "Shows available commands.", (ctx) -> {
-            CommandResponder.tellFancy(ctx, "Available commands:");
+            CompletableFuture<String[]> response = new CompletableFuture<>();
+            ArrayList<String> helpResponse = new ArrayList<>();
 
+            helpResponse.add(CommandResponder.formatFancy(ctx, "Available commands:"));
             for (Map.Entry<String, Command> entry : commands.entrySet()) {
                 Command command = entry.getValue();
 
@@ -262,8 +314,10 @@ public class TebexCommands {
                 }
                 helpMessage.append(" | ");
                 helpMessage.append(command.getDescription());
-                CommandResponder.tellFancy(ctx, helpMessage.toString());
+                helpResponse.add(CommandResponder.formatFancy(ctx, helpMessage.toString()));
             }
+            response.complete(helpResponse.toArray(new String[0]));
+            return response;
         });
     }
 }
