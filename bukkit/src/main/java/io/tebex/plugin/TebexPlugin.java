@@ -92,8 +92,6 @@ public final class TebexPlugin extends JavaPlugin {
                         return null;
                     });
         }, 0, 20 * 60);
-
-
     }
 
     /**
