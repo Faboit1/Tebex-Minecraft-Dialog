@@ -4,10 +4,7 @@ import io.tebex.sdk.obj.CommunityGoal;
 import io.tebex.sdk.platform.Platform;
 import io.tebex.sdk.request.response.ServerInformation;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -19,6 +16,12 @@ public class TebexCommands {
 
     private static final Map<String, Command> commands = new HashMap<>();
 
+    /**
+     * Each platform can define a restricted set of commands, which only those commands will be executed.
+     * If this is empty, all default Tebex commands will be enabled.
+     */
+    private static final ArrayList<String> restrictedToCommands = new ArrayList<>();
+
     public static Map<String, Command> getCommands() {
         return Collections.unmodifiableMap(commands);
     }
@@ -29,16 +32,27 @@ public class TebexCommands {
         TebexCommands.platform = platform;
     }
 
+    public static void setRestrictedToCommands(String... commands) {
+        restrictedToCommands.clear();
+        restrictedToCommands.addAll(Arrays.asList(commands));
+    }
+
     private static void register(String name, String usage, String description, Function<CommandContext, CompletableFuture<String[]>> handler) {
         Command command = new Command(name, usage, description, handler);
         commands.put(name, command);
-        platform.log(Level.INFO, "Registered command: '/tebex " + name + "' with permission '" +command.getPermission() + "'");
+        platform.log(Level.INFO, "Tebex command: '/tebex " + name + "' has permission '" +command.getPermission() + "'");
     }
 
     public static boolean process(CommandContext context, Consumer<CompletableFuture<String[]>> sendMessageConsumer) {
         if (context.getFullCommand().startsWith(TEBEX_COMMAND_PREFIX)) {
-            Command command = commands.get(context.getCommandName());
             CompletableFuture<String[]> response = new CompletableFuture<>();
+            Command command = commands.get(context.getCommandName());
+
+            if (!restrictedToCommands.isEmpty() && !restrictedToCommands.contains(command.getName())) {
+                response.complete(new String[]{CommandResponder.formatError(context, "Unrecognized command or no permission.")});
+                sendMessageConsumer.accept(response);
+                return false;
+            }
 
             if (command == null) {
                 response.complete(new String[]{CommandResponder.formatError(context, "Unrecognized command or no permission.")});
@@ -48,8 +62,8 @@ public class TebexCommands {
 
             Function<CommandContext, CompletableFuture<String[]>> handler = command.getHandler();
 
-            // Check permissions
-            boolean hasPermission = context.isFromConsole() || TebexCommands.getPlatform().hasPermission(context.getSenderUsername(), command.getPermission());
+            // Check permissions against the platform for the sending user
+            boolean hasPermission = TebexCommands.getPlatform().hasPermission(context.getSenderUsername(), command.getPermission());
             if (!hasPermission) {
                 response.complete(new String[]{CommandResponder.formatError(context, "Unrecognized command or no permission.")});
                 sendMessageConsumer.accept(response);
@@ -297,8 +311,13 @@ public class TebexCommands {
             for (Map.Entry<String, Command> entry : commands.entrySet()) {
                 Command command = entry.getValue();
 
-                // Only show commands the user has permissions for, or all for console
-                boolean hasPermission = ctx.isFromConsole() || TebexCommands.getPlatform().hasPermission(ctx.getSenderUsername(), command.getPermission());
+                // Check if the command is restricted for the platform, and skip if so
+                if (!restrictedToCommands.isEmpty() && restrictedToCommands.contains(command.getName())) {
+                    continue;
+                }
+
+                // Only show commands the user has permissions for
+                boolean hasPermission = TebexCommands.getPlatform().hasPermission(ctx.getSenderUsername(), command.getPermission());
                 if (!hasPermission) {
                     continue;
                 }

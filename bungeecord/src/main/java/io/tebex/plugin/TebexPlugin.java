@@ -1,11 +1,11 @@
 package io.tebex.plugin;
 
-import io.tebex.plugin.event.JoinListener;
-import io.tebex.plugin.manager.CommandManager;
 import io.tebex.sdk.Tebex;
+import io.tebex.sdk.commands.TebexCommands;
 import io.tebex.sdk.placeholder.PlaceholderManager;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.api.plugin.PluginManager;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -23,8 +23,11 @@ public class TebexPlugin extends Plugin {
         platform.init(); // Used loaded key to set current store and cache available packages
 
         // Bungee-specific registration
+        TebexCommands.setRestrictedToCommands("help", "forcecheck", "reload", "secret", "debug");
         PlaceholderManager placeholderManager = platform.getPlaceholderManager();
-        new CommandManager(platform).register();
+        TebexCommandExecutor tebexCommand = new TebexCommandExecutor(platform);
+        PluginManager pluginManager = platform.getPlugin().getProxy().getPluginManager();
+        pluginManager.registerCommand(platform.getPlugin(), tebexCommand);
         placeholderManager.registerDefaults();
         getProxy().getPluginManager().registerListener(this, new JoinListener(platform));
 
