@@ -571,6 +571,13 @@ public abstract class BasePlatform implements Platform {
             // Load the platform config file.
             configYaml = initPlatformConfig();
             config = loadServerPlatformConfig(configYaml);
+
+            // check if secret key was provided via environment, which overrides the config
+            String envKey = System.getenv("TEBEX_SECRET_KEY");
+            if (!envKey.isEmpty()) {
+                debug("Detected secret key environment variable. This will override the key in config.yml.");
+                config.setSecretKey(envKey);
+            }
         } catch (IOException e) {
             warning("Failed to load configuration: " + e.getMessage(),
                     "Check that your configuration is valid and in the proper format and reload the plugin. You may delete `Tebex/config.yml` and a new configuration will be generated.");
