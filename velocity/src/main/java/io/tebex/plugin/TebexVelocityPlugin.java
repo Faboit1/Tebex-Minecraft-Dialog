@@ -23,7 +23,7 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -147,7 +147,20 @@ public class TebexVelocityPlugin extends BasePlatform {
 
     @Override
     public void log(Level level, String message) {
-        logger.log(level, message);
+        logger.atLevel(convertLevel(level)).log(message);
+    }
+
+    private org.slf4j.event.Level convertLevel(Level level){
+        if(level == Level.SEVERE)
+            return org.slf4j.event.Level.ERROR;
+        else if(level == Level.WARNING)
+            return org.slf4j.event.Level.WARN;
+        else if(level == Level.INFO)
+            return org.slf4j.event.Level.INFO;
+        else if(level == Level.CONFIG || level == Level.FINE)
+            return org.slf4j.event.Level.DEBUG;
+        else
+            return org.slf4j.event.Level.TRACE;
     }
 
     @Override
