@@ -574,7 +574,7 @@ public abstract class BasePlatform implements Platform {
 
             // check if secret key was provided via environment, which overrides the config
             String envKey = System.getenv("TEBEX_SECRET_KEY");
-            if (!envKey.isEmpty()) {
+            if (envKey != null && !envKey.isEmpty()) {
                 debug("Detected secret key environment variable. This will override the key in config.yml.");
                 config.setSecretKey(envKey);
             }
