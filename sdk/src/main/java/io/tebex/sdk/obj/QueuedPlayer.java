@@ -1,6 +1,7 @@
 package io.tebex.sdk.obj;
 
 import com.google.gson.JsonObject;
+import io.tebex.sdk.util.UUIDUtil;
 
 public class QueuedPlayer {
     private final int id;
@@ -17,7 +18,7 @@ public class QueuedPlayer {
     public QueuedPlayer(int id, String name, String uuid) {
         this.id = id;
         this.name = name;
-        this.uuid = uuid;
+        this.uuid = String.valueOf(UUIDUtil.mojangIdToJavaId(uuid)); // tebex API returns truncated uuids
     }
 
     public int getId() {
