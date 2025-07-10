@@ -109,3 +109,25 @@ fabric1215Project.configure<JavaPluginExtension> {
         }
     }
 }
+
+val fabric1216Project = project(":fabric-1.21.6")
+fabric1216Project.configure<JavaPluginExtension> {
+    sourceSets {
+        getByName("main") {
+            java {
+                srcDir("src/main/kotlin")
+            }
+        }
+    }
+}
+
+val fabric1217Project = project(":fabric-1.21.7")
+fabric1217Project.configure<JavaPluginExtension> {
+    sourceSets {
+        getByName("main") {
+            java {
+                srcDir("src/main/kotlin")
+            }
+        }
+    }
+}
