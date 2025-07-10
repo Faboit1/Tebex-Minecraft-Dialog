@@ -4,10 +4,7 @@ import com.google.common.collect.Maps;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.sdk.SDK;
 import io.tebex.sdk.exception.ServerNotFoundException;
-import io.tebex.sdk.obj.Category;
-import io.tebex.sdk.obj.QueuedCommand;
-import io.tebex.sdk.obj.QueuedPlayer;
-import io.tebex.sdk.obj.ServerEvent;
+import io.tebex.sdk.obj.*;
 import io.tebex.sdk.placeholder.PlaceholderManager;
 import io.tebex.sdk.placeholder.defaults.UuidPlaceholder;
 import io.tebex.sdk.platform.config.IPlatformConfig;
@@ -20,12 +17,8 @@ import io.tebex.sdk.util.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -44,8 +37,8 @@ public abstract class BasePlatform implements Platform {
     protected Map<Object, Integer> queuedPlayers;
 
     protected ServerInformation storeInformation;
-    protected List<Category> storeCategories;
-    protected List<ServerEvent> serverEvents;
+    protected List<Category> storeCategories = new ArrayList<>();
+    protected List<ServerEvent> serverEvents = new ArrayList<>();
 
     private final ArrayList<PluginEvent> PLUGIN_EVENTS = new ArrayList<>();
 
@@ -64,7 +57,7 @@ public abstract class BasePlatform implements Platform {
         return getStoreType().contains("Offline/Geyser");
     }
 
-    public final void init() {
+    public final void initStore() {
         sdk = new SDK(this, config.getSecretKey());
         placeholderManager = new PlaceholderManager();
         queuedPlayers = Maps.newConcurrentMap();
@@ -82,6 +75,9 @@ public abstract class BasePlatform implements Platform {
                 setStoreInfo(serverInformation);
                 setSetup(true);
                 configure();
+
+                // Start the initial check, which is rescheduled per each remote next check
+                performCheck(true);
             }).exceptionally(ex -> {
                 Throwable cause = ex.getCause();
                 setSetup(false);
@@ -106,12 +102,15 @@ public abstract class BasePlatform implements Platform {
     }
 
     public final CompletableFuture<String[]> performCheck(boolean useRemoteNextCheck) {
-        if(! isSetup()) throw new CompletionException(new ServerNotFoundException());
+        CompletableFuture<String[]> forceCheckOutput = new CompletableFuture<>();
+
+        if(!isSetup()) {
+            return forceCheckOutput;
+        }
 
         debug("Checking for due players...");
         getQueuedPlayers().clear();
 
-        CompletableFuture<String[]> forceCheckOutput = new CompletableFuture<>();
         getSDK().getDuePlayers().whenComplete((duePlayersResponse, ex) -> {
             ArrayList<String> output = new ArrayList<>();
             if (ex != null) {
@@ -378,7 +377,7 @@ public abstract class BasePlatform implements Platform {
 
     // Create and update the file
     public final YamlDocument initPlatformConfig() throws IOException {
-        return YamlDocument.create(getBundledFile(this, getDirectory(), "config.yml"));
+        return YamlDocument.create(getBundledFile(this, getRunningDirectory(), "config.yml"));
     }
 
     /**
@@ -550,13 +549,16 @@ public abstract class BasePlatform implements Platform {
         TickScheduler.scheduleLater(runnable, time, unit);
     }
 
-    public final List<ServerEvent> getServerEvents() {
+    public final List<ServerEvent> getJoinEvents() {
         return serverEvents;
+    }
+
+    public void createJoinEvent(String uuid, String username, String ip) {
+        serverEvents.add(new ServerEvent(uuid, username, ip, ServerEventType.JOIN));
     }
 
     public final void configure() {
         setup = true;
-        performCheck();
         sdk.sendTelemetry();
     }
 

@@ -1,7 +1,7 @@
 package io.tebex.plugin.command.sub;
 
 import com.velocitypowered.api.command.CommandSource;
-import io.tebex.plugin.TebexPlugin;
+import io.tebex.plugin.TebexVelocityPlugin;
 import io.tebex.plugin.command.SubCommand;
 
 import java.util.concurrent.ExecutionException;
@@ -9,13 +9,13 @@ import java.util.concurrent.ExecutionException;
 import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection;
 
 public class BanCommand extends SubCommand {
-    public BanCommand(TebexPlugin platform) {
+    public BanCommand(TebexVelocityPlugin platform) {
         super(platform, "ban", "tebex.ban");
     }
 
     @Override
     public void execute(CommandSource sender, String[] args) {
-        TebexPlugin platform = getPlatform();
+        TebexVelocityPlugin platform = getPlatform();
 
         if (args.length < 1) { // require username at minimum
             sender.sendMessage(getInvalidUsageMessage());

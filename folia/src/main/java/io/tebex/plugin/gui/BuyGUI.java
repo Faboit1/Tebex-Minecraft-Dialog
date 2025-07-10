@@ -1,7 +1,6 @@
 package io.tebex.plugin.gui;
 
 import io.tebex.plugin.FoliaPlatform;
-import io.tebex.plugin.TebexPlugin;
 import io.tebex.plugin.util.MaterialUtil;
 import io.tebex.sdk.obj.Category;
 import io.tebex.sdk.obj.CategoryPackage;

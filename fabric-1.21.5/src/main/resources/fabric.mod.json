@@ -10,7 +10,7 @@
   "environment": "server",
   "entrypoints": {
     "server": [
-      "io.tebex.plugin.TebexPlugin"
+      "io.tebex.plugin.TebexFabricPlugin"
     ]
   },
   "depends": {

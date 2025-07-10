@@ -20,7 +20,7 @@ public class PlayerJoinListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         Object playerId = platform.getPlayerId(player.getName(), player.getUniqueId());
-        platform.getServerEvents().add(new ServerEvent(player.getUniqueId().toString(), player.getName(), player.getAddress().getAddress().getHostAddress(), ServerEventType.JOIN));
+        platform.getJoinEvents().add(new ServerEvent(player.getUniqueId().toString(), player.getName(), player.getAddress().getAddress().getHostAddress(), ServerEventType.JOIN));
 
         if(! platform.getQueuedPlayers().containsKey(playerId)) {
             return;

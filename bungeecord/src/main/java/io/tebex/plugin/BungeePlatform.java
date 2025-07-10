@@ -15,9 +15,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class BungeePlatform extends BasePlatform {
-    private final TebexPlugin plugin;
+    private final TebexBungeePlugin plugin;
 
-    public BungeePlatform(TebexPlugin plugin) {
+    public BungeePlatform(TebexBungeePlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -27,7 +27,7 @@ public class BungeePlatform extends BasePlatform {
     }
 
     @Override
-    public File getDirectory() {
+    public File getRunningDirectory() {
         return plugin.getDataFolder();
     }
 
@@ -129,7 +129,7 @@ public class BungeePlatform extends BasePlatform {
         return player != null && player.hasPermission(permission);
     }
 
-    public TebexPlugin getPlugin() {
+    public TebexBungeePlugin getPlugin() {
         return this.plugin;
     }
 }

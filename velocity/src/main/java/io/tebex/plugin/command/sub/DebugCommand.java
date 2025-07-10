@@ -2,19 +2,17 @@ package io.tebex.plugin.command.sub;
 
 import com.velocitypowered.api.command.CommandSource;
 import dev.dejvokep.boostedyaml.YamlDocument;
-import io.tebex.plugin.TebexPlugin;
+import io.tebex.plugin.TebexVelocityPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.sdk.platform.config.ProxyPlatformConfig;
 import io.tebex.sdk.util.StringUtil;
-import net.kyori.adventure.text.Component;
 
 import java.io.IOException;
-import java.util.Set;
 
 import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection;
 
 public class DebugCommand extends SubCommand {
-    public DebugCommand(TebexPlugin platform) {
+    public DebugCommand(TebexVelocityPlugin platform) {
         super(platform, "debug", "tebex.debug");
     }
 
@@ -25,7 +23,7 @@ public class DebugCommand extends SubCommand {
             return;
         }
 
-        TebexPlugin platform = getPlatform();
+        TebexVelocityPlugin platform = getPlatform();
 
         ProxyPlatformConfig config = (ProxyPlatformConfig) platform.getPlatformConfig();
         YamlDocument configFile = config.getYamlDocument();

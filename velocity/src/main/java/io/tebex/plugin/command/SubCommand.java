@@ -1,17 +1,17 @@
 package io.tebex.plugin.command;
 
 import com.velocitypowered.api.command.CommandSource;
-import io.tebex.plugin.TebexPlugin;
+import io.tebex.plugin.TebexVelocityPlugin;
 import net.kyori.adventure.text.Component;
 
 import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection;
 
 public abstract class SubCommand {
-    private final TebexPlugin platform;
+    private final TebexVelocityPlugin platform;
     private final String name;
     private final String permission;
 
-    public SubCommand(TebexPlugin platform, String name, String permission) {
+    public SubCommand(TebexVelocityPlugin platform, String name, String permission) {
         this.platform = platform;
         this.name = name;
         this.permission = permission;
@@ -19,7 +19,7 @@ public abstract class SubCommand {
 
     public abstract void execute(final CommandSource sender, final String[] args);
 
-    public TebexPlugin getPlatform() {
+    public TebexVelocityPlugin getPlatform() {
         return platform;
     }
 

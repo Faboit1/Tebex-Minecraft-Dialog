@@ -22,6 +22,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     compileOnly("com.google.guava:guava:33.3.1-jre")
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
+    testImplementation("com.google.guava:guava:33.3.1-jre")
 }
 
 tasks.named<Test>("test") {

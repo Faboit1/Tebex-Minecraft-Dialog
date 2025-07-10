@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
         url = "https://tebex.io",
         authors = {"Tebex"}
 )
-public class TebexPlugin extends BasePlatform {
+public class TebexVelocityPlugin extends BasePlatform {
     protected ProxyPlatformConfig config;
 
     private final ProxyServer proxy;
@@ -43,7 +43,7 @@ public class TebexPlugin extends BasePlatform {
     private final Path dataDirectory;
 
     @Inject
-    public TebexPlugin(ProxyServer proxy, Logger logger, @DataDirectory Path dataDirectory) {
+    public TebexVelocityPlugin(ProxyServer proxy, Logger logger, @DataDirectory Path dataDirectory) {
         this.proxy = proxy;
         this.logger = logger;
         this.dataDirectory = dataDirectory;
@@ -59,7 +59,7 @@ public class TebexPlugin extends BasePlatform {
 
         load(); // load config file for the platform
 
-        init(); // use loaded key to set current store
+        initStore(); // use loaded key to set current store
 
         // Velocity specific
         new CommandManager(this).register();
@@ -81,7 +81,7 @@ public class TebexPlugin extends BasePlatform {
     }
 
     @Override
-    public File getDirectory() {
+    public File getRunningDirectory() {
         return dataDirectory.toFile();
     }
 

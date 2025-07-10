@@ -46,32 +46,36 @@ public class TebexCommands {
     public static boolean process(CommandContext context, Consumer<CompletableFuture<String[]>> sendMessageConsumer) {
         if (context.getFullCommand().startsWith(TEBEX_COMMAND_PREFIX)) {
             CompletableFuture<String[]> response = new CompletableFuture<>();
-            Command command = commands.get(context.getCommandName());
 
-            if (!restrictedToCommands.isEmpty() && !restrictedToCommands.contains(command.getName())) {
-                response.complete(new String[]{CommandResponder.formatError(context, "Unrecognized command or no permission.")});
+            platform.debug(context.getCommandName());
+            Command command = commands.get(context.getCommandName().replaceAll("tebex ", ""));
+
+            if (command == null) {
+                response.complete(new String[]{CommandResponder.formatError(context, "Command not found.")});
                 sendMessageConsumer.accept(response);
                 return false;
             }
 
-            if (command == null) {
-                response.complete(new String[]{CommandResponder.formatError(context, "Unrecognized command or no permission.")});
+            if (!restrictedToCommands.isEmpty() && !restrictedToCommands.contains(command.getName())) {
+                response.complete(new String[]{CommandResponder.formatError(context, "Command is restricted on this platform.")});
                 sendMessageConsumer.accept(response);
                 return false;
             }
 
             Function<CommandContext, CompletableFuture<String[]>> handler = command.getHandler();
 
-            // Check permissions against the platform for the sending user
-            boolean hasPermission = TebexCommands.getPlatform().hasPermission(context.getSenderUsername(), command.getPermission());
-            if (!hasPermission) {
-                response.complete(new String[]{CommandResponder.formatError(context, "Unrecognized command or no permission.")});
-                sendMessageConsumer.accept(response);
-                return false;
+            // Check permissions against the platform for the sending user if we're a player
+            if (!context.isFromConsole()) {
+                boolean hasPermission = TebexCommands.getPlatform().hasPermission(context.getSenderUsername(), command.getPermission());
+                if (!hasPermission) {
+                    response.complete(new String[]{CommandResponder.formatError(context, "Unrecognized command or no permission.")});
+                    sendMessageConsumer.accept(response);
+                    return false;
+                }
             }
 
             // Check number of args required
-            if (context.getArgs().length != command.getNumArgsRequired()) {
+            if (context.getArgs().length < command.getNumArgsRequired()) {
                 response.complete(new String[]{CommandResponder.formatError(context, "Usage: /tebex " + command.getName() + " " + command.getUsage())});
                 sendMessageConsumer.accept(response);
                 return false;
@@ -317,9 +321,11 @@ public class TebexCommands {
                 }
 
                 // Only show commands the user has permissions for
-                boolean hasPermission = TebexCommands.getPlatform().hasPermission(ctx.getSenderUsername(), command.getPermission());
-                if (!hasPermission) {
-                    continue;
+                if (!ctx.isFromConsole()) {
+                    boolean hasPermission = TebexCommands.getPlatform().hasPermission(ctx.getSenderUsername(), command.getPermission());
+                    if (!hasPermission) {
+                        continue;
+                    }
                 }
 
                 StringBuilder helpMessage = new StringBuilder();

@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.SimpleCommand;
-import io.tebex.plugin.TebexPlugin;
+import io.tebex.plugin.TebexVelocityPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.plugin.command.TebexCommand;
 import io.tebex.plugin.command.sub.*;
@@ -12,10 +12,10 @@ import io.tebex.plugin.command.sub.*;
 import java.util.Map;
 
 public class CommandManager {
-    private final TebexPlugin platform;
+    private final TebexVelocityPlugin platform;
     private final Map<String, SubCommand> commands;
 
-    public CommandManager(TebexPlugin platform) {
+    public CommandManager(TebexVelocityPlugin platform) {
         this.platform = platform;
         this.commands = Maps.newHashMap();
     }
@@ -46,7 +46,7 @@ public class CommandManager {
         return commands;
     }
 
-    public TebexPlugin getPlatform() {
+    public TebexVelocityPlugin getPlatform() {
         return platform;
     }
 }

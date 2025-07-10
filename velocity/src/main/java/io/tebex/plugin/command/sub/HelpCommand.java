@@ -1,7 +1,7 @@
 package io.tebex.plugin.command.sub;
 
 import com.velocitypowered.api.command.CommandSource;
-import io.tebex.plugin.TebexPlugin;
+import io.tebex.plugin.TebexVelocityPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.plugin.manager.CommandManager;
 
@@ -12,7 +12,7 @@ import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializ
 public class HelpCommand extends SubCommand {
     private final CommandManager commandManager;
 
-    public HelpCommand(TebexPlugin platform, CommandManager commandManager) {
+    public HelpCommand(TebexVelocityPlugin platform, CommandManager commandManager) {
         super(platform, "help", "tebex.admin");
         this.commandManager = commandManager;
     }

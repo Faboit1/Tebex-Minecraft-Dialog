@@ -2,15 +2,15 @@ package io.tebex.plugin.gui;
 
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
-import io.tebex.plugin.TebexPlugin;
-import io.tebex.plugin.util.ItemUtil;
+import io.tebex.plugin.FabricPlatform;
+import io.tebex.plugin.TebexFabricPlugin;
+import io.tebex.plugin.ItemUtil;
 import io.tebex.sdk.obj.Category;
 import io.tebex.sdk.obj.CategoryPackage;
 import io.tebex.sdk.obj.ICategory;
 import io.tebex.sdk.obj.SubCategory;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.GenericContainerScreenHandler;
@@ -26,10 +26,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class BuyGUI {
-    private final TebexPlugin platform;
+    private final FabricPlatform platform;
     private final YamlDocument config;
 
-    public BuyGUI(TebexPlugin platform) {
+    public BuyGUI(FabricPlatform platform) {
         this.platform = platform;
         this.config = platform.getPlatformConfig().getYamlDocument();
     }

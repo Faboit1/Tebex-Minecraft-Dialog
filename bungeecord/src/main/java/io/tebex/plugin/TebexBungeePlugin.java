@@ -10,7 +10,7 @@ import net.md_5.bungee.api.plugin.PluginManager;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-public class TebexPlugin extends Plugin {
+public class TebexBungeePlugin extends Plugin {
     private BungeePlatform platform;
 
     @Override
@@ -20,7 +20,7 @@ public class TebexPlugin extends Plugin {
 
         platform.load(); // loads the platform configuration
 
-        platform.init(); // Used loaded key to set current store and cache available packages
+        platform.initStore(); // Used loaded key to set current store and cache available packages
 
         // Bungee-specific registration
         TebexCommands.setRestrictedToCommands("help", "forcecheck", "reload", "secret", "debug");

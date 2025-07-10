@@ -23,9 +23,9 @@ import java.util.regex.Pattern;
 
 public class BukkitPlatform extends BasePlatform {
     private BuyGUI buyGUI;
-    private final TebexPlugin plugin;
+    private final TebexBukkitPlugin plugin;
 
-    public BukkitPlatform(TebexPlugin plugin) {
+    public BukkitPlatform(TebexBukkitPlugin plugin) {
         this.plugin = plugin;
         this.buyGUI = new BuyGUI(this);
     }
@@ -55,7 +55,7 @@ public class BukkitPlatform extends BasePlatform {
     }
 
     @Override
-    public File getDirectory() {
+    public File getRunningDirectory() {
         return plugin.getDataFolder();
     }
 
@@ -168,7 +168,7 @@ public class BukkitPlatform extends BasePlatform {
         this.sdk = new SDK(this, key);
     }
 
-    public TebexPlugin getPlugin() {
+    public TebexBukkitPlugin getPlugin() {
         return this.plugin;
     }
 }

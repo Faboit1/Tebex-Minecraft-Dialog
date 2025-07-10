@@ -21,9 +21,9 @@ import java.util.regex.Pattern;
 
 public class FoliaPlatform extends BasePlatform {
     private BuyGUI buyGUI;
-    private final TebexPlugin plugin;
+    private final TebexFoliaPlugin plugin;
 
-    public FoliaPlatform(TebexPlugin plugin) {
+    public FoliaPlatform(TebexFoliaPlugin plugin) {
         this.plugin = plugin;
         this.buyGUI = new BuyGUI(this);
     }
@@ -49,7 +49,7 @@ public class FoliaPlatform extends BasePlatform {
     }
 
     @Override
-    public File getDirectory() {
+    public File getRunningDirectory() {
         return plugin.getDataFolder();
     }
 
@@ -163,7 +163,7 @@ public class FoliaPlatform extends BasePlatform {
         this.buyGUI = buyGUI;
     }
 
-    public TebexPlugin getPlugin() {
+    public TebexFoliaPlugin getPlugin() {
         return this.plugin;
     }
 }

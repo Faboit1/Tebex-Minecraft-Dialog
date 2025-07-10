@@ -3,15 +3,13 @@ package io.tebex.plugin.event;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.proxy.Player;
-import io.tebex.plugin.TebexPlugin;
+import io.tebex.plugin.TebexVelocityPlugin;
 import io.tebex.sdk.obj.QueuedPlayer;
 
-import java.util.UUID;
-
 public class JoinListener {
-    private final TebexPlugin plugin;
+    private final TebexVelocityPlugin plugin;
 
-    public JoinListener(TebexPlugin plugin) {
+    public JoinListener(TebexVelocityPlugin plugin) {
         this.plugin = plugin;
     }
 

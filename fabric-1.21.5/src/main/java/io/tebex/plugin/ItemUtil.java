@@ -1,4 +1,4 @@
-package io.tebex.plugin.util;
+package io.tebex.plugin;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;

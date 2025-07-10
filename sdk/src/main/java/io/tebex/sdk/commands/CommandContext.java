@@ -22,12 +22,12 @@ public class CommandContext {
         this.targetUUID = targetUUID;
         this.fullCommand = command;
 
-
+        command = command.replaceAll("tebex ", "");
         if (arguments.length > 0) {
-            this.commandName = arguments[0];
+            this.commandName = command.split(" ")[0];
             this.arguments = Arrays.copyOfRange(arguments, 1, arguments.length);
         } else {
-            this.commandName = "";
+            this.commandName = command;
             this.arguments = new String[0];
         }
     }

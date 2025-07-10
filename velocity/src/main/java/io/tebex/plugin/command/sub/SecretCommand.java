@@ -2,7 +2,7 @@ package io.tebex.plugin.command.sub;
 
 import com.velocitypowered.api.command.CommandSource;
 import dev.dejvokep.boostedyaml.YamlDocument;
-import io.tebex.plugin.TebexPlugin;
+import io.tebex.plugin.TebexVelocityPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.sdk.SDK;
 import io.tebex.sdk.exception.ServerNotFoundException;
@@ -13,7 +13,7 @@ import java.io.IOException;
 import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection;
 
 public class SecretCommand extends SubCommand {
-    public SecretCommand(TebexPlugin platform) {
+    public SecretCommand(TebexVelocityPlugin platform) {
         super(platform, "secret", "tebex.setup");
     }
 
@@ -25,7 +25,7 @@ public class SecretCommand extends SubCommand {
         }
 
         String serverToken = args[0];
-        TebexPlugin platform = getPlatform();
+        TebexVelocityPlugin platform = getPlatform();
 
         SDK sdk = platform.getSDK();
         ProxyPlatformConfig config = (ProxyPlatformConfig) platform.getPlatformConfig();

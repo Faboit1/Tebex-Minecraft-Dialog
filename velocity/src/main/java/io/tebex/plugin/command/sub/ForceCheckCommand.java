@@ -1,15 +1,15 @@
 package io.tebex.plugin.command.sub;
 
 import com.velocitypowered.api.command.CommandSource;
-import io.tebex.plugin.TebexPlugin;
+import io.tebex.plugin.TebexVelocityPlugin;
 import io.tebex.plugin.command.SubCommand;
 
 import static net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection;
 
 public class ForceCheckCommand extends SubCommand {
-    private final TebexPlugin platform;
+    private final TebexVelocityPlugin platform;
 
-    public ForceCheckCommand(TebexPlugin platform) {
+    public ForceCheckCommand(TebexVelocityPlugin platform) {
         super(platform, "forcecheck", "tebex.forcecheck");
         this.platform = platform;
     }

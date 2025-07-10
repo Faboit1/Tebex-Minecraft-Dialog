@@ -20,7 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.lang.reflect.Field;
 import java.util.*;
 
-public final class TebexPlugin extends JavaPlugin {
+public final class TebexFoliaPlugin extends JavaPlugin {
     private FoliaPlatform platform;
 
     public FoliaPlatform getPlatform() {
@@ -37,7 +37,7 @@ public final class TebexPlugin extends JavaPlugin {
 
         platform.load(); // loads the configuration file for the platform
 
-        platform.init(); // uses loaded key to set current store and cache the available packages
+        platform.initStore(); // uses loaded key to set current store and cache the available packages
 
         // Bukkit specific registration
         TebexCommandExecutor tebexCommands = new TebexCommandExecutor(platform);
@@ -65,7 +65,7 @@ public final class TebexPlugin extends JavaPlugin {
 
         // clear server events every minute
         getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
-            List<ServerEvent> allServerEvents = platform.getServerEvents();
+            List<ServerEvent> allServerEvents = platform.getJoinEvents();
             List<ServerEvent> runEvents = Lists.newArrayList(allServerEvents.subList(0, Math.min(allServerEvents.size(), 750)));
             if (runEvents.isEmpty()) return;
             if (!platform.isSetup()) return;

@@ -31,7 +31,7 @@ public interface Platform {
     /**
      * @return The directory where the plugin is running from as a File
      */
-    File getDirectory();
+    File getRunningDirectory();
 
     /**
      * Logs a message with the specified level.
