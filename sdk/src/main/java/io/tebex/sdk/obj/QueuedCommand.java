@@ -10,17 +10,6 @@ public class QueuedCommand {
     private final QueuedPlayer player;
     private final boolean online;
 
-    public QueuedCommand(int id, String command, int payment, int packageId, int delay, int requiredSlots) {
-        this.id = id;
-        this.command = command;
-        this.payment = payment;
-        this.packageId = packageId;
-        this.delay = delay;
-        this.requiredSlots = requiredSlots;
-        this.player = null;
-        this.online = true;
-    }
-
     public QueuedCommand(int id, String command, int payment, int packageId, int delay, int requiredSlots, QueuedPlayer player) {
         this.id = id;
         this.command = command;
