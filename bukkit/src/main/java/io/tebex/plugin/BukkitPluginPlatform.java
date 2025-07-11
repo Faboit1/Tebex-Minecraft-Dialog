@@ -45,10 +45,6 @@ public class BukkitPluginPlatform extends BasePluginPlatform {
                 .count();
     }
 
-    public BuyGUI getBuyGUI() {
-        return buyGUI;
-    }
-
     @Override
     public File getRunningDirectory() {
         return plugin.getDataFolder();

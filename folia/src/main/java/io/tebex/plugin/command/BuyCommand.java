@@ -1,9 +1,11 @@
 package io.tebex.plugin.command;
 
 import io.tebex.plugin.FoliaPluginPlatform;
+import io.tebex.plugin.gui.BuyGUI;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 public class BuyCommand extends Command {
@@ -21,6 +23,12 @@ public class BuyCommand extends Command {
             return true;
         }
 
-        return true;
+        if (sender instanceof Player) {
+            new BuyGUI(platform).open((Player) sender);
+            return true;
+        }
+
+        sender.sendMessage(ChatColor.RED + "The buy command cannot be used from the console.");
+        return false;
     }
 }

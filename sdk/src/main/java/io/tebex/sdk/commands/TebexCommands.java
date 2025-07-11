@@ -34,7 +34,6 @@ public class TebexCommands {
     private static void register(String name, String usage, String description, Function<Context, CompletableFuture<String[]>> handler) {
         PlayerCommand command = new PlayerCommand(name, usage, description, handler);
         commands.put(name, command);
-        platform.debug("Tebex command: '/tebex " + name + "' has permission '" +command.getPermission() + "'");
     }
 
     public static Map<String, PlayerCommand> getCommands() {

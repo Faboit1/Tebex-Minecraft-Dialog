@@ -78,6 +78,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                 setStoreInfo(serverInformation);
                 setSetup(true);
                 configure();
+                refreshListings();
 
                 // Start the initial check, which is rescheduled per each remote next check
                 checkCommandQueue(true);
