@@ -1,7 +1,7 @@
 package io.tebex.plugin;
 
-import io.tebex.sdk.commands.CommandContext;
-import io.tebex.sdk.commands.CommandResponder;
+import io.tebex.sdk.commands.Context;
+import io.tebex.sdk.commands.Responder;
 import io.tebex.sdk.commands.TebexCommands;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -11,8 +11,8 @@ import net.md_5.bungee.api.plugin.Command;
 import java.util.UUID;
 
 public class TebexCommandExecutor extends Command {
-    private final BungeePlatform platform;
-    public TebexCommandExecutor(BungeePlatform platform) {
+    private final BungeePluginPlatform platform;
+    public TebexCommandExecutor(BungeePluginPlatform platform) {
         super("tebex");
         this.platform = platform;
     }
@@ -49,15 +49,12 @@ public class TebexCommandExecutor extends Command {
         }
 
         // Build the command context with the information we have so far for responding.
-        CommandContext context = CommandContext.from(false, senderName, senderUUID, fullCommand.toString(), args);
-        if (targetName != null && !targetName.isEmpty()) {
-            context = context.withTarget(targetName, targetUUID);
-        }
+        Context context = Context.from(false, senderName, senderUUID, fullCommand.toString(), targetName, targetUUID, args);
 
         // Show splash for no args /tebex command
         if (args.length == 1 && sender.hasPermission("tebex.tebex")) {
-            sender.sendMessage(TextComponent.fromLegacyText(CommandResponder.formatFancy(context, "Welcome to Tebex!")));
-            sender.sendMessage(TextComponent.fromLegacyText(CommandResponder.formatFancy(context,"This server is running version {0}", "v" + platform.getVersion())));
+            sender.sendMessage(TextComponent.fromLegacyText(Responder.formatFancy(context, "Welcome to Tebex!")));
+            sender.sendMessage(TextComponent.fromLegacyText(Responder.formatFancy(context,"This server is running version {0}", "v" + platform.getPluginVersion())));
             return;
         }
 

@@ -1,15 +1,14 @@
 package io.tebex.plugin.command;
 
-import io.tebex.plugin.BukkitPlatform;
+import io.tebex.plugin.BukkitPluginPlatform;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
 public class BuyCommand extends Command {
-    private final BukkitPlatform platform;
+    private final BukkitPluginPlatform platform;
 
-    public BuyCommand(String command, BukkitPlatform platform) {
+    public BuyCommand(String command, BukkitPluginPlatform platform) {
         super(command);
         this.platform = platform;
     }

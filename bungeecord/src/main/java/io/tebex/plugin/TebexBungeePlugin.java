@@ -11,14 +11,14 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class TebexBungeePlugin extends Plugin {
-    private BungeePlatform platform;
+    private BungeePluginPlatform platform;
 
     @Override
     public void onEnable() {
-        platform = new BungeePlatform(this);
+        platform = new BungeePluginPlatform(this);
         Tebex.init(platform);
 
-        platform.load(); // loads the platform configuration
+        platform.loadPlatformConfig(); // loads the platform configuration
 
         platform.initStore(); // Used loaded key to set current store and cache available packages
 

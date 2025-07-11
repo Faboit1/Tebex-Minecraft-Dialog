@@ -1,10 +1,10 @@
 package io.tebex.plugin.command;
 
 import com.google.common.collect.ImmutableList;
-import io.tebex.sdk.commands.CommandContext;
-import io.tebex.sdk.commands.CommandResponder;
+import io.tebex.sdk.commands.Context;
+import io.tebex.sdk.commands.Responder;
 import io.tebex.sdk.commands.TebexCommands;
-import io.tebex.sdk.platform.Platform;
+import io.tebex.sdk.platform.PluginPlatform;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -16,9 +16,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class TebexCommandExecutor implements TabExecutor {
-    private final Platform platform;
+    private final PluginPlatform platform;
 
-    public TebexCommandExecutor(Platform platform) {
+    public TebexCommandExecutor(PluginPlatform platform) {
         this.platform = platform;
     }
 
@@ -55,16 +55,13 @@ public class TebexCommandExecutor implements TabExecutor {
         }
 
         // Build the command context with the information we have so far for responding.
-        CommandContext context = CommandContext.from(isConsole, senderName, senderUUID, fullCommand.toString(), args);
-        if (targetName != null && !targetName.isEmpty()) {
-            context = context.withTarget(targetName, targetUUID);
-        }
+        Context context = Context.from(isConsole, senderName, senderUUID, fullCommand.toString(), targetName, targetUUID, args);
 
         // Show splash for no args /tebex command
         if (args.length == 0 && sender.hasPermission("tebex.tebex")) {
             sender.sendMessage(new String[]{
-                    CommandResponder.formatFancy(context, "Welcome to Tebex!"),
-                    CommandResponder.formatFancy(context,"This server is running version {0}", "v" + platform.getVersion())
+                    Responder.formatFancy(context, "Welcome to Tebex!"),
+                    Responder.formatFancy(context,"This server is running version {0}", "v" + platform.getPluginVersion())
             });
             return true;
         }

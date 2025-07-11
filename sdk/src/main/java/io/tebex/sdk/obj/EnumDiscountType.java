@@ -1,6 +1,6 @@
 package io.tebex.sdk.obj;
 
-public enum DiscountType {
+public enum EnumDiscountType {
     PERCENTAGE,
     VALUE
 }

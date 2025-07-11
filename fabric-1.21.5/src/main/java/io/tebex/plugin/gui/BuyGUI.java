@@ -2,8 +2,7 @@ package io.tebex.plugin.gui;
 
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
-import io.tebex.plugin.FabricPlatform;
-import io.tebex.plugin.TebexFabricPlugin;
+import io.tebex.plugin.FabricPluginPlatform;
 import io.tebex.plugin.ItemUtil;
 import io.tebex.sdk.obj.Category;
 import io.tebex.sdk.obj.CategoryPackage;
@@ -26,10 +25,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class BuyGUI {
-    private final FabricPlatform platform;
+    private final FabricPluginPlatform platform;
     private final YamlDocument config;
 
-    public BuyGUI(FabricPlatform platform) {
+    public BuyGUI(FabricPluginPlatform platform) {
         this.platform = platform;
         this.config = platform.getPlatformConfig().getYamlDocument();
     }

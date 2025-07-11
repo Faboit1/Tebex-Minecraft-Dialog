@@ -1,7 +1,7 @@
 package io.tebex.sdk;
 
 import io.tebex.sdk.commands.TebexCommands;
-import io.tebex.sdk.platform.Platform;
+import io.tebex.sdk.platform.PluginPlatform;
 
 /**
  * The Tebex class serves as the entry point for the Tebex SDK and provides methods to
@@ -9,7 +9,7 @@ import io.tebex.sdk.platform.Platform;
  * platforms, such as Bukkit or Sponge, through the use of the Platform interface.
  */
 public class Tebex {
-    private static Platform platform;
+    private static PluginPlatform platform;
 
     /**
      * Private constructor to prevent instantiation of this singleton class.
@@ -23,9 +23,9 @@ public class Tebex {
      *
      * @param platform The platform instance to initialise the SDK with
      */
-    public static void init(Platform platform) {
+    public static void init(PluginPlatform platform) {
         Tebex.platform = platform;
-        TebexCommands.register(platform);
+        TebexCommands.init(platform);
     }
 
     /**
@@ -33,7 +33,7 @@ public class Tebex {
      *
      * @return The current platform instance, or null if the SDK has not been initialized
      */
-    public static Platform get() {
+    public static PluginPlatform get() {
         return platform;
     }
 }

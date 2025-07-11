@@ -1,6 +1,6 @@
 package io.tebex.plugin.gui;
 
-import io.tebex.plugin.FoliaPlatform;
+import io.tebex.plugin.FoliaPluginPlatform;
 import io.tebex.plugin.util.MaterialUtil;
 import io.tebex.sdk.obj.Category;
 import io.tebex.sdk.obj.CategoryPackage;
@@ -19,10 +19,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class BuyGUI {
-    private final FoliaPlatform platform;
+    private final FoliaPluginPlatform platform;
     private final FileConfiguration config;
 
-    public BuyGUI(FoliaPlatform platform) {
+    public BuyGUI(FoliaPluginPlatform platform) {
         this.platform = platform;
         this.config = platform.getPlugin().getConfig();
     }
@@ -144,7 +144,7 @@ public class BuyGUI {
         String itemType = section.getString("material");
 
         Material defaultMaterial = MaterialUtil.fromString(itemType).isPresent() ? MaterialUtil.fromString(itemType).get().parseMaterial() : null;
-        Material material = MaterialUtil.fromString(categoryPackage.getGuiItem()).isPresent() ? MaterialUtil.fromString(categoryPackage.getGuiItem()).get().parseMaterial() : defaultMaterial;
+        Material material = MaterialUtil.fromString(categoryPackage.getItemId()).isPresent() ? MaterialUtil.fromString(categoryPackage.getItemId()).get().parseMaterial() : defaultMaterial;
 
         String name = section.getString("name");
         List<String> lore = section.getStringList("lore");

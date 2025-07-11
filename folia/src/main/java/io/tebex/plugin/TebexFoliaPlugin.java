@@ -21,9 +21,9 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 public final class TebexFoliaPlugin extends JavaPlugin {
-    private FoliaPlatform platform;
+    private FoliaPluginPlatform platform;
 
-    public FoliaPlatform getPlatform() {
+    public FoliaPluginPlatform getPlatform() {
         return platform;
     }
 
@@ -32,10 +32,10 @@ public final class TebexFoliaPlugin extends JavaPlugin {
      */
     @Override
     public void onEnable() {
-        platform = new FoliaPlatform(this);
+        platform = new FoliaPluginPlatform(this);
         Tebex.init(platform);
 
-        platform.load(); // loads the configuration file for the platform
+        platform.loadPlatformConfig(); // loads the configuration file for the platform
 
         platform.initStore(); // uses loaded key to set current store and cache the available packages
 

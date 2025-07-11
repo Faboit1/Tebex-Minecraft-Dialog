@@ -1,18 +1,16 @@
 package io.tebex.plugin.event;
 
-import io.tebex.plugin.BukkitPlatform;
+import io.tebex.plugin.BukkitPluginPlatform;
 import io.tebex.sdk.obj.QueuedPlayer;
-import io.tebex.sdk.obj.ServerEvent;
-import io.tebex.sdk.obj.ServerEventType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 public class PlayerJoinListener implements Listener {
-    private final BukkitPlatform platform;
+    private final BukkitPluginPlatform platform;
 
-    public PlayerJoinListener(BukkitPlatform platform) {
+    public PlayerJoinListener(BukkitPluginPlatform platform) {
         this.platform = platform;
     }
 

@@ -1,10 +1,12 @@
 package io.tebex.sdk.obj;
 
 import com.google.gson.JsonObject;
+import lombok.Data;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Data
 public class SubCategory implements ICategory {
     private final int id;
     private final int order;
@@ -12,15 +14,6 @@ public class SubCategory implements ICategory {
     private final String guiItem;
     private final Category parentCategory;
     private final List<CategoryPackage> categoryPackages;
-
-    public SubCategory(int id, int order, String name, String guiItem, Category parentCategory, List<CategoryPackage> categoryPackages) {
-        this.id = id;
-        this.order = order;
-        this.name = name;
-        this.guiItem = guiItem;
-        this.parentCategory = parentCategory;
-        this.categoryPackages = categoryPackages;
-    }
 
     @Override
     public int getId() {
@@ -59,15 +52,5 @@ public class SubCategory implements ICategory {
                 category,
                 jsonObject.getAsJsonArray("packages").asList().stream().map(item -> CategoryPackage.fromJsonObject(item.getAsJsonObject())).collect(Collectors.toList())
         );
-    }
-
-    @Override
-    public String toString() {
-        return "Category{" +
-                "id=" + id +
-                ", order=" + order +
-                ", name='" + name + '\'' +
-                ", packages=" + categoryPackages +
-                '}';
     }
 }

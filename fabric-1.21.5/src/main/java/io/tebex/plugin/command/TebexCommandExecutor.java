@@ -4,10 +4,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import io.tebex.plugin.FabricPlatform;
-import io.tebex.sdk.commands.Command;
-import io.tebex.sdk.commands.CommandContext;
-import io.tebex.sdk.commands.CommandResponder;
+import io.tebex.plugin.FabricPluginPlatform;
+import io.tebex.sdk.commands.PlayerCommand;
+import io.tebex.sdk.commands.Context;
+import io.tebex.sdk.commands.Responder;
 import io.tebex.sdk.commands.TebexCommands;
 import io.tebex.sdk.platform.config.ServerPlatformConfig;
 import me.lucko.fabric.api.permissions.v0.Permissions;
@@ -22,9 +22,9 @@ import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
 public class TebexCommandExecutor {
-    private final FabricPlatform platform;
+    private final FabricPluginPlatform platform;
 
-    public TebexCommandExecutor(FabricPlatform platform) {
+    public TebexCommandExecutor(FabricPluginPlatform platform) {
         this.platform = platform;
     }
 
@@ -50,20 +50,20 @@ public class TebexCommandExecutor {
 
             ArgumentBuilder<ServerCommandSource, ?> subCommand;
             if (args.length == 3) {
-                subCommand = literal(command.getName())
+                subCommand = literal(command.getCommandName())
                         .then(argument(args[0], StringArgumentType.string())
                         .then(argument(args[1], StringArgumentType.string())
                         .then(argument(args[2], StringArgumentType.string())
                         .executes(context -> { run(command,context); return 1;}))));
             } else if (args.length == 2) {
-                subCommand = literal(command.getName())
+                subCommand = literal(command.getCommandName())
                         .then(argument(args[0], StringArgumentType.string())
                         .then(argument(args[1], StringArgumentType.string())
                         .executes(context -> { run(command,context); return 1;})));
             } else if (args.length == 1) {
-                subCommand = literal(command.getName()).then(argument(args[0], StringArgumentType.string()).executes(context -> { run(command,context); return 1;}));
+                subCommand = literal(command.getCommandName()).then(argument(args[0], StringArgumentType.string()).executes(context -> { run(command,context); return 1;}));
             } else if (args.length == 0) {
-                subCommand = literal(command.getName()).executes(context -> { run(command,context); return 1;});
+                subCommand = literal(command.getCommandName()).executes(context -> { run(command,context); return 1;});
             } else {
                 return;
             }
@@ -75,7 +75,7 @@ public class TebexCommandExecutor {
         });
     }
 
-    public void run(Command command, com.mojang.brigadier.context.CommandContext<ServerCommandSource> context) {
+    public void run(PlayerCommand command, com.mojang.brigadier.context.CommandContext<ServerCommandSource> context) {
         ServerCommandSource sender = context.getSource();
         String senderName = sender.getName();
         UUID senderUUID = sender.getEntity() instanceof ServerPlayerEntity ? ((ServerPlayerEntity) sender.getEntity()).getUuid() : null;
@@ -96,14 +96,10 @@ public class TebexCommandExecutor {
             }
         }
 
-        CommandContext tebexCtx = CommandContext.from(isConsole, senderName, senderUUID, "tebex " + command.getName(), tokens);
-        if (!targetName.isEmpty()) {
-            tebexCtx = tebexCtx.withTarget(targetName, targetUUID);
-        }
-
+        Context tebexCtx = Context.from(isConsole, senderName, senderUUID, "tebex " + command.getCommandName(), targetName, targetUUID, tokens);
         if (tokens.length == 0 && platform.hasPermission(senderName, "tebex.base")) {
-            sender.sendMessage(Text.literal(CommandResponder.formatFancy(tebexCtx, "Welcome to Tebex!")));
-            sender.sendMessage(Text.literal(CommandResponder.formatFancy(tebexCtx, "This server is running version {0}", "v" + platform.getVersion())));
+            sender.sendMessage(Text.literal(Responder.formatFancy(tebexCtx, "Welcome to Tebex!")));
+            sender.sendMessage(Text.literal(Responder.formatFancy(tebexCtx, "This server is running version {0}", "v" + platform.getPluginVersion())));
             return;
         }
 

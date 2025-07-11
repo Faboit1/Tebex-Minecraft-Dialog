@@ -5,7 +5,7 @@ import io.tebex.sdk.exception.ServerNotFoundException;
 import io.tebex.sdk.exception.ServerNotSetupException;
 import io.tebex.sdk.obj.Package;
 import io.tebex.sdk.obj.*;
-import io.tebex.sdk.platform.BasePlatform;
+import io.tebex.sdk.platform.BasePluginPlatform;
 import io.tebex.sdk.request.TebexRequest;
 import io.tebex.sdk.request.builder.CreateCouponRequest;
 import io.tebex.sdk.request.interceptor.LoggingInterceptor;
@@ -15,6 +15,8 @@ import io.tebex.sdk.request.response.PaginatedResponse;
 import io.tebex.sdk.request.response.ServerInformation;
 import io.tebex.sdk.triage.PluginEvent;
 import io.tebex.sdk.util.Pagination;
+import lombok.Getter;
+import lombok.Setter;
 import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
 
@@ -31,7 +33,10 @@ import java.util.stream.Collectors;
  * The main SDK class for interacting with the Tebex API.
  */
 public class SDK {
-    private BasePlatform platform;
+    /** The platform the SDK is executing on */
+    private BasePluginPlatform platform;
+
+    @Setter @Getter
     private String secretKey;
 
     private static final Gson GSON = new GsonBuilder()
@@ -42,7 +47,7 @@ public class SDK {
     private final OkHttpClient HTTP_CLIENT = new OkHttpClient().newBuilder().retryOnConnectionFailure(true)
             .addInterceptor(new LoggingInterceptor())
             .addNetworkInterceptor(chain -> {
-                return chain.proceed(chain.request().newBuilder().header("User-Agent", "Minecraft-" + platform.getTelemetry().getServerVersion() + "/Tebex-" + platform.getVersion()).build());
+                return chain.proceed(chain.request().newBuilder().header("User-Agent", "Minecraft-" + platform.getType().name() + "-" + platform.getTelemetry().getServerVersion() + "/Tebex-" + platform.getPluginVersion()).build());
             })
             .build();
 
@@ -52,7 +57,7 @@ public class SDK {
      * @param platform  The platform on which the SDK is running.
      * @param secretKey The secret key for authentication.
      */
-    public SDK(BasePlatform platform, String secretKey) {
+    public SDK(BasePluginPlatform platform, String secretKey) {
         this.platform = platform;
         this.secretKey = secretKey;
     }
@@ -184,7 +189,7 @@ public class SDK {
                             packageId,
                             conditions.has("delay") ? conditions.get("delay").getAsInt() : 0,
                             conditions.has("slots") ? conditions.get("slots").getAsInt() : 0,
-                            queuedPlayer
+                            queuedPlayer, false
                     ));
                 }
 
@@ -235,7 +240,7 @@ public class SDK {
                             packageId,
                             conditions.has("delay") ? conditions.get("delay").getAsInt() : 0,
                             conditions.has("slots") ? conditions.get("slots").getAsInt() : 0,
-                            player
+                            player, true
                     ));
                 }
 
@@ -475,14 +480,14 @@ public class SDK {
         payload.addProperty("discount_percentage", createCouponRequest.getDiscountValue());
         payload.addProperty("discount_amount", createCouponRequest.getDiscountValue());
 
-        payload.addProperty("redeem_unlimited", createCouponRequest.canRedeemUnlimited());
-        payload.addProperty("expire_never", ! createCouponRequest.canExpire());
+        payload.addProperty("redeem_unlimited", createCouponRequest.isRedeemUnlimited());
+        payload.addProperty("expire_never", ! createCouponRequest.isCanExpire());
 
-        if(! createCouponRequest.canRedeemUnlimited()) {
+        if(! createCouponRequest.isRedeemUnlimited()) {
             payload.addProperty("expire_limit", createCouponRequest.getExpiryLimit());
         }
 
-        if(createCouponRequest.canExpire()) {
+        if(createCouponRequest.isCanExpire()) {
             if(createCouponRequest.getExpiryDate() == null) {
                 throw new RuntimeException("Coupon has expiry set to true, but no expiry date exists");
             }
@@ -707,7 +712,7 @@ public class SDK {
         serverData.put("online_mode", platform.isOnlineMode());
 
         // Plugin data
-        pluginData.put("version", platform.getVersion());
+        pluginData.put("version", platform.getPluginVersion());
 
         // Combine and send to Tebex
         Map<String, Object> keenData = new LinkedHashMap<>();
@@ -801,24 +806,6 @@ public class SDK {
                 throw new CompletionException(e);
             }
         });
-    }
-
-    /**
-     * Get the secret key associated with this SDK instance.
-     *
-     * @return The secret key as a String
-     */
-    public String getSecretKey() {
-        return secretKey;
-    }
-
-    /**
-     * Set the secret key for this SDK instance.
-     *
-     * @param secretKey The secret key as a String
-     */
-    public void setSecretKey(String secretKey) {
-        this.secretKey = secretKey;
     }
 
     /**

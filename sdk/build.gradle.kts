@@ -20,20 +20,26 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("dev.dejvokep:boosted-yaml:1.3")
     implementation("com.google.code.gson:gson:2.10.1")
+
+    compileOnly("org.projectlombok:lombok:1.18.38")
+    annotationProcessor("org.projectlombok:lombok:1.18.38")
+    testCompileOnly("org.projectlombok:lombok:1.18.38")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.38")
+
     compileOnly("com.google.guava:guava:33.3.1-jre")
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
     testImplementation("com.google.guava:guava:33.3.1-jre")
 }
 
-tasks.named<Test>("test") {
-    useJUnitPlatform()
-
-    maxHeapSize = "1G"
-
-    testLogging {
-        events("passed")
-    }
-}
+//tasks.named<Test>("test") {
+//    useJUnitPlatform()
+//
+//    maxHeapSize = "1G"
+//
+//    testLogging {
+//        events("passed")
+//    }
+//}
 
 tasks.withType<JavaCompile> {
     options.compilerArgs.addAll(listOf("-Xlint:deprecation", "-Xlint:unchecked"))

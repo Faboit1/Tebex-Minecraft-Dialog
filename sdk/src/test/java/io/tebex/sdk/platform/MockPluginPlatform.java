@@ -6,15 +6,15 @@ import io.tebex.sdk.util.CommandResult;
 import java.io.File;
 import java.util.logging.Level;
 
-public class MockPlatform extends BasePlatform {
-    public MockPlatform() {
+public class MockPluginPlatform extends BasePluginPlatform {
+    public MockPluginPlatform() {
         super();
         config = new ServerPlatformConfig(1);
         config.setVerbose(true);
     }
 
     @Override
-    public String getVersion() {
+    public String getPluginVersion() {
         return "";
     }
 

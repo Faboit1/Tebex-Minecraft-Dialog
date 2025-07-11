@@ -10,15 +10,14 @@ import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.server.MinecraftServer;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class TebexFabricPlugin implements DedicatedServerModInitializer {
-    private FabricPlatform platform;
+    private FabricPluginPlatform platform;
 
-    public FabricPlatform getPlatform() {
+    public FabricPluginPlatform getPlatform() {
         return platform;
     }
 
@@ -27,9 +26,9 @@ public class TebexFabricPlugin implements DedicatedServerModInitializer {
      */
     @Override
     public void onInitializeServer() {
-        platform = new FabricPlatform(this);
+        platform = new FabricPluginPlatform(this);
         Tebex.init(platform);
-        platform.load(); // loads the configuration file for the platform
+        platform.loadPlatformConfig(); // loads the configuration file for the platform
 
         // Register event hooks
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {

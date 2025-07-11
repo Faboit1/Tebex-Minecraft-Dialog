@@ -1,6 +1,6 @@
 package io.tebex.sdk.util;
 
-import io.tebex.sdk.platform.Platform;
+import io.tebex.sdk.platform.PluginPlatform;
 import io.tebex.sdk.platform.PlatformType;
 
 import java.io.File;
@@ -8,7 +8,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.logging.Level;
 
 public final class ResourceUtil {
     private ResourceUtil() {
@@ -22,7 +21,7 @@ public final class ResourceUtil {
      * @param fileName The file name
      * @return The file
      */
-    public static File getBundledFile(Platform platform, File directory, String fileName) {
+    public static File getBundledFile(PluginPlatform platform, File directory, String fileName) {
         File file = new File(directory, fileName);
 
         if (!file.exists()) {

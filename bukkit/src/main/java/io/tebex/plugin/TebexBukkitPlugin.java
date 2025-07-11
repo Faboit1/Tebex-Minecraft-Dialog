@@ -31,9 +31,9 @@ import java.util.Properties;
  * The Bukkit platform.
  */
 public final class TebexBukkitPlugin extends JavaPlugin {
-    private BukkitPlatform platform;
+    private BukkitPluginPlatform platform;
 
-    public BukkitPlatform getPlatform() {
+    public BukkitPluginPlatform getPlatform() {
         return platform;
     }
 
@@ -42,12 +42,12 @@ public final class TebexBukkitPlugin extends JavaPlugin {
      */
     @Override
     public void onEnable() {
-        platform = new BukkitPlatform(this);
+        platform = new BukkitPluginPlatform(this);
         Tebex.init(platform);
 
         migrateConfig();  // Migrate old config from BuycraftX
 
-        platform.load(); // loads the configuration file for the platform
+        platform.loadPlatformConfig(); // loads the configuration file for the platform
 
         platform.initStore(); // uses loaded key to set current store and cache the available packages
 
@@ -94,7 +94,7 @@ public final class TebexBukkitPlugin extends JavaPlugin {
         }, 0, 20 * 60);
 
         // start the initial check, which is rescheduled according to the next_check from remote
-        platform.performCheck(true);
+        platform.checkCommandQueue(true);
     }
 
     /**

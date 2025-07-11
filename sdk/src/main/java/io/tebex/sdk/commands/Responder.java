@@ -1,7 +1,7 @@
 package io.tebex.sdk.commands;
 
-public class CommandResponder {
-    public static String formatFancy(CommandContext context, String message, String... args) {
+public class Responder {
+    public static String formatFancy(Context context, String message, String... args) {
         // "Tebex" appears always in cyan from the raw message
         if (!context.isFromConsole()) {
             message = message.replaceAll("Tebex", "§bTebex");
@@ -29,11 +29,10 @@ public class CommandResponder {
         }
 
         // Otherwise append a prefix (cyan), message is white
-        String prefixedFormattedMessage = "§b[Tebex] §f" + message;
-        return prefixedFormattedMessage;
+        return "§b[Tebex] §f" + message;
     }
 
-    public static String formatError(CommandContext context, String message) {
+    public static String formatError(Context context, String message) {
         if (context.isFromConsole()) {
             return message;
         }
@@ -45,7 +44,7 @@ public class CommandResponder {
         return "§b[Tebex] §c" + message;
     }
 
-    public static String formatSuccess(CommandContext context, String message, String... args) {
+    public static String formatSuccess(Context context, String message, String... args) {
         if (context.isFromConsole()) {
             return message;
         }
@@ -63,7 +62,7 @@ public class CommandResponder {
         return "§b[Tebex] §a" + message;
     }
 
-    public static void tellOtherFancy(CommandContext context, String message, String... args) {
+    public static void tellOtherFancy(Context context, String message, String... args) {
         context.tellTarget(formatFancy(context, message, args));
     }
 }

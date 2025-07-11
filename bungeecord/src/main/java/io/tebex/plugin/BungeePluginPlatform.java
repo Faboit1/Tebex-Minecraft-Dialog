@@ -1,6 +1,6 @@
 package io.tebex.plugin;
 
-import io.tebex.sdk.platform.BasePlatform;
+import io.tebex.sdk.platform.BasePluginPlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
 import io.tebex.sdk.platform.PlatformType;
 import io.tebex.sdk.util.CommandResult;
@@ -14,10 +14,10 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class BungeePlatform extends BasePlatform {
+public class BungeePluginPlatform extends BasePluginPlatform {
     private final TebexBungeePlugin plugin;
 
-    public BungeePlatform(TebexBungeePlugin plugin) {
+    public BungeePluginPlatform(TebexBungeePlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -86,7 +86,7 @@ public class BungeePlatform extends BasePlatform {
     }
 
     @Override
-    public String getVersion() {
+    public String getPluginVersion() {
         return plugin.getDescription().getVersion();
     }
 
@@ -106,7 +106,7 @@ public class BungeePlatform extends BasePlatform {
         }
 
         return new PlatformTelemetry(
-                getVersion(),
+                getPluginVersion(),
                 plugin.getProxy().getName(),
                 serverVersion,
                 System.getProperty("java.version"),

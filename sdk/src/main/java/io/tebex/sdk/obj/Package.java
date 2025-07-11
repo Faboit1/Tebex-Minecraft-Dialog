@@ -3,11 +3,14 @@ package io.tebex.sdk.obj;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Getter @AllArgsConstructor
 public class Package {
     private final int id;
     private final String name;
@@ -35,150 +38,10 @@ public class Package {
     private final boolean inheritCommands;
     private final boolean variableGiftcard;
 
-        public Package(int id, String name, String image, double price, int expiryLength, String expiryPeriod, String type, Category category, int globalLimit, String globalLimitPeriod, int userLimit, String userLimitPeriod, List<Server> servers, List<Integer> requiredPackages, boolean requireAny, boolean createGiftcard, boolean showUtil, String itemId, boolean disabled, boolean disableQuantity, boolean customPrice, boolean chooseServer, boolean limitExpires, boolean inheritCommands, boolean variableGiftcard) {
-        this.id = id;
-        this.name = name;
-        this.image = image;
-        this.price = price;
-        this.expiryLength = expiryLength;
-        this.expiryPeriod = expiryPeriod;
-        this.type = type;
-        this.category = category;
-        this.globalLimit = globalLimit;
-        this.globalLimitPeriod = globalLimitPeriod;
-        this.userLimit = userLimit;
-        this.userLimitPeriod = userLimitPeriod;
-        this.servers = servers;
-        this.requiredPackages = requiredPackages;
-        this.requireAny = requireAny;
-        this.createGiftcard = createGiftcard;
-        this.showUtil = showUtil;
-        this.itemId = itemId;
-        this.disabled = disabled;
-        this.disableQuantity = disableQuantity;
-        this.customPrice = customPrice;
-        this.chooseServer = chooseServer;
-        this.limitExpires = limitExpires;
-        this.inheritCommands = inheritCommands;
-        this.variableGiftcard = variableGiftcard;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public int getExpiryLength() {
-        return expiryLength;
-    }
-
-    public String getExpiryPeriod() {
-        return expiryPeriod;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public int getGlobalLimit() {
-        return globalLimit;
-    }
-
-    public String getGlobalLimitPeriod() {
-        return globalLimitPeriod;
-    }
-
-    public int getUserLimit() {
-        return userLimit;
-    }
-
-    public String getUserLimitPeriod() {
-        return userLimitPeriod;
-    }
-
-    public List<Server> getServers() {
-        return servers;
-    }
-
-    public List<Integer> getRequiredPackages() {
-        return requiredPackages;
-    }
-
-    public boolean requiresAnyPackages() {
-        return requireAny;
-    }
-
-    public boolean canCreateGiftcard() {
-        return createGiftcard;
-    }
-
-    public boolean canShowUtil() {
-        return showUtil;
-    }
-
-    public String getItemId() {
-        return itemId;
-    }
-
-    public boolean isDisabled() {
-        return disabled;
-    }
-
-    public boolean isQuantityDisabled() {
-        return disableQuantity;
-    }
-
-    public boolean hasCustomPrice() {
-        return customPrice;
-    }
-
-    public boolean canChooseServer() {
-        return chooseServer;
-    }
-
-    public boolean doesLimitExpire() {
-        return limitExpires;
-    }
-
-    public boolean canInheritCommands() {
-        return inheritCommands;
-    }
-
-    public boolean isVariableGiftcard() {
-        return variableGiftcard;
-    }
-
+    @Getter @AllArgsConstructor
     public static class Category {
         private final int id;
         private final String name;
-
-        public Category(int id, String name) {
-            this.id = id;
-            this.name = name;
-        }
-
-        public int getId() {
-            return id;
-        }
-
-        public String getName() {
-            return name;
-        }
 
         @Override
         public String toString() {
@@ -189,22 +52,10 @@ public class Package {
         }
     }
 
+    @Getter @AllArgsConstructor
     public static class Server {
         private final int id;
         private final String name;
-
-        public Server(int id, String name) {
-            this.id = id;
-            this.name = name;
-        }
-
-        public int getId() {
-            return id;
-        }
-
-        public String getName() {
-            return name;
-        }
 
         @Override
         public String toString() {

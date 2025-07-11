@@ -2,7 +2,10 @@ package io.tebex.sdk.obj;
 
 import com.google.gson.JsonObject;
 import io.tebex.sdk.util.UUIDUtil;
+import lombok.Data;
+import lombok.Getter;
 
+@Data
 public class QueuedPlayer {
     private final int id;
     private final String name;
@@ -13,24 +16,12 @@ public class QueuedPlayer {
      *
      * @param id The Tebex player ID.
      * @param name The player name.
-     * @param uuid The player UUID.
+     * @param uuid The player UUID. If truncated, is transformed into java-style uuid ("00000000-0000-0000-etc...")
      */
     public QueuedPlayer(int id, String name, String uuid) {
         this.id = id;
         this.name = name;
         this.uuid = String.valueOf(UUIDUtil.mojangIdToJavaId(uuid)); // tebex API returns truncated uuids
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getUuid() {
-        return uuid;
     }
 
     public static QueuedPlayer fromJson(JsonObject object) {

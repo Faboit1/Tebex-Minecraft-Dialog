@@ -1,6 +1,6 @@
 name: Tebex
 version: '${version}'
-main: io.tebex.plugin.TebexPlugin
+main: io.tebex.plugin.TebexBukkitPlugin
 api-version: 1.13
 softdepend:
   - BuycraftX

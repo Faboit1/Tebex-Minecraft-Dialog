@@ -3,7 +3,7 @@ package io.tebex.plugin;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.gui.BuyGUI;
 import io.tebex.sdk.SDK;
-import io.tebex.sdk.platform.BasePlatform;
+import io.tebex.sdk.platform.BasePluginPlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
 import io.tebex.sdk.platform.PlatformType;
 import io.tebex.sdk.platform.config.ServerPlatformConfig;
@@ -21,11 +21,11 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class BukkitPlatform extends BasePlatform {
+public class BukkitPluginPlatform extends BasePluginPlatform {
     private BuyGUI buyGUI;
     private final TebexBukkitPlugin plugin;
 
-    public BukkitPlatform(TebexBukkitPlugin plugin) {
+    public BukkitPluginPlatform(TebexBukkitPlugin plugin) {
         this.plugin = plugin;
         this.buyGUI = new BuyGUI(this);
     }
@@ -47,11 +47,6 @@ public class BukkitPlatform extends BasePlatform {
 
     public BuyGUI getBuyGUI() {
         return buyGUI;
-    }
-
-    @Override
-    public PlatformType getType() {
-        return PlatformType.BUKKIT;
     }
 
     @Override
@@ -119,7 +114,7 @@ public class BukkitPlatform extends BasePlatform {
     }
 
     @Override
-    public String getVersion() {
+    public String getPluginVersion() {
         return plugin.getDescription().getVersion();
     }
 
@@ -134,7 +129,7 @@ public class BukkitPlatform extends BasePlatform {
         }
 
         return new PlatformTelemetry(
-                getVersion(),
+                getPluginVersion(),
                 plugin.getServer().getName(),
                 serverVersion,
                 System.getProperty("java.version"),
@@ -154,6 +149,11 @@ public class BukkitPlatform extends BasePlatform {
     public boolean hasPermission(String username, String permission) {
         Player player = getPlayer(username);
         return player != null && player.hasPermission(permission);
+    }
+
+    @Override
+    public PlatformType getType() {
+        return PlatformType.BUKKIT;
     }
 
     public void setPlatformConfigYaml(YamlDocument configYaml) {

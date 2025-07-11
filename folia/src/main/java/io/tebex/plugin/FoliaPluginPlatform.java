@@ -1,7 +1,7 @@
 package io.tebex.plugin;
 
 import io.tebex.plugin.gui.BuyGUI;
-import io.tebex.sdk.platform.BasePlatform;
+import io.tebex.sdk.platform.BasePluginPlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
 import io.tebex.sdk.platform.PlatformType;
 import io.tebex.sdk.util.CommandResult;
@@ -19,11 +19,11 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FoliaPlatform extends BasePlatform {
+public class FoliaPluginPlatform extends BasePluginPlatform {
     private BuyGUI buyGUI;
     private final TebexFoliaPlugin plugin;
 
-    public FoliaPlatform(TebexFoliaPlugin plugin) {
+    public FoliaPluginPlatform(TebexFoliaPlugin plugin) {
         this.plugin = plugin;
         this.buyGUI = new BuyGUI(this);
     }
@@ -45,7 +45,7 @@ public class FoliaPlatform extends BasePlatform {
 
     @Override
     public PlatformType getType() {
-        return PlatformType.BUKKIT;
+        return PlatformType.FOLIA;
     }
 
     @Override
@@ -117,7 +117,7 @@ public class FoliaPlatform extends BasePlatform {
     }
 
     @Override
-    public String getVersion() {
+    public String getPluginVersion() {
         return plugin.getDescription().getVersion();
     }
 
@@ -132,7 +132,7 @@ public class FoliaPlatform extends BasePlatform {
         }
 
         return new PlatformTelemetry(
-                getVersion(),
+                getPluginVersion(),
                 plugin.getServer().getName(),
                 serverVersion,
                 System.getProperty("java.version"),

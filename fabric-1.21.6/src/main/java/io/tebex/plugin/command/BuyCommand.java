@@ -1,16 +1,15 @@
 package io.tebex.plugin.command;
 
 import com.mojang.brigadier.context.CommandContext;
-import io.tebex.plugin.FabricPlatform;
-import io.tebex.plugin.TebexFabricPlugin;
+import io.tebex.plugin.FabricPluginPlatform;
 import io.tebex.plugin.gui.BuyGUI;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
 public class BuyCommand {
-    private final FabricPlatform platform;
-    public BuyCommand(FabricPlatform platform) {
+    private final FabricPluginPlatform platform;
+    public BuyCommand(FabricPluginPlatform platform) {
         this.platform = platform;
     }
 

@@ -1,7 +1,7 @@
 package io.tebex.plugin;
 
 import io.tebex.plugin.gui.BuyGUI;
-import io.tebex.sdk.platform.BasePlatform;
+import io.tebex.sdk.platform.BasePluginPlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
 import io.tebex.sdk.platform.PlatformType;
 import io.tebex.sdk.platform.config.ServerPlatformConfig;
@@ -21,7 +21,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FabricPlatform extends BasePlatform {
+public class FabricPluginPlatform extends BasePluginPlatform {
     private BuyGUI buyGUI;
     private final TebexFabricPlugin plugin;
 
@@ -31,7 +31,7 @@ public class FabricPlatform extends BasePlatform {
 
     private MinecraftServer server;
 
-    public FabricPlatform(TebexFabricPlugin plugin) {
+    public FabricPluginPlatform(TebexFabricPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -92,7 +92,7 @@ public class FabricPlatform extends BasePlatform {
     }
 
     @Override
-    public String getVersion() {
+    public String getPluginVersion() {
         return "@VERSION@";
     }
 
@@ -120,7 +120,7 @@ public class FabricPlatform extends BasePlatform {
         }
 
         return new PlatformTelemetry(
-                getVersion(),
+                getPluginVersion(),
                 server.getName(),
                 serverVersion,
                 System.getProperty("java.version"),

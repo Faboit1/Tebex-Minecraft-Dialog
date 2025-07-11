@@ -26,7 +26,7 @@ public class TebexCommand implements SimpleCommand {
 
         if(args.length == 0) {
             sender.sendMessage(legacySection().deserialize("§8[Tebex] §7Welcome to Tebex!"));
-            sender.sendMessage(legacySection().deserialize("§8[Tebex] §7This server is running version §fv" + commandManager.getPlatform().getVersion() + "§7."));
+            sender.sendMessage(legacySection().deserialize("§8[Tebex] §7This server is running version §fv" + commandManager.getPlatform().getPluginVersion() + "§7."));
             return;
         }
 

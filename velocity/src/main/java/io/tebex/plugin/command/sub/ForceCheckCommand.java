@@ -22,7 +22,7 @@ public class ForceCheckCommand extends SubCommand {
         }
 
         sender.sendMessage(legacySection().deserialize("§b[Tebex] §7Performing force check..."));
-        getPlatform().performCheck(false);
+        getPlatform().checkCommandQueue(false);
     }
 
     @Override

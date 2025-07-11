@@ -11,7 +11,7 @@ import com.velocitypowered.api.util.ProxyVersion;
 import io.tebex.plugin.event.JoinListener;
 import io.tebex.plugin.manager.CommandManager;
 import io.tebex.sdk.Tebex;
-import io.tebex.sdk.platform.BasePlatform;
+import io.tebex.sdk.platform.BasePluginPlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
 import io.tebex.sdk.platform.PlatformType;
 import io.tebex.sdk.platform.config.ProxyPlatformConfig;
@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
         url = "https://tebex.io",
         authors = {"Tebex"}
 )
-public class TebexVelocityPlugin extends BasePlatform {
+public class TebexVelocityPlugin extends BasePluginPlatform {
     protected ProxyPlatformConfig config;
 
     private final ProxyServer proxy;
@@ -57,7 +57,7 @@ public class TebexVelocityPlugin extends BasePlatform {
     public void onEnable(ProxyInitializeEvent event) {
         Tebex.init(this);
 
-        load(); // load config file for the platform
+        loadPlatformConfig(); // load config file for the platform
 
         initStore(); // use loaded key to set current store
 
@@ -141,7 +141,7 @@ public class TebexVelocityPlugin extends BasePlatform {
     }
 
     @Override
-    public String getVersion() {
+    public String getPluginVersion() {
         return Constants.VERSION;
     }
 
@@ -175,7 +175,7 @@ public class TebexVelocityPlugin extends BasePlatform {
         }
 
         return new PlatformTelemetry(
-                getVersion(),
+                getPluginVersion(),
                 proxyVersion.getName(),
                 serverVersion,
                 System.getProperty("java.version"),

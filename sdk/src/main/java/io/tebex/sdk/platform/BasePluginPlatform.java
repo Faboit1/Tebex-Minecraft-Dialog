@@ -25,7 +25,10 @@ import java.util.logging.Level;
 
 import static io.tebex.sdk.util.ResourceUtil.getBundledFile;
 
-public abstract class BasePlatform implements Platform {
+/**
+ * BasePlatform class represents the foundational platform for basic Tebex functionality.
+ */
+public abstract class BasePluginPlatform implements PluginPlatform {
     public final int MAX_COMMANDS_PER_BATCH = 3;
 
     protected SDK sdk;
@@ -77,7 +80,7 @@ public abstract class BasePlatform implements Platform {
                 configure();
 
                 // Start the initial check, which is rescheduled per each remote next check
-                performCheck(true);
+                checkCommandQueue(true);
             }).exceptionally(ex -> {
                 Throwable cause = ex.getCause();
                 setSetup(false);
@@ -98,10 +101,10 @@ public abstract class BasePlatform implements Platform {
     }
 
     public final void performCheck() {
-        performCheck(true);
+        checkCommandQueue(true);
     }
 
-    public final CompletableFuture<String[]> performCheck(boolean useRemoteNextCheck) {
+    public final CompletableFuture<String[]> checkCommandQueue(boolean useRemoteNextCheck) {
         CompletableFuture<String[]> forceCheckOutput = new CompletableFuture<>();
 
         if(!isSetup()) {
@@ -143,7 +146,7 @@ public abstract class BasePlatform implements Platform {
                 playerList.forEach(this::handleOnlineCommands);
             }
 
-            if(! duePlayersResponse.canExecuteOffline()) return;
+            if(! duePlayersResponse.isExecuteOffline()) return;
             handleOfflineCommands();
         });
 
@@ -217,7 +220,7 @@ public abstract class BasePlatform implements Platform {
                 CommandResult commandResult = dispatchCommand(command.getParsedCommand());
 
                 // report whether the command succeeded or failed
-                if (!commandResult.getIsSuccess()) {
+                if (!commandResult.isSuccess()) {
                     String extraInfo = "";
                     Throwable commandException = commandResult.getException();
                     if (commandResult.getMessage() != null && !commandResult.getMessage().isEmpty()) {
@@ -275,7 +278,7 @@ public abstract class BasePlatform implements Platform {
                     CommandResult offlineCommandResult = dispatchCommand(command.getParsedCommand());
 
                     // report whether the offline command succeeded or failed
-                    if (!offlineCommandResult.getIsSuccess()) {
+                    if (!offlineCommandResult.isSuccess()) {
                         String extraInfo = "";
                         Throwable commandException = offlineCommandResult.getException();
                         if (!offlineCommandResult.getMessage().isEmpty()) {
@@ -323,7 +326,7 @@ public abstract class BasePlatform implements Platform {
      * @return The version number.
      */
     public final int getVersionNumber() {
-        return Integer.parseInt(getVersion().replace(".", ""));
+        return Integer.parseInt(getPluginVersion().replace(".", ""));
     }
 
     /**
@@ -554,7 +557,7 @@ public abstract class BasePlatform implements Platform {
     }
 
     public void createJoinEvent(String uuid, String username, String ip) {
-        serverEvents.add(new ServerEvent(uuid, username, ip, ServerEventType.JOIN));
+        serverEvents.add(new ServerEvent(uuid, username, ip, EnumServerEventType.JOIN));
     }
 
     public final void configure() {
@@ -566,7 +569,7 @@ public abstract class BasePlatform implements Platform {
         return PLUGIN_EVENTS;
     }
 
-    public void load() {
+    public void loadPlatformConfig() {
         try {
             // Load the platform config file.
             configYaml = initPlatformConfig();
@@ -601,5 +604,9 @@ public abstract class BasePlatform implements Platform {
 
     public void clearSelectedPluginEvents(List<ServerEvent> events) {
         serverEvents.removeAll(events);
+    }
+
+    public void setServerInformation(ServerInformation info) {
+        this.storeInformation = info;
     }
 }

@@ -8,9 +8,9 @@ import net.md_5.bungee.event.EventHandler;
 import java.util.UUID;
 
 public class JoinListener implements Listener {
-    private final BungeePlatform platform;
+    private final BungeePluginPlatform platform;
 
-    public JoinListener(BungeePlatform platform) {
+    public JoinListener(BungeePluginPlatform platform) {
         this.platform = platform;
     }
 

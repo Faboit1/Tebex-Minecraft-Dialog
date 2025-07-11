@@ -2,7 +2,7 @@ package io.tebex.sdk;
 
 import io.tebex.sdk.obj.*;
 import io.tebex.sdk.obj.Package;
-import io.tebex.sdk.platform.MockPlatform;
+import io.tebex.sdk.platform.MockPluginPlatform;
 import io.tebex.sdk.triage.EnumEventLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,14 +13,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SDKTest {
     SDK sdk;
-    MockPlatform platform;
+    MockPluginPlatform platform;
 
     String secret = ""; //TODO replace with your secret key
     String testUsername = ""; //TODO replace with a username to test against
     String testUuid = ""; //TODO replace with a uuid to test against
     @BeforeEach
     void setUp() {
-        platform = new MockPlatform();
+        platform = new MockPluginPlatform();
         sdk = new SDK(platform, secret);
     }
 

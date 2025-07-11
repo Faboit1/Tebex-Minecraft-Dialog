@@ -1,11 +1,13 @@
 package io.tebex.sdk.platform.config;
 
 import dev.dejvokep.boostedyaml.YamlDocument;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
- * The PlatformConfig class holds the configuration for the Tebex SDK.
- * It contains settings related to excluded players, minimum playtime, and various other options.
+ * The ServerPlatformConfig class holds the configuration for the Tebex SDK on game servers. This is the "full" Tebex configuration.
  */
+@Getter @Setter
 public class ServerPlatformConfig implements IPlatformConfig {
     private final int configVersion;
     private YamlDocument yamlDocument;
@@ -30,47 +32,6 @@ public class ServerPlatformConfig implements IPlatformConfig {
     }
 
     /**
-     * Sets the secret key.
-     *
-     * @param secretKey The secret key.
-     */
-    public void setSecretKey(String secretKey) {
-        this.secretKey = secretKey;
-    }
-
-    public void setBuyCommandName(String buyCommandName) {
-        this.buyCommandName = buyCommandName;
-    }
-
-    public void setBuyCommandEnabled(boolean buyCommandEnabled) {
-        this.buyCommandEnabled = buyCommandEnabled;
-    }
-
-    public void setCheckForUpdates(boolean checkForUpdates) {
-        this.checkForUpdates = checkForUpdates;
-    }
-
-    @Override
-    public void setVerbose(boolean verbose) {
-        this.verbose = verbose;
-    }
-
-    public void setProxyMode(boolean proxyMode) {
-        this.proxyMode = proxyMode;
-    }
-
-    public void setAutoReportEnabled(boolean autoReportEnabled) { this.autoReportEnabled = autoReportEnabled; }
-
-    /**
-     * Sets the YAML document for this configuration.
-     *
-     * @param yamlDocument The YAML document.
-     */
-    public void setYamlDocument(YamlDocument yamlDocument) {
-        this.yamlDocument = yamlDocument;
-    }
-
-    /**
      * Returns the configuration version.
      *
      * @return The configuration version.
@@ -90,16 +51,9 @@ public class ServerPlatformConfig implements IPlatformConfig {
         return secretKey;
     }
 
-    public String getBuyCommandName() {
-        return buyCommandName;
-    }
-
-    public boolean isBuyCommandEnabled() {
-        return buyCommandEnabled;
-    }
-
-    public boolean isCheckForUpdates() {
-        return checkForUpdates;
+    @Override
+    public void setSecretKey(String key) {
+        this.secretKey = key;
     }
 
     @Override
@@ -107,11 +61,10 @@ public class ServerPlatformConfig implements IPlatformConfig {
         return verbose;
     }
 
-    public boolean isProxyMode() {
-        return proxyMode;
+    @Override
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
     }
-
-    public boolean isAutoReportEnabled() { return autoReportEnabled; }
 
     /**
      * Returns the YAML document for this configuration.
@@ -121,20 +74,5 @@ public class ServerPlatformConfig implements IPlatformConfig {
     @Override
     public YamlDocument getYamlDocument() {
         return yamlDocument;
-    }
-
-    @Override
-    public String toString() {
-        return "ServerPlatformConfig{" +
-                "configVersion=" + configVersion +
-                ", yamlDocument=" + yamlDocument +
-                ", buyCommandName='" + buyCommandName + '\'' +
-                ", buyCommandEnabled=" + buyCommandEnabled +
-                ", checkForUpdates=" + checkForUpdates +
-                ", verbose=" + verbose +
-                ", proxyMode=" + proxyMode +
-                ", secretKey='" + secretKey + '\'' +
-                ", autoReportEnabled=" + autoReportEnabled +
-                '}';
     }
 }

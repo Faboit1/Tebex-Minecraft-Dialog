@@ -2,14 +2,10 @@ package io.tebex.sdk.triage;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import io.tebex.sdk.platform.Platform;
+import io.tebex.sdk.platform.PluginPlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
-import io.tebex.sdk.request.TebexRequest;
 import io.tebex.sdk.request.response.ServerInformation;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
@@ -44,9 +40,9 @@ public class PluginEvent {
     @SerializedName(value = "trace")
     private String trace;
 
-    private final transient Platform _platform;
+    private final transient PluginPlatform _platform;
 
-    public PluginEvent(Platform platform, EnumEventLevel level, String message) {
+    public PluginEvent(PluginPlatform platform, EnumEventLevel level, String message) {
         this._platform = platform;
 
         PlatformTelemetry tel = platform.getTelemetry();
@@ -55,7 +51,7 @@ public class PluginEvent {
         this.frameworkId = tel.getServerSoftware();                 // name of the platform software, Bukkit, Spigot, etc.
         this.runtimeVersion = "Java " + tel.getJavaVersion();       // version of Java
         this.frameworkVersion = tel.getServerVersion();             // version of Bukkit, Spigot, etc.
-        this.pluginVersion = platform.getVersion();
+        this.pluginVersion = platform.getPluginVersion();
         this.eventLevel = level;
         this.eventMessage = message;
         this.trace = "";
