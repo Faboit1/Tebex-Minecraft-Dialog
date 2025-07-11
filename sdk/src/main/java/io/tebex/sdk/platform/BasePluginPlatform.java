@@ -590,7 +590,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
 
     @Override
     public void reloadConfig() {
-        //TODO
+        loadPlatformConfig();
     }
 
     @Override
