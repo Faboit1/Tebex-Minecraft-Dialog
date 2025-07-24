@@ -387,7 +387,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
      * @param message The message to log.
      */
     public final void debug(String message) {
-        if (!getPlatformConfig().isVerbose()) return;
+        if (! getPlatformConfig().isVerbose()) return;
         info("[DEBUG] " + message);
     }
 
