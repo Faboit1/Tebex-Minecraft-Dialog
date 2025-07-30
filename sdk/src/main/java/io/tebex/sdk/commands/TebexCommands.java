@@ -2,6 +2,7 @@ package io.tebex.sdk.commands;
 
 import io.tebex.sdk.obj.CommunityGoal;
 import io.tebex.sdk.platform.PluginPlatform;
+import io.tebex.sdk.platform.config.IPlatformConfig;
 import io.tebex.sdk.request.response.ServerInformation;
 import lombok.Getter;
 
@@ -273,17 +274,24 @@ public class TebexCommands {
             String oldKey = platform.getPlatformConfig().getSecretKey();
 
             // Set the new key and attempt to query server info. If it works, key is valid and we set in config.
-            platform.getSDK().setSecretKey(ctx.getArguments()[0]);
+            String newKey = ctx.getArguments()[0];
+
+            IPlatformConfig cfg = platform.getPlatformConfig();
+            platform.getSDK().setSecretKey(newKey);
+            cfg.setSecretKey(newKey);
+            platform.saveConfig(cfg);
+
             platform.getSDK().getServerInformation().thenAccept((newInfo) -> {
                 if (newInfo != null) {
-                    platform.getPlatformConfig().setSecretKey(ctx.getArguments()[0]);
                     platform.setServerInformation(newInfo);
-                    platform.saveConfig(platform.getPlatformConfig());
                     platform.refreshListings();
+                    platform.initStore();
                     response.complete(new String[]{Responder.formatFancy(ctx, "Successfully connected to your store: {0} as {1}", newInfo.getStore().getName(), newInfo.getServer().getName())});
                 }
             }).exceptionally((e) -> {
                 platform.getSDK().setSecretKey(oldKey);
+                cfg.setSecretKey(oldKey);
+                platform.saveConfig(cfg);
                 response.complete(new String[]{Responder.formatError(ctx, "Your secret key was invalid. Please try again.")});
                 return null;
             });

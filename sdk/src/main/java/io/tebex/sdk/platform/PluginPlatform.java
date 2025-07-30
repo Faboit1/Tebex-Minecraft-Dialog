@@ -28,6 +28,8 @@ public interface PluginPlatform {
      */
     File getRunningDirectory();
 
+    void initStore();
+
     /**
      * Logs a message with the specified level.
      *

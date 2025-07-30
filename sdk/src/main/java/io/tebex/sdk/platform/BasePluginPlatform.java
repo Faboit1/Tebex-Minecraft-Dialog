@@ -109,6 +109,8 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         CompletableFuture<String[]> forceCheckOutput = new CompletableFuture<>();
 
         if(!isSetup()) {
+            debug("Tebex is not set up. Skipping check.");
+            executeAsyncLater(this::performCheck, 1, TimeUnit.MINUTES);
             return forceCheckOutput;
         }
 
@@ -387,7 +389,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
      * @param message The message to log.
      */
     public final void debug(String message) {
-        if (! getPlatformConfig().isVerbose()) return;
+        if (getPlatformConfig() != null && !getPlatformConfig().isVerbose()) return;
         info("[DEBUG] " + message);
     }
 
@@ -584,20 +586,26 @@ public abstract class BasePluginPlatform implements PluginPlatform {
 
     public void loadPlatformConfig() {
         try {
-            // Load the platform config file.
+            debug("Loading platform config...");
             configYaml = initPlatformConfig();
+            debug("Config YAML initialized");
             config = loadServerPlatformConfig(configYaml);
+            debug("Server platform config loaded, secret key: " + config.getSecretKey());
 
-            // check if secret key was provided via environment, which overrides the config
             String envKey = System.getenv("TEBEX_SECRET_KEY");
             if (envKey != null && !envKey.isEmpty()) {
-                debug("Detected secret key environment variable. This will override the key in config.yml.");
+                debug("Using secret key from environment variable");
                 config.setSecretKey(envKey);
+            }
+
+            if (config.getYamlDocument() == null) {
+                error("YamlDocument is null after loading config");
             }
         } catch (IOException e) {
             warning("Failed to load configuration: " + e.getMessage(),
                     "Check that your configuration is valid and in the proper format and reload the plugin. You may delete `Tebex/config.yml` and a new configuration will be generated.");
         }
+
     }
 
     @Override
@@ -608,12 +616,25 @@ public abstract class BasePluginPlatform implements PluginPlatform {
     @Override
     public void saveConfig(IPlatformConfig platformConfig) {
         try {
+            config.setSecretKey(platformConfig.getSecretKey());
+            config.setVerbose(platformConfig.isVerbose());
             this.config = (ServerPlatformConfig) platformConfig;
-            this.config.getYamlDocument().save();
+            YamlDocument yamlDoc = this.config.getYamlDocument();
+            if (yamlDoc == null) {
+                error("YamlDocument is null when trying to save config!?");
+                return;
+            }
+
+            // ensure actual value is set in the document
+            yamlDoc.set("server.secret-key", this.config.getSecretKey());
+            yamlDoc.set("verbose", this.config.isVerbose());
+
+            yamlDoc.save(); // Save the updated YAML document
         } catch (Exception e) {
             error("Failed to save configuration: " + e.getMessage(), e);
         }
     }
+
 
     public void clearSelectedPluginEvents(List<ServerEvent> events) {
         serverEvents.removeAll(events);
