@@ -1,6 +1,5 @@
 package io.tebex.plugin.gui;
 
-import io.tebex.sdk.Tebex;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;

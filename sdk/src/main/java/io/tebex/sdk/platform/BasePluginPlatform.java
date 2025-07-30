@@ -48,7 +48,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
     /**
      * Checks if the configured store is Geyser/Offline
      *
-     * @return Whether the store is a Offline/Geyser type webstore
+     * @return Whether the store is an Offline/Geyser-type webstore
      */
     public final boolean isGeyser() {
         if (!isSetup()) return false;
@@ -187,7 +187,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
      */
     @NotNull
     public final Object getPlayerId(String name, UUID uuid) {
-        // online mode uses uuids while offline mode uses usernames. public final to the name if we ever fail to have a uuid
+        // online mode uses uuids while offline mode uses usernames. public final to the name if we ever fail to have an uuid
         Object identifier = isOnlineMode() ? uuid : name;
         if (identifier == null) {
             identifier = (name == null) ? "" : name;
@@ -216,7 +216,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                 continue;
             }
 
-            executeBlockingLater(() -> {
+            final Runnable commandRunnable = () -> {
                 info(String.format("Dispatching command '%s' for player '%s'", command.getParsedCommand(), playerName));
                 CommandResult commandResult = dispatchCommand(command.getParsedCommand());
 
@@ -241,7 +241,13 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                     }
                     warning("Command failed to execute: " + extraInfo, solution);
                 }
-            }, command.getDelay(), TimeUnit.SECONDS);
+            };
+            if (command.getDelay() > 0) {
+                executeBlockingLater(commandRunnable, command.getDelay(), TimeUnit.SECONDS);
+            } else {
+                executeBlocking(commandRunnable);
+            }
+
             // At present all queued commands are reported as successful once delivery criteria are met, regardless if dispatching
             // the command worked without errors. We *could* refactor this to only mark commands completed if they were successful, but
             // platform-specific support for actually reporting if a command was successful and why or why not is dubious at best.
@@ -274,7 +280,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
 
             List<Integer> completedCommands = new ArrayList<>();
             for (QueuedCommand command : offlineData.getCommands()) {
-                executeBlockingLater(() -> {
+                final Runnable commandRunnable = () -> {
                     info(String.format("Dispatching offline command '%s' for player '%s'.", command.getParsedCommand(), command.getPlayer().getName()));
                     CommandResult offlineCommandResult = dispatchCommand(command.getParsedCommand());
 
@@ -295,7 +301,13 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                         }
                         warning(String.format("Command `%s` failed to execute: %s", command.getParsedCommand(), extraInfo), solution);
                     }
-                }, command.getDelay(), TimeUnit.SECONDS);
+                };
+                if (command.getDelay() > 0) {
+                    executeBlockingLater(commandRunnable, command.getDelay(), TimeUnit.SECONDS);
+                } else {
+                    executeBlocking(commandRunnable);
+                }
+
                 completedCommands.add(command.getId());
 
                 if(completedCommands.size() % MAX_COMMANDS_PER_BATCH == 0) {
@@ -342,7 +354,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
     /**
      * Logs a warning message to the console. A "warning" is due to a problem that either the user can solve, or a
      * problem that can resolve itself later. All warnings must have solutions provided.
-     *
+     * <p>
      * ex.)
      * @param message The message to log.
      * @param solution User-friendly description of how to resolve the problem.

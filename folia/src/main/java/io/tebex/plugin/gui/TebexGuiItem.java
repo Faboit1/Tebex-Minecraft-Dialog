@@ -1,7 +1,6 @@
 package io.tebex.plugin.gui;
 
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 
 public class TebexGuiItem {

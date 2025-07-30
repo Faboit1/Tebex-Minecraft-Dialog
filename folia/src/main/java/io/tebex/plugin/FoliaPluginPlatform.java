@@ -1,9 +1,12 @@
 package io.tebex.plugin;
 
+import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.gui.BuyGUI;
+import io.tebex.sdk.SDK;
 import io.tebex.sdk.platform.BasePluginPlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
 import io.tebex.sdk.platform.PlatformType;
+import io.tebex.sdk.platform.config.ServerPlatformConfig;
 import io.tebex.sdk.util.CommandResult;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -30,7 +33,7 @@ public class FoliaPluginPlatform extends BasePluginPlatform {
 
     @Override
     public int getFreeSlots(Object playerId) {
-        Player player = plugin.getPlayer(playerId);
+        Player player = getPlayer(playerId);
         if (player == null) return -1;
 
         ItemStack[] inv = player.getInventory().getContents();
@@ -44,30 +47,13 @@ public class FoliaPluginPlatform extends BasePluginPlatform {
     }
 
     @Override
-    public PlatformType getType() {
-        return PlatformType.FOLIA;
-    }
-
-    @Override
     public File getRunningDirectory() {
         return plugin.getDataFolder();
     }
 
-
     @Override
     public boolean isOnlineMode() {
         return Bukkit.getServer().getOnlineMode() || config.isProxyMode();
-    }
-
-    @Override
-    public <T> T getPlayer(Object uuidOrUsername) {
-        if(uuidOrUsername == null) return null;
-
-        if (isOnlineMode() && !isGeyser() && uuidOrUsername instanceof UUID) {
-            return (T) Bukkit.getServer().getPlayer((UUID) uuidOrUsername);
-        }
-
-        return (T) Bukkit.getServer().getPlayerExact((String) uuidOrUsername);
     }
 
     @Override
@@ -84,14 +70,12 @@ public class FoliaPluginPlatform extends BasePluginPlatform {
     @Override
     public void executeAsync(Runnable runnable) {
         if (!plugin.isEnabled()) return;
-
         plugin.getServer().getGlobalRegionScheduler().execute(plugin, runnable);
     }
 
     @Override
     public void executeAsyncLater(Runnable runnable, long time, TimeUnit unit) {
         if (!plugin.isEnabled()) return;
-
         long ticks = unit.toMillis(time) / 50;
         plugin.getServer().getGlobalRegionScheduler().runDelayed(plugin, task -> runnable.run(), ticks);
     }
@@ -99,16 +83,25 @@ public class FoliaPluginPlatform extends BasePluginPlatform {
     @Override
     public void executeBlocking(Runnable runnable) {
         if (!plugin.isEnabled()) return;
-
         plugin.getServer().getGlobalRegionScheduler().execute(plugin, runnable);
     }
 
     @Override
     public void executeBlockingLater(Runnable runnable, long time, TimeUnit unit) {
         if (!plugin.isEnabled()) return;
-
         long ticks = unit.toMillis(time) / 50;
         plugin.getServer().getGlobalRegionScheduler().runDelayed(plugin, task -> runnable.run(), ticks);
+    }
+
+    @Override
+    public <T> T getPlayer(Object uuidOrUsername) {
+        if(uuidOrUsername == null) return null;
+
+        if (isOnlineMode() && !isGeyser() && uuidOrUsername instanceof UUID) {
+            return (T) Bukkit.getServer().getPlayer((UUID) uuidOrUsername);
+        }
+
+        return (T) Bukkit.getServer().getPlayerExact((String) uuidOrUsername);
     }
 
     @Override
@@ -143,10 +136,9 @@ public class FoliaPluginPlatform extends BasePluginPlatform {
 
     @Override
     public void sendPlayerMessage(String playerName, String message) {
-        Player player = plugin.getPlayer(playerName);
-        if (player != null){
-            player.sendMessage(message);
-        }
+        Player player = getPlayer(playerName);
+        if (player == null) return;
+        player.sendMessage(message);
     }
 
     @Override
@@ -155,12 +147,21 @@ public class FoliaPluginPlatform extends BasePluginPlatform {
         return player != null && player.hasPermission(permission);
     }
 
-    public BuyGUI getBuyGUI() {
-        return buyGUI;
+    @Override
+    public PlatformType getType() {
+        return PlatformType.FOLIA;
     }
 
-    public void setBuyGUI(BuyGUI buyGUI) {
-        this.buyGUI = buyGUI;
+    public void setPlatformConfigYaml(YamlDocument configYaml) {
+        this.configYaml = configYaml;
+    }
+
+    public void setConfig(ServerPlatformConfig serverPlatformConfig) {
+        this.config = serverPlatformConfig;
+    }
+
+    public void setSecretKey(String key) {
+        this.sdk = new SDK(this, key);
     }
 
     public TebexFoliaPlugin getPlugin() {

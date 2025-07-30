@@ -15,7 +15,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -49,7 +50,6 @@ public class BukkitPluginPlatform extends BasePluginPlatform {
     public File getRunningDirectory() {
         return plugin.getDataFolder();
     }
-
 
     @Override
     public boolean isOnlineMode() {

@@ -45,7 +45,7 @@ public final class TebexBukkitPlugin extends JavaPlugin {
         platform = new BukkitPluginPlatform(this);
         Tebex.init(platform);
 
-        migrateConfig();  // Migrate old config from BuycraftX
+        migrateConfig(); // Migrate old config from BuycraftX
 
         platform.loadPlatformConfig(); // loads the configuration file for the platform
 
@@ -71,9 +71,7 @@ public final class TebexBukkitPlugin extends JavaPlugin {
         getServer().getScheduler().runTaskTimerAsynchronously(this, platform::refreshListings, 0, 20 * 60 * 5);
 
         // Every 10 minutes clear the plugin event queue
-        getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
-            platform.getSDK().sendPluginEvents();
-        }, 0, 60 * 20 * 10);
+        getServer().getScheduler().runTaskTimerAsynchronously(this, () -> platform.getSDK().sendPluginEvents(), 0, 60 * 20 * 10);
 
         // clear server events every minute
         getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
