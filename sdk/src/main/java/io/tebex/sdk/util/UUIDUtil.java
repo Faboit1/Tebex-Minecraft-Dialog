@@ -11,7 +11,7 @@ public class UUIDUtil {
      * @return the Java UUID or null if id provided is null
      */
     public static UUID mojangIdToJavaId(String id) {
-        if (id == null) {
+        if (id == null || id.isEmpty() || id.equals("null")) {
             return null;
         }
 
