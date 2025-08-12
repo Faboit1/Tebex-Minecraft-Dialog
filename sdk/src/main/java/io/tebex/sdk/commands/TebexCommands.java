@@ -181,7 +181,12 @@ public class TebexCommands {
             }
 
             boolean debugValue = Boolean.parseBoolean(value);
-            platform.getPlatformConfig().setVerbose(debugValue);
+            IPlatformConfig cfg = platform.getPlatformConfig();
+            cfg.setVerbose(debugValue);
+
+            // save debug config to file
+            platform.saveConfig(cfg);
+
             response.complete(new String[] { Responder.formatFancy(ctx, "Debug mode set to {0}", value) } );
             return response;
         });
