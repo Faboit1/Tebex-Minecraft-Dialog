@@ -144,8 +144,14 @@ public abstract class BasePluginPlatform implements PluginPlatform {
             List<QueuedPlayer> playerList = duePlayersResponse.getPlayers();
             if(! playerList.isEmpty()) {
                 String listMessage = "Found " + playerList.size() + " " + StringUtil.pluralise(playerList.size(), "player", "players") + " with pending commands.";
-                debug(listMessage);
-                playerList.forEach(this::handleOnlineCommands);
+
+                for (QueuedPlayer queuedPlayer : playerList) {
+                    try {
+                        handleOnlineCommands(queuedPlayer);
+                    } catch (Exception e) {
+                        error("Failed to handle online commands for player '" + queuedPlayer.getName() + "': " + e.getMessage(), e);
+                    }
+                }
             }
 
             if(! duePlayersResponse.isExecuteOffline()) return;
