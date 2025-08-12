@@ -63,14 +63,15 @@ public class TebexVelocityPlugin extends BasePluginPlatform {
         new CommandManager(this).register();
         placeholderManager.registerDefaults();
         proxy.getEventManager().register(this, new JoinListener(this));
-        proxy.getScheduler()
-                .buildTask(this, () -> {
-                    getSDK().getServerInformation().thenAccept(information -> storeInformation = information);
-                    getSDK().getListing().thenAccept(listing -> storeCategories = listing);
-                })
-                .repeat(5, TimeUnit.MINUTES)
-                .delay(0, TimeUnit.MINUTES)
-                .schedule();
+
+//        proxy.getScheduler()
+//                .buildTask(this, () -> {
+//                    getSDK().getServerInformation().thenAccept(information -> storeInformation = information);
+//                    getSDK().getListing().thenAccept(listing -> storeCategories = listing);
+//                })
+//                .repeat(5, TimeUnit.MINUTES)
+//                .delay(0, TimeUnit.MINUTES)
+//                .schedule();
     }
 
     @Override
