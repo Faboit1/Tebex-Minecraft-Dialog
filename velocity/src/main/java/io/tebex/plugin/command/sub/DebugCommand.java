@@ -4,7 +4,7 @@ import com.velocitypowered.api.command.CommandSource;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.TebexVelocityPlugin;
 import io.tebex.plugin.command.SubCommand;
-import io.tebex.sdk.platform.config.ProxyPlatformConfig;
+import io.tebex.sdk.platform.config.ServerPlatformConfig;
 import io.tebex.sdk.util.StringUtil;
 
 import java.io.IOException;
@@ -25,7 +25,7 @@ public class DebugCommand extends SubCommand {
 
         TebexVelocityPlugin platform = getPlatform();
 
-        ProxyPlatformConfig config = (ProxyPlatformConfig) platform.getPlatformConfig();
+        ServerPlatformConfig config = (ServerPlatformConfig) platform.getPlatformConfig();
         YamlDocument configFile = config.getYamlDocument();
 
         if (StringUtil.isTruthy(args[0])) {

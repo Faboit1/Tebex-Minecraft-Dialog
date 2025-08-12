@@ -31,9 +31,7 @@ public class CommandManager {
         ).forEach(command -> commands.put(command.getName(), command));
 
         SimpleCommand tebexCommand = new TebexCommand(this);
-
         com.velocitypowered.api.command.CommandManager commandManager = platform.getProxy().getCommandManager();
-
         CommandMeta commandMeta = commandManager.metaBuilder("tebex")
                 .aliases("tbx", "buycraft")
                 .plugin(platform)

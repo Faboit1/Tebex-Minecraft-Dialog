@@ -14,7 +14,6 @@ import io.tebex.sdk.Tebex;
 import io.tebex.sdk.platform.BasePluginPlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
 import io.tebex.sdk.platform.PlatformType;
-import io.tebex.sdk.platform.config.ProxyPlatformConfig;
 import io.tebex.sdk.util.CommandResult;
 import net.kyori.adventure.text.Component;
 
@@ -36,7 +35,6 @@ import java.util.regex.Pattern;
         authors = {"Tebex"}
 )
 public class TebexVelocityPlugin extends BasePluginPlatform {
-    protected ProxyPlatformConfig config;
 
     private final ProxyServer proxy;
     private final Logger logger;
@@ -48,7 +46,7 @@ public class TebexVelocityPlugin extends BasePluginPlatform {
         this.logger = logger;
         this.dataDirectory = dataDirectory;
     }
-
+    
     public ProxyServer getProxy() {
         return proxy;
     }

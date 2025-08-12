@@ -6,7 +6,7 @@ import io.tebex.plugin.TebexVelocityPlugin;
 import io.tebex.plugin.command.SubCommand;
 import io.tebex.sdk.SDK;
 import io.tebex.sdk.exception.ServerNotFoundException;
-import io.tebex.sdk.platform.config.ProxyPlatformConfig;
+import io.tebex.sdk.platform.config.ServerPlatformConfig;
 
 import java.io.IOException;
 
@@ -28,7 +28,7 @@ public class SecretCommand extends SubCommand {
         TebexVelocityPlugin platform = getPlatform();
 
         SDK sdk = platform.getSDK();
-        ProxyPlatformConfig config = (ProxyPlatformConfig) platform.getPlatformConfig();
+        ServerPlatformConfig config = (ServerPlatformConfig) platform.getPlatformConfig();
         YamlDocument configFile = config.getYamlDocument();
 
         sdk.setSecretKey(serverToken);

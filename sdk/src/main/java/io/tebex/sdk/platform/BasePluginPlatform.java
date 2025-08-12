@@ -8,7 +8,6 @@ import io.tebex.sdk.obj.*;
 import io.tebex.sdk.placeholder.PlaceholderManager;
 import io.tebex.sdk.placeholder.defaults.UuidPlaceholder;
 import io.tebex.sdk.platform.config.IPlatformConfig;
-import io.tebex.sdk.platform.config.ProxyPlatformConfig;
 import io.tebex.sdk.platform.config.ServerPlatformConfig;
 import io.tebex.sdk.request.response.ServerInformation;
 import io.tebex.sdk.triage.EnumEventLevel;
@@ -425,26 +424,6 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         return config;
     }
 
-    /**
-     * Loads the proxy platform configuration from the file.
-     *
-     * @param configFile The configuration file.
-     * @return The PlatformConfig instance representing the loaded configuration.
-     */
-    public final ProxyPlatformConfig loadProxyPlatformConfig(YamlDocument configFile) {
-        ProxyPlatformConfig config = new ProxyPlatformConfig(configFile.getInt("config-version", 1));
-        config.setYamlDocument(configFile);
-
-        if(config.getConfigVersion() < 2) {
-            return config;
-        }
-
-        config.setSecretKey(configFile.getString("server.secret-key"));
-        config.setVerbose(configFile.getBoolean("verbose", false));
-
-        return config;
-    }
-
     public final void refreshListings() {
         getSDK().getListing().thenAccept(this::setStoreCategories);
     }
@@ -543,7 +522,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
      *
      * @return The PlatformConfig instance representing the current configuration.
      */
-    public final IPlatformConfig getPlatformConfig() {
+    public IPlatformConfig getPlatformConfig() {
         return config;
     }
 
