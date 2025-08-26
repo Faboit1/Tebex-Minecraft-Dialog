@@ -235,7 +235,7 @@ public class SDK {
 
                     queuedCommands.add(new QueuedCommand(
                             commandJson.get("id").getAsInt(),
-                            platform.getPlaceholderManager().handlePlaceholders(player, commandJson.get("command").getAsString()),
+                            commandJson.get("command").getAsString(),
                             paymentId,
                             packageId,
                             conditions.has("delay") ? conditions.get("delay").getAsInt() : 0,
