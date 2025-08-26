@@ -1,3 +1,60 @@
+2.3.1
+=====
+Fix: UUIDs incorrectly replaced with player name for offline servers
+Fix: Failure to process one player would cause processing for other players to stop
+Fix: Debug settings were not saved to file
+Fix: Errors loading config on Velocity
+Fix: Secret key would not persist after setting on certain setups
+Fix: [Fabric] Proper versions of fabric-permissions-api per version (thank you, MemencioPerez!)
+
+2.3.0
+=====
+Tebex now officially supports Folia! Thank you, @R00tB33rMan
+
+This version includes builds for Fabric 1.21.1, 1.21.4, 1.21.5, 1.21.6, and 1.21.7. You must use the correct variant for your version of Fabric.
+
+## Features
+- Secret key can now be specified via the TEBEX_SECRET_KEY environment variable. This will override any configuration setting.
+- [SDK] Included unit tests and mocks for SDK and platform
+- [SDK] Data classes now use Lombok
+- [SDK] Improved overall documentation
+
+## Changes
+- All in-game command code moved to SDK. See TebexCommands.
+- Further generalized Platform into BasePlatform
+
+## Fixes
+- Player UUIDs that fill {id} placeholders are now no longer truncated. Fixes support for other mods/plugin commands.
+- /buy GUI packages now respect store order
+- [Velocity] All logs used the incorrect logger causing improper log levels
+- Tebex docs link in configuration is no longer incorrect
+- Failure to send plugin events no longer leads to unbounded growth
+- /sendlink command did not execute asynchronously #88
+
+2.2.1
+=====
+Notice: This is the final supported build for Fabric 1.20.1 and 1.20.4.
+
+Feature: A build for Fabric 1.21.4 is now available (Thanks @ZekeZDev) #82
+Feature: Better command suggestions on Velocity (Thanks @RealBauHD) #70
+
+Fix: Create coupon caused unnecessary RuntimeException if Cart used as effective type #78
+Fix: Unexpected status code when sending server events caused by excessive precision in date format #79
+Fix: /information request was duplicated on plugin enable
+Fix: Some requests would attempt to run if secret key was not set or invalid
+Fix: Proper version string replacement in all variants
+Fix: Improvements to debug logging
+
+2.2.0
+=====
+Feature: Player IP addresses for join events are now anonymized before sending to Tebex
+
+Fix [Fabric]: Items can no longer be taken out of or placed into the /buy GUI
+Fix: Threads did not shut down properly on Fabric #71
+Fix: Online commands did not respect command delays
+Fix: Server events use Instant.now() for UTC timing. #73
+Fix: Buy GUI now appropriately re-sizes according to number of packages in a category #75
+
 2.1.0
 =====
 This version resolves the majority of cross-version and inter-plugin issues experienced on the current Bukkit variant.
