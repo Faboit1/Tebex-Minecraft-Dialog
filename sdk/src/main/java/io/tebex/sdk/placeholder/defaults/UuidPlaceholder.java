@@ -5,6 +5,8 @@ import io.tebex.sdk.placeholder.Placeholder;
 import io.tebex.sdk.placeholder.PlaceholderManager;
 import io.tebex.sdk.util.UUIDUtil;
 
+import static io.tebex.sdk.util.UUIDUtil.EMPTY_UUID;
+
 public class UuidPlaceholder implements Placeholder {
     private final PlaceholderManager placeholderManager;
 
@@ -14,7 +16,7 @@ public class UuidPlaceholder implements Placeholder {
 
     @Override
     public String handle(QueuedPlayer player, String command) {
-        if (player.getUuid() == null) {
+        if (player.getUuid() == null || player.getUuid().equals("null") || player.getUuid().equals(EMPTY_UUID.toString())) {
             return placeholderManager.getUsernameRegex().matcher(command).replaceAll(player.getName());
         }
         return placeholderManager.getUsernameRegex().matcher(command).replaceAll(UUIDUtil.mojangIdToJavaId(player.getUuid()).toString());

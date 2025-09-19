@@ -571,12 +571,8 @@ public abstract class BasePluginPlatform implements PluginPlatform {
 
     public void loadPlatformConfig() {
         try {
-            debug("Loading platform config...");
             configYaml = initPlatformConfig();
-            debug("Config YAML initialized");
             config = loadServerPlatformConfig(configYaml);
-            debug("Server platform config loaded, secret key: " + config.getSecretKey());
-
             String envKey = System.getenv("TEBEX_SECRET_KEY");
             if (envKey != null && !envKey.isEmpty()) {
                 debug("Using secret key from environment variable");
