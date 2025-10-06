@@ -21,7 +21,7 @@ plugins {
 defaultTasks("shadowJar")
 
 group = "io.tebex"
-version = "2.3.1"
+version = "2.3.2"
 
 tasks.register("processSources", Copy::class.java) {
     val props = mapOf("@VERSION@" to rootProject.version)
