@@ -92,7 +92,7 @@ public final class TebexBukkitPlugin extends JavaPlugin {
         }, 0, 20 * 60);
 
         // start the initial check, which is rescheduled according to the next_check from remote
-        platform.checkCommandQueue(true);
+        //platform.checkCommandQueue(true);
     }
 
     /**
