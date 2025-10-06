@@ -1,3 +1,8 @@
+2.3.2
+=====
+Fix: Unnecessary command checks initiated during loading phase
+Fix: UUID replacement for offline stores #108
+
 2.3.1
 =====
 Fix: UUIDs incorrectly replaced with player name for offline servers
