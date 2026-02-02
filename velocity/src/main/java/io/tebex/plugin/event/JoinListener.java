@@ -18,6 +18,7 @@ public class JoinListener {
         Player player = event.getPlayer();
 
         Object playerId = plugin.getPlayerId(player.getUsername(), player.getUniqueId());
+        plugin.createJoinEvent(player.getUniqueId().toString(), player.getUsername(), player.getRemoteAddress().getAddress().getHostAddress());
 
         if (!plugin.getQueuedPlayers().containsKey(playerId)) {
             return;
