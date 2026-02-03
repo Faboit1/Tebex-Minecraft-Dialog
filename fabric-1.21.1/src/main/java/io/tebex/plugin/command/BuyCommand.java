@@ -16,6 +16,11 @@ public class BuyCommand {
     public int execute(CommandContext<ServerCommandSource> context) {
         final ServerCommandSource source = context.getSource();
 
+        if (!platform.isSetup()) {
+            source.sendMessage(Text.of("§cTebex is not setup yet!"));
+            return 1;
+        }
+
         try {
             ServerPlayerEntity player = source.getPlayer();
             new BuyGUI(platform).open(player);
