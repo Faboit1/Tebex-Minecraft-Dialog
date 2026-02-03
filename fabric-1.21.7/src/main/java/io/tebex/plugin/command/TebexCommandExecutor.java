@@ -70,7 +70,13 @@ public class TebexCommandExecutor {
 
             // Final root: tebex -> subcommand -> args -> execute
             LiteralArgumentBuilder<ServerCommandSource> root = literal("tebex").requires(Permissions.require(command.getPermission(), false)
-                    .or(source -> source.hasPermissionLevel(4))).then(subCommand);
+                    .or(source -> {
+                        try {
+                            return source.hasPermissionLevel(4);
+                        } catch (NoSuchMethodError e) {
+                            return Permissions.check(source, "tebex.admin", 4);
+                        }
+                    })).then(subCommand);
             dispatcher.register(root);
         });
     }
