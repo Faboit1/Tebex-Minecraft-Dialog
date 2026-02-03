@@ -14,6 +14,7 @@ import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.command.DefaultPermissions;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -70,7 +71,13 @@ public class TebexCommandExecutor {
 
             // Final root: tebex -> subcommand -> args -> execute
             LiteralArgumentBuilder<ServerCommandSource> root = literal("tebex").requires(Permissions.require(command.getPermission(), false)
-                    .or(source -> source.hasPermissionLevel(4))).then(subCommand);
+                    .or(source -> {
+                        try {
+                            source.hasPermissionLevel(4);
+                        } catch (NoSuchMethodError e) {
+                            source.getPermissions().hasPermission(DefaultPermissions.OWNERS);
+                        }
+                            })).then(subCommand);
             dispatcher.register(root);
         });
     }
