@@ -74,7 +74,7 @@ public class TebexCommandExecutor {
                         try {
                             return source.hasPermissionLevel(4);
                         } catch (NoSuchMethodError e) {
-                            return Permissions.check(source, "tebex.admin", 4);
+                            return platform.hasPermission(source.getName(), "tebex.admin");
                         }
                     })).then(subCommand);
             dispatcher.register(root);
