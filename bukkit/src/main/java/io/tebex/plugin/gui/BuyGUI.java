@@ -37,8 +37,9 @@ public class BuyGUI {
         }
 
         ListingGui listingGui = new ListingGui()
-                .title(getConfig().getString("gui.menu.home.title", "Server Shop"))
-                .rows(getConfig().getInt("gui.menu.home.rows") < 1 ? categories.size() / 9 + 1 : getConfig().getInt("gui.menu.home.rows"))
+                .title(remapLegacyFormatSeparator(getConfig().getString("gui.menu.home.title", "Server Shop")))
+                .rows(getConfig().getInt("gui.menu.home.rows") < 1 ? categories.size() / 9 + 1
+                        : getConfig().getInt("gui.menu.home.rows"))
                 .create();
 
         categories.sort(Comparator.comparingInt(Category::getOrder));
@@ -62,20 +63,22 @@ public class BuyGUI {
         }
 
         ListingGui subListingGui = new ListingGui()
-                .title(getConfig().getString("gui.menu.category.title").replace("%category%", category.getName()))
+                .title(remapLegacyFormatSeparator(
+                        getConfig().getString("gui.menu.category.title").replace("%category%", category.getName())))
                 .rows(configRows)
                 .create();
 
         category.getPackages().sort(Comparator.comparingInt(CategoryPackage::getOrder));
 
-        if(category instanceof Category) {
+        if (category instanceof Category) {
             Category cat = (Category) category;
 
-            if(cat.getSubCategories() != null) {
-                cat.getSubCategories().forEach(subCategory -> subListingGui.addItem(getCategoryItemBuilder(subCategory).asGuiItem(action -> {
-                    action.setCancelled(true);
-                    openCategoryMenu(player, subCategory);
-                })));
+            if (cat.getSubCategories() != null) {
+                cat.getSubCategories().forEach(
+                        subCategory -> subListingGui.addItem(getCategoryItemBuilder(subCategory).asGuiItem(action -> {
+                            action.setCancelled(true);
+                            openCategoryMenu(player, subCategory);
+                        })));
 
                 TebexGuiItem backItem = getBackItemBuilder().asGuiItem(action -> {
                     action.setCancelled(true);
@@ -83,15 +86,14 @@ public class BuyGUI {
                 });
                 int backItemSlot = subListingGui.getRows() * 9 - 5;
                 subListingGui.addItem(backItemSlot, backItem);
-                //subListingGui.setItem(backItemSlot, backItem);
+                // subListingGui.setItem(backItemSlot, backItem);
             }
-        } else if(category instanceof SubCategory) {
+        } else if (category instanceof SubCategory) {
             SubCategory subCategory = (SubCategory) category;
 
-            subListingGui.updateTitle(getConfig().getString("gui.menu.sub-category.title")
+            subListingGui.updateTitle(remapLegacyFormatSeparator(getConfig().getString("gui.menu.sub-category.title")
                     .replace("%category%", subCategory.getParent().getName())
-                    .replace("%sub_category%", category.getName())
-            );
+                    .replace("%sub_category%", category.getName())));
 
             TebexGuiItem backItem = getBackItemBuilder().asGuiItem(action -> {
                 action.setCancelled(true);
@@ -100,21 +102,24 @@ public class BuyGUI {
             int backItemSlot = subListingGui.getRows() * 9 - 5;
 
             subListingGui.addItem(backItemSlot, backItem);
-            //subListingGui.setItem(subListingGui.getRows() * 9 - 5,backItem);
+            // subListingGui.setItem(subListingGui.getRows() * 9 - 5,backItem);
         }
 
-        category.getPackages().forEach(categoryPackage -> subListingGui.addItem(getPackageItemBuilder(categoryPackage).asGuiItem(action -> {
-            action.setCancelled(true);
-            player.closeInventory();
+        category.getPackages().forEach(
+                categoryPackage -> subListingGui.addItem(getPackageItemBuilder(categoryPackage).asGuiItem(action -> {
+                    action.setCancelled(true);
+                    player.closeInventory();
 
-            // Create Checkout Url
-            platform.getSDK().createCheckoutUrl(categoryPackage.getId(), player.getName()).thenAccept(checkout -> {
-                player.sendMessage(ChatColor.GREEN + "You can checkout here: " + checkout.getUrl());
-            }).exceptionally(ex -> {
-                player.sendMessage(ChatColor.RED + "Failed to create checkout URL. Please contact an administrator.");
-                return null;
-            });
-        })));
+                    // Create Checkout Url
+                    platform.getSDK().createCheckoutUrl(categoryPackage.getId(), player.getName())
+                            .thenAccept(checkout -> {
+                                player.sendMessage(ChatColor.GREEN + "You can checkout here: " + checkout.getUrl());
+                            }).exceptionally(ex -> {
+                                player.sendMessage(ChatColor.RED
+                                        + "Failed to create checkout URL. Please contact an administrator.");
+                                return null;
+                            });
+                })));
 
         platform.executeBlocking(() -> subListingGui.open(player));
     }
@@ -123,40 +128,57 @@ public class BuyGUI {
         ConfigurationSection section = getConfig().getConfigurationSection("gui.item.category");
 
         String itemType = section.getString("material");
-        Material defaultMaterial = MaterialUtil.fromString(itemType).isPresent() ? MaterialUtil.fromString(itemType).get().parseMaterial() : null;
-        Material material = MaterialUtil.fromString(category.getGuiItem()).isPresent() ? MaterialUtil.fromString(category.getGuiItem()).get().parseMaterial() : defaultMaterial;
+        Material defaultMaterial = MaterialUtil.fromString(itemType).isPresent()
+                ? MaterialUtil.fromString(itemType).get().parseMaterial()
+                : null;
+        Material material = MaterialUtil.fromString(category.getGuiItem()).isPresent()
+                ? MaterialUtil.fromString(category.getGuiItem()).get().parseMaterial()
+                : defaultMaterial;
 
         String name = section.getString("name");
         List<String> lore = section.getStringList("lore");
 
         return TebexItemBuilder.from(material != null ? material : Material.BOOK)
                 .flags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_UNBREAKABLE)
-                .name(name != null ? remapLegacyFormatSeparator(italicize(handlePlaceholders(category, name))) : remapLegacyFormatSeparator(category.getName()))
-                .lore(lore.stream().map(line ->  remapLegacyFormatSeparator(italicize(handlePlaceholders(category, line)))).collect(Collectors.toList()));
+                .name(name != null ? remapLegacyFormatSeparator(italicize(handlePlaceholders(category, name)))
+                        : remapLegacyFormatSeparator(category.getName()))
+                .lore(lore.stream()
+                        .map(line -> remapLegacyFormatSeparator(italicize(handlePlaceholders(category, line))))
+                        .collect(Collectors.toList()));
     }
 
     private TebexItemBuilder getPackageItemBuilder(CategoryPackage categoryPackage) {
-        ConfigurationSection section = getConfig().getConfigurationSection("gui.item." + (categoryPackage.hasSale() ? "package-sale" : "package"));
+        ConfigurationSection section = getConfig()
+                .getConfigurationSection("gui.item." + (categoryPackage.hasSale() ? "package-sale" : "package"));
 
-        if(section == null) {
-            platform.warning("Invalid configuration section for " + (categoryPackage.hasSale() ? "package-sale" : "package"), "Check that your definition for `" + categoryPackage.getName() + "` in config.yml is valid.");
+        if (section == null) {
+            platform.warning(
+                    "Invalid configuration section for " + (categoryPackage.hasSale() ? "package-sale" : "package"),
+                    "Check that your definition for `" + categoryPackage.getName() + "` in config.yml is valid.");
             return null;
         }
 
         String itemType = section.getString("material");
 
-        Material defaultMaterial = MaterialUtil.fromString(itemType).isPresent() ? MaterialUtil.fromString(itemType).get().parseMaterial() : null;
-        Material material = MaterialUtil.fromString(categoryPackage.getItemId()).isPresent() ? MaterialUtil.fromString(categoryPackage.getItemId()).get().parseMaterial() : defaultMaterial;
+        Material defaultMaterial = MaterialUtil.fromString(itemType).isPresent()
+                ? MaterialUtil.fromString(itemType).get().parseMaterial()
+                : null;
+        Material material = MaterialUtil.fromString(categoryPackage.getItemId()).isPresent()
+                ? MaterialUtil.fromString(categoryPackage.getItemId()).get().parseMaterial()
+                : defaultMaterial;
 
         String name = section.getString("name");
         List<String> lore = section.getStringList("lore");
 
         TebexItemBuilder itemBuilder = TebexItemBuilder.from(material != null ? material : Material.BOOK)
                 .flags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_UNBREAKABLE)
-                .name(name != null ? remapLegacyFormatSeparator(italicize(handlePlaceholders(categoryPackage, name))) : remapLegacyFormatSeparator(categoryPackage.getName()))
-                .lore(lore.stream().map(line -> remapLegacyFormatSeparator(italicize(handlePlaceholders(categoryPackage, line)))).collect(Collectors.toList()));
+                .name(name != null ? remapLegacyFormatSeparator(italicize(handlePlaceholders(categoryPackage, name)))
+                        : remapLegacyFormatSeparator(categoryPackage.getName()))
+                .lore(lore.stream()
+                        .map(line -> remapLegacyFormatSeparator(italicize(handlePlaceholders(categoryPackage, line))))
+                        .collect(Collectors.toList()));
 
-        if(categoryPackage.hasSale()) {
+        if (categoryPackage.hasSale()) {
             itemBuilder.enchant();
         }
 
@@ -175,8 +197,12 @@ public class BuyGUI {
         ConfigurationSection section = getConfig().getConfigurationSection("gui.item.back");
 
         String itemType = section.getString("material");
-        Material defaultMaterial = MaterialUtil.fromString(itemType).isPresent() ? MaterialUtil.fromString(itemType).get().parseMaterial() : null;
-        Material material = MaterialUtil.fromString(section.getString("material")).isPresent() ? MaterialUtil.fromString(section.getString("material")).get().parseMaterial() : defaultMaterial;
+        Material defaultMaterial = MaterialUtil.fromString(itemType).isPresent()
+                ? MaterialUtil.fromString(itemType).get().parseMaterial()
+                : null;
+        Material material = MaterialUtil.fromString(section.getString("material")).isPresent()
+                ? MaterialUtil.fromString(section.getString("material")).get().parseMaterial()
+                : defaultMaterial;
 
         String name = section.getString("name");
         List<String> lore = section.getStringList("lore");
@@ -184,15 +210,16 @@ public class BuyGUI {
         return TebexItemBuilder.from(material != null ? material : Material.BOOK)
                 .flags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_UNBREAKABLE)
                 .name(name != null ? remapLegacyFormatSeparator(italicize(name)) : "Back")
-                .lore(lore.stream().map(line -> remapLegacyFormatSeparator(italicize(line))).collect(Collectors.toList()));
+                .lore(lore.stream().map(line -> remapLegacyFormatSeparator(italicize(line)))
+                        .collect(Collectors.toList()));
     }
 
     private String handlePlaceholders(Object obj, String str) {
-        if(obj instanceof ICategory) {
+        if (obj instanceof ICategory) {
             ICategory category = (ICategory) obj;
 
             str = str.replace("%category%", category.getName());
-        } else if(obj instanceof CategoryPackage) {
+        } else if (obj instanceof CategoryPackage) {
             CategoryPackage categoryPackage = (CategoryPackage) obj;
 
             DecimalFormat decimalFormat = new DecimalFormat("#.##");
@@ -200,13 +227,15 @@ public class BuyGUI {
             str = str
                     .replace("%package_name%", categoryPackage.getName())
                     .replace("%package_price%", decimalFormat.format(categoryPackage.getPrice()))
-                    .replace("%package_currency_name%", platform.getStoreInformation().getStore().getCurrency().getIso4217())
+                    .replace("%package_currency_name%",
+                            platform.getStoreInformation().getStore().getCurrency().getIso4217())
                     .replace("%package_currency%", platform.getStoreInformation().getStore().getCurrency().getSymbol());
 
-            if(categoryPackage.hasSale()) {
+            if (categoryPackage.hasSale()) {
                 str = str
                         .replace("%package_discount%", decimalFormat.format(categoryPackage.getSale().getDiscount()))
-                        .replace("%package_sale_price%", decimalFormat.format(categoryPackage.getPrice() - categoryPackage.getSale().getDiscount()));
+                        .replace("%package_sale_price%", decimalFormat
+                                .format(categoryPackage.getPrice() - categoryPackage.getSale().getDiscount()));
             }
         }
 
