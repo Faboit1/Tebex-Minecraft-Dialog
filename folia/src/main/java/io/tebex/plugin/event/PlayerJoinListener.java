@@ -2,8 +2,6 @@ package io.tebex.plugin.event;
 
 import io.tebex.plugin.FoliaPluginPlatform;
 import io.tebex.sdk.obj.QueuedPlayer;
-import io.tebex.sdk.obj.ServerEvent;
-import io.tebex.sdk.obj.EnumServerEventType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,7 +18,7 @@ public class PlayerJoinListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         Object playerId = platform.getPlayerId(player.getName(), player.getUniqueId());
-        platform.getJoinEvents().add(new ServerEvent(player.getUniqueId().toString(), player.getName(), player.getAddress().getAddress().getHostAddress(), EnumServerEventType.JOIN));
+        platform.createJoinEvent(player.getUniqueId().toString(), player.getName(), player.getAddress().getAddress().getHostAddress());
 
         if(! platform.getQueuedPlayers().containsKey(playerId)) {
             return;

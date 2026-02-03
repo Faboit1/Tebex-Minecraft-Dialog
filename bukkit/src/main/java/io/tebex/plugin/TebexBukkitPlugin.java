@@ -76,7 +76,10 @@ public final class TebexBukkitPlugin extends JavaPlugin {
         // clear server events every minute
         getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
             List<ServerEvent> allServerEvents = platform.getJoinEvents();
-            List<ServerEvent> runEvents = Lists.newArrayList(allServerEvents.subList(0, Math.min(allServerEvents.size(), 750)));
+            List<ServerEvent> runEvents;
+            synchronized (allServerEvents) {
+                runEvents = Lists.newArrayList(allServerEvents.subList(0, Math.min(allServerEvents.size(), 750)));
+            }
             if (runEvents.isEmpty()) return;
             if (!platform.isSetup()) return;
 

@@ -20,11 +20,13 @@ import java.util.stream.Collectors;
 
 public class BuyGUI {
     private final BukkitPluginPlatform platform;
-    private final FileConfiguration config;
 
     public BuyGUI(BukkitPluginPlatform platform) {
         this.platform = platform;
-        this.config = platform.getPlugin().getConfig();
+    }
+
+    private FileConfiguration getConfig() {
+        return platform.getPlugin().getConfig();
     }
 
     public void open(Player player) {
@@ -35,9 +37,9 @@ public class BuyGUI {
         }
 
         ListingGui listingGui = new ListingGui()
-                .title(remapLegacyFormatSeparator(config.getString("gui.menu.home.title", "Server Shop")))
-                .rows(config.getInt("gui.menu.home.rows") < 1 ? categories.size() / 9 + 1
-                        : config.getInt("gui.menu.home.rows"))
+                .title(remapLegacyFormatSeparator(getConfig().getString("gui.menu.home.title", "Server Shop")))
+                .rows(getConfig().getInt("gui.menu.home.rows") < 1 ? categories.size() / 9 + 1
+                        : getConfig().getInt("gui.menu.home.rows"))
                 .create();
 
         categories.sort(Comparator.comparingInt(Category::getOrder));
@@ -53,7 +55,7 @@ public class BuyGUI {
     }
 
     private void openCategoryMenu(Player player, ICategory category) {
-        int configRows = config.getInt("gui.menu.category.rows");
+        int configRows = getConfig().getInt("gui.menu.category.rows");
         int neededRows = (category.getPackages().size() / 9) + 1;
 
         if (configRows < neededRows) {
@@ -62,7 +64,7 @@ public class BuyGUI {
 
         ListingGui subListingGui = new ListingGui()
                 .title(remapLegacyFormatSeparator(
-                        config.getString("gui.menu.category.title").replace("%category%", category.getName())))
+                        getConfig().getString("gui.menu.category.title").replace("%category%", category.getName())))
                 .rows(configRows)
                 .create();
 
@@ -89,7 +91,7 @@ public class BuyGUI {
         } else if (category instanceof SubCategory) {
             SubCategory subCategory = (SubCategory) category;
 
-            subListingGui.updateTitle(remapLegacyFormatSeparator(config.getString("gui.menu.sub-category.title")
+            subListingGui.updateTitle(remapLegacyFormatSeparator(getConfig().getString("gui.menu.sub-category.title")
                     .replace("%category%", subCategory.getParent().getName())
                     .replace("%sub_category%", category.getName())));
 
@@ -123,7 +125,7 @@ public class BuyGUI {
     }
 
     private TebexItemBuilder getCategoryItemBuilder(ICategory category) {
-        ConfigurationSection section = config.getConfigurationSection("gui.item.category");
+        ConfigurationSection section = getConfig().getConfigurationSection("gui.item.category");
 
         String itemType = section.getString("material");
         Material defaultMaterial = MaterialUtil.fromString(itemType).isPresent()
@@ -146,7 +148,7 @@ public class BuyGUI {
     }
 
     private TebexItemBuilder getPackageItemBuilder(CategoryPackage categoryPackage) {
-        ConfigurationSection section = config
+        ConfigurationSection section = getConfig()
                 .getConfigurationSection("gui.item." + (categoryPackage.hasSale() ? "package-sale" : "package"));
 
         if (section == null) {
@@ -192,7 +194,7 @@ public class BuyGUI {
     }
 
     private TebexItemBuilder getBackItemBuilder() {
-        ConfigurationSection section = config.getConfigurationSection("gui.item.back");
+        ConfigurationSection section = getConfig().getConfigurationSection("gui.item.back");
 
         String itemType = section.getString("material");
         Material defaultMaterial = MaterialUtil.fromString(itemType).isPresent()

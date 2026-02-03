@@ -1,5 +1,6 @@
 package io.tebex.plugin;
 
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -11,6 +12,7 @@ import com.velocitypowered.api.util.ProxyVersion;
 import io.tebex.plugin.event.JoinListener;
 import io.tebex.plugin.manager.CommandManager;
 import io.tebex.sdk.Tebex;
+import io.tebex.sdk.obj.ServerEvent;
 import io.tebex.sdk.platform.BasePluginPlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
 import io.tebex.sdk.platform.PlatformType;
@@ -19,6 +21,7 @@ import net.kyori.adventure.text.Component;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -63,6 +66,30 @@ public class TebexVelocityPlugin extends BasePluginPlatform {
         new CommandManager(this).register();
         placeholderManager.registerDefaults();
         proxy.getEventManager().register(this, new JoinListener(this));
+
+        // Clear server events every minute
+        proxy.getScheduler()
+                .buildTask(this, () -> {
+                    List<ServerEvent> allServerEvents = getJoinEvents();
+                    List<ServerEvent> runEvents;
+                    synchronized (allServerEvents) {
+                        runEvents = Lists.newArrayList(allServerEvents.subList(0, Math.min(allServerEvents.size(), 750)));
+                    }
+                    if (runEvents.isEmpty()) return;
+                    if (!isSetup()) return;
+
+                    getSDK().sendJoinEvents(runEvents)
+                            .thenAccept(aVoid -> {
+                                clearSelectedPluginEvents(runEvents);
+                                debug("Successfully sent join events.");
+                            })
+                            .exceptionally(throwable -> {
+                                debug("Failed to send join events: " + throwable.getMessage());
+                                return null;
+                            });
+                })
+                .repeat(1, TimeUnit.MINUTES)
+                .schedule();
 
 //        proxy.getScheduler()
 //                .buildTask(this, () -> {
