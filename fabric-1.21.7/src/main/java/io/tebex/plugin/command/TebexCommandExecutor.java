@@ -14,7 +14,6 @@ import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.command.DefaultPermissions;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -73,11 +72,11 @@ public class TebexCommandExecutor {
             LiteralArgumentBuilder<ServerCommandSource> root = literal("tebex").requires(Permissions.require(command.getPermission(), false)
                     .or(source -> {
                         try {
-                            source.hasPermissionLevel(4);
+                            return source.hasPermissionLevel(4);
                         } catch (NoSuchMethodError e) {
-                            source.getPermissions().hasPermission(DefaultPermissions.OWNERS);
+                            return platform.hasPermission(source.getName(), "tebex.admin");
                         }
-                            })).then(subCommand);
+                    })).then(subCommand);
             dispatcher.register(root);
         });
     }
@@ -85,7 +84,7 @@ public class TebexCommandExecutor {
     public void run(PlayerCommand command, com.mojang.brigadier.context.CommandContext<ServerCommandSource> context) {
         ServerCommandSource sender = context.getSource();
         String senderName = sender.getName();
-        UUID senderUUID = sender.getEntity() instanceof ServerPlayerEntity ? ((ServerPlayerEntity) sender.getEntity()).getUuid() : null;
+        UUID senderUUID = sender.getEntity() instanceof ServerPlayerEntity ? sender.getEntity().getUuid() : null;
         boolean isConsole = sender.getEntity() == null;
 
         String[] splitInput = context.getInput().split("\\s+");

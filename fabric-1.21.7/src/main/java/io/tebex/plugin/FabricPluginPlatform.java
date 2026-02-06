@@ -140,6 +140,11 @@ public class FabricPluginPlatform extends BasePluginPlatform {
     @Override
     public boolean hasPermission(String username, String permission) {
         ServerPlayerEntity player = getPlayer(username); //ops override permissions in case no manager is used
-        return player != null && (Permissions.check(player, permission, false) || player.hasPermissionLevel(4));
+        if (player == null) return false;
+        try {
+            return Permissions.check(player, permission, false) || player.hasPermissionLevel(4);
+        } catch (NoSuchMethodError e) {
+            return Permissions.check(player, permission, false);
+        }
     }
 }
