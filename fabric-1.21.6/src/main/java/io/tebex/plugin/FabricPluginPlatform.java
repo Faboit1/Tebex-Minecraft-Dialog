@@ -7,6 +7,7 @@ import io.tebex.sdk.platform.PlatformType;
 import io.tebex.sdk.platform.config.ServerPlatformConfig;
 import io.tebex.sdk.util.CommandResult;
 import me.lucko.fabric.api.permissions.v0.Permissions;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -121,7 +122,7 @@ public class FabricPluginPlatform extends BasePluginPlatform {
 
         return new PlatformTelemetry(
                 getPluginVersion(),
-                server.getName(),
+                plugin.getPlatform().getType().toString(),
                 serverVersion,
                 System.getProperty("java.version"),
                 System.getProperty("os.arch"),
