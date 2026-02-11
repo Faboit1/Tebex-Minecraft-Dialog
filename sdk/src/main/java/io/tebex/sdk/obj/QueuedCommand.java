@@ -1,5 +1,6 @@
 package io.tebex.sdk.obj;
 
+import io.tebex.sdk.util.UUIDUtil;
 import lombok.Data;
 
 @Data
@@ -20,14 +21,25 @@ public class QueuedCommand {
             parsedCommand = parsedCommand.replace("{username}", player.getName());
             parsedCommand = parsedCommand.replace("{name}", player.getName());
 
-            if (player.getUuid() != null) { // offline servers will return null uuid here as these uuids are not verified
+            if (isMissingUuid(player.getUuid())) {
+                // Offline/unauthenticated players: fall back to username for both placeholders
+                parsedCommand = parsedCommand.replace("{id}", player.getName());
+                parsedCommand = parsedCommand.replace("{uuid}", player.getName());
+            } else {
                 parsedCommand = parsedCommand.replace("{id}", player.getUuid());
                 parsedCommand = parsedCommand.replace("{uuid}", player.getUuid());
-            } else { // {id} must still be replaced with username if uuid is not present
-                parsedCommand = parsedCommand.replace("{id}", player.getName());
             }
         }
 
         return parsedCommand;
+    }
+
+    private boolean isMissingUuid(String uuid) {
+        if (uuid == null) return true;
+
+        String trimmed = uuid.trim();
+        return trimmed.isEmpty()
+                || trimmed.equalsIgnoreCase("null")
+                || trimmed.equalsIgnoreCase(UUIDUtil.EMPTY_UUID.toString());
     }
 }
