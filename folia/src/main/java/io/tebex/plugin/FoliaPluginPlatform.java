@@ -95,13 +95,17 @@ public class FoliaPluginPlatform extends BasePluginPlatform {
 
     @Override
     public <T> T getPlayer(Object uuidOrUsername) {
-        if(uuidOrUsername == null) return null;
+        if (uuidOrUsername == null) return null;
 
-        if (isOnlineMode() && !isGeyser() && uuidOrUsername instanceof UUID) {
+        if (uuidOrUsername instanceof UUID) {
             return (T) Bukkit.getServer().getPlayer((UUID) uuidOrUsername);
         }
 
-        return (T) Bukkit.getServer().getPlayerExact((String) uuidOrUsername);
+        if (uuidOrUsername instanceof String) {
+            return (T) Bukkit.getServer().getPlayerExact((String) uuidOrUsername);
+        }
+
+        return null;
     }
 
     @Override

@@ -208,13 +208,13 @@ public abstract class BasePluginPlatform implements PluginPlatform {
      */
     @NotNull
     public final Object getPlayerId(String name, UUID uuid) {
-        // online mode uses uuids while offline mode uses usernames. public final to the name if we ever fail to have an uuid
-        Object identifier = isOnlineMode() ? uuid : name;
-        if (identifier == null) {
-            identifier = (name == null) ? "" : name;
+        // Geyser/offline stores and missing UUIDs must use usernames for consistent matching.
+        boolean useUuid = isOnlineMode() && !isGeyser() && uuid != null && !UUIDUtil.EMPTY_UUID.equals(uuid);
+        if (useUuid) {
+            return uuid;
         }
 
-        return identifier;
+        return (name == null) ? "" : name;
     }
 
     /**
