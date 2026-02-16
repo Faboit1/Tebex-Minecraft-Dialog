@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 import static io.tebex.sdk.util.ResourceUtil.getBundledFile;
@@ -43,6 +44,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
     protected List<ServerEvent> serverEvents = Collections.synchronizedList(new ArrayList<>());
 
     private final ArrayList<PluginEvent> PLUGIN_EVENTS = new ArrayList<>();
+    private final AtomicBoolean commandCheckInProgress = new AtomicBoolean(false);
 
     /**
      * Checks if the configured store is Geyser/Offline
@@ -113,10 +115,19 @@ public abstract class BasePluginPlatform implements PluginPlatform {
             return forceCheckOutput;
         }
 
+        if (!commandCheckInProgress.compareAndSet(false, true)) {
+            debug("Command queue check already in progress. Skipping to avoid duplicate execution.");
+            if (useRemoteNextCheck) {
+                executeAsyncLater(this::performCheck, 60, TimeUnit.SECONDS);
+            }
+            return forceCheckOutput;
+        }
+
         debug("Checking for due players...");
         getQueuedPlayers().clear();
 
         getSDK().getDuePlayers().whenComplete((duePlayersResponse, ex) -> {
+            try {
             ArrayList<String> output = new ArrayList<>();
             if (ex != null) {
                 if (ex.getMessage().contains("429")) { // handling for rate limits
@@ -156,6 +167,9 @@ public abstract class BasePluginPlatform implements PluginPlatform {
 
             if(! duePlayersResponse.isExecuteOffline()) return;
             handleOfflineCommands();
+            } finally {
+                commandCheckInProgress.set(false);
+            }
         });
 
         return forceCheckOutput;

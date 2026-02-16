@@ -94,8 +94,9 @@ public final class TebexFoliaPlugin extends JavaPlugin {
                     });
         }, 1, 60 * 20);
 
-        // start the initial check, which is rescheduled according to the next_check from remote
-        platform.checkCommandQueue(true);
+        // Initial check is started by initStore() when getServerInformation() completes (see BasePluginPlatform).
+        // Do not call checkCommandQueue here to avoid running it twice on Folia (once from here and once from
+        // initStore's callback), which would process online players' commands twice.
     }
 
     /**
