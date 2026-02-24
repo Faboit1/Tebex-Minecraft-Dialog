@@ -19,7 +19,7 @@ fun gitCommitHash(): String {
 plugins {
     java
     id("com.gradleup.shadow")
-    id("fabric-loom") version "1.11-SNAPSHOT" apply(true)
+    id("fabric-loom") version "1.13.6" apply(true)
 }
 
 var minecraftVersion = properties["minecraft_version"] as String

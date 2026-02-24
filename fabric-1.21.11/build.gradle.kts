@@ -48,8 +48,8 @@ dependencies {
 
     compileOnly("dev.dejvokep:boosted-yaml:1.3")
 
-    modImplementation("me.lucko:fabric-permissions-api:0.4.0")
-    include("me.lucko:fabric-permissions-api:0.4.0")
+    modImplementation("me.lucko:fabric-permissions-api:0.4.1")
+    include("me.lucko:fabric-permissions-api:0.4.1")
 }
 
 
