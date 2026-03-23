@@ -21,6 +21,8 @@ dependencies {
     implementation("dev.dejvokep:boosted-yaml:1.3")
     implementation("com.google.code.gson:gson:2.10.1")
 
+    compileOnly("org.geysermc.floodgate:api:2.2.5-SNAPSHOT")
+
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")
     testCompileOnly("org.projectlombok:lombok:1.18.38")

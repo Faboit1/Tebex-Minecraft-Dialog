@@ -1,6 +1,6 @@
 package io.tebex.sdk.obj;
 
-import io.tebex.sdk.util.UUIDUtil;
+import io.tebex.sdk.platform.PluginPlatform;
 import lombok.Data;
 
 @Data
@@ -15,31 +15,26 @@ public class QueuedCommand {
     private final boolean online;
 
     public String getParsedCommand() {
+        return getParsedCommand(null);
+    }
+
+    public String getParsedCommand(PluginPlatform platform) {
         String parsedCommand = command;
 
         if (player != null) {
+            String commandPlayerId = platform == null
+                    ? player.getDefaultCommandIdentifier()
+                    : platform.resolveCommandPlayerId(player);
+            if (commandPlayerId == null) {
+                commandPlayerId = player.getDefaultCommandIdentifier();
+            }
+
             parsedCommand = parsedCommand.replace("{username}", player.getName());
             parsedCommand = parsedCommand.replace("{name}", player.getName());
-
-            if (isMissingUuid(player.getUuid())) {
-                // Offline/unauthenticated players: fall back to username for both placeholders
-                parsedCommand = parsedCommand.replace("{id}", player.getName());
-                parsedCommand = parsedCommand.replace("{uuid}", player.getName());
-            } else {
-                parsedCommand = parsedCommand.replace("{id}", player.getUuid());
-                parsedCommand = parsedCommand.replace("{uuid}", player.getUuid());
-            }
+            parsedCommand = parsedCommand.replace("{id}", commandPlayerId);
+            parsedCommand = parsedCommand.replace("{uuid}", commandPlayerId);
         }
 
         return parsedCommand;
-    }
-
-    private boolean isMissingUuid(String uuid) {
-        if (uuid == null) return true;
-
-        String trimmed = uuid.trim();
-        return trimmed.isEmpty()
-                || trimmed.equalsIgnoreCase("null")
-                || trimmed.equalsIgnoreCase(UUIDUtil.EMPTY_UUID.toString());
     }
 }

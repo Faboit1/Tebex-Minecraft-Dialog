@@ -14,12 +14,16 @@ import io.tebex.sdk.triage.EnumEventLevel;
 import io.tebex.sdk.triage.PluginEvent;
 import io.tebex.sdk.util.*;
 import org.jetbrains.annotations.NotNull;
+import org.geysermc.floodgate.api.FloodgateApi;
+import org.geysermc.floodgate.api.player.FloodgatePlayer;
+import org.geysermc.floodgate.util.LinkedPlayer;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
@@ -45,6 +49,8 @@ public abstract class BasePluginPlatform implements PluginPlatform {
 
     private final ArrayList<PluginEvent> PLUGIN_EVENTS = new ArrayList<>();
     private final AtomicBoolean commandCheckInProgress = new AtomicBoolean(false);
+    private final AtomicBoolean floodgateWarningLogged = new AtomicBoolean(false);
+    private final Map<String, UUID> resolvedFloodgateIds = Maps.newConcurrentMap();
 
     /**
      * Checks if the configured store is Geyser/Offline
@@ -54,17 +60,19 @@ public abstract class BasePluginPlatform implements PluginPlatform {
     public final boolean isGeyser() {
         if (!isSetup()) return false;
 
-        if (getStoreType() == null || getStoreType().isEmpty()) {
+        String storeType = getStoreType();
+        if (storeType == null || storeType.isEmpty()) {
             return false;
         }
 
-        return getStoreType().contains("Offline/Geyser");
+        return storeType.toLowerCase(Locale.ROOT).contains("geyser");
     }
 
     public final void initStore() {
         sdk = new SDK(this, config.getSecretKey());
         placeholderManager = new PlaceholderManager();
         queuedPlayers = Maps.newConcurrentMap();
+        resolvedFloodgateIds.clear();
         storeCategories = new ArrayList<>();
         serverEvents = Collections.synchronizedList(new ArrayList<>());
         placeholderManager.register(new UuidPlaceholder(placeholderManager));
@@ -217,6 +225,85 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         return (name == null) ? "" : name;
     }
 
+    @Override
+    public String resolveCommandPlayerId(QueuedPlayer player) {
+        if (player == null) {
+            return "";
+        }
+
+        if (player.hasUuid()) {
+            return player.getUuid();
+        }
+
+        if (!player.hasXuid()) {
+            return player.getDefaultCommandIdentifier();
+        }
+
+        UUID resolvedUuid = resolvedFloodgateIds.computeIfAbsent(player.getXuid(), ignored -> resolveFloodgateUniqueId(player));
+        if (resolvedUuid != null && !UUIDUtil.EMPTY_UUID.equals(resolvedUuid)) {
+            return resolvedUuid.toString();
+        }
+
+        return player.getDefaultCommandIdentifier();
+    }
+
+    private UUID resolveFloodgateUniqueId(QueuedPlayer player) {
+        if (!isGeyser()) {
+            return null;
+        }
+
+        Long xuid = player.getXuidAsLong();
+        if (xuid == null) {
+            debug("Unable to parse Bedrock XUID '" + player.getXuid() + "' for player '" + player.getName() + "'.");
+            return null;
+        }
+
+        try {
+            FloodgateApi api = FloodgateApi.getInstance();
+            UUID bedrockId = api.createJavaPlayerId(xuid);
+
+            if (bedrockId == null || UUIDUtil.EMPTY_UUID.equals(bedrockId)) {
+                return null;
+            }
+
+            FloodgatePlayer onlinePlayer = api.getPlayer(bedrockId);
+            if (onlinePlayer != null && onlinePlayer.getCorrectUniqueId() != null) {
+                return onlinePlayer.getCorrectUniqueId();
+            }
+
+            if (api.getPlayerLink() != null) {
+                try {
+                    LinkedPlayer linkedPlayer = api.getPlayerLink().getLinkedPlayer(bedrockId).get(2, TimeUnit.SECONDS);
+                    if (linkedPlayer != null && linkedPlayer.getJavaUniqueId() != null) {
+                        return linkedPlayer.getJavaUniqueId();
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    debug("Interrupted while resolving Floodgate UUID for player '" + player.getName() + "'.");
+                } catch (ExecutionException | TimeoutException e) {
+                    debug("Failed to resolve Floodgate link data for player '" + player.getName() + "': " + e.getMessage());
+                }
+            }
+
+            return bedrockId;
+        } catch (IllegalStateException | NoClassDefFoundError e) {
+            warnMissingFloodgateApi();
+        }
+
+        return null;
+    }
+
+    private void warnMissingFloodgateApi() {
+        if (!floodgateWarningLogged.compareAndSet(false, true)) {
+            return;
+        }
+
+        warning(
+                "Received a Bedrock XUID for command placeholder resolution, but the Floodgate API is unavailable.",
+                "Install Floodgate on the same server or proxy running Tebex so {id}/{uuid} placeholders can be resolved for Bedrock players."
+        );
+    }
+
     /**
      * Processes the online commands for a player.
      *
@@ -230,16 +317,17 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         List<Integer> completedCommands = new ArrayList<>();
         boolean hasInventorySpace = true;
         for (QueuedCommand command : commands) {
+            String parsedCommand = command.getParsedCommand(this);
             int freeSlots = getFreeSlots(playerId);
             if(freeSlots < command.getRequiredSlots()) {
-                info(String.format("Skipping command '%s' for player '%s' due to no inventory space. Free slots: %d. Slots required: %d", command.getParsedCommand(), playerName, freeSlots, command.getRequiredSlots()));
+                info(String.format("Skipping command '%s' for player '%s' due to no inventory space. Free slots: %d. Slots required: %d", parsedCommand, playerName, freeSlots, command.getRequiredSlots()));
                 hasInventorySpace = false;
                 continue;
             }
 
             final Runnable commandRunnable = () -> {
-                info(String.format("Dispatching command '%s' for player '%s'", command.getParsedCommand(), playerName));
-                CommandResult commandResult = dispatchCommand(command.getParsedCommand());
+                info(String.format("Dispatching command '%s' for player '%s'", parsedCommand, playerName));
+                CommandResult commandResult = dispatchCommand(parsedCommand);
 
                 // report whether the command succeeded or failed
                 if (!commandResult.isSuccess()) {
@@ -256,7 +344,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                         extraInfo = "No further information";
                     }
 
-                    String solution = String.format("Manually try `%s` for player %s. Check that the command syntax is correct.", command.getParsedCommand(), playerName);
+                    String solution = String.format("Manually try `%s` for player %s. Check that the command syntax is correct.", parsedCommand, playerName);
                     if (command.getPayment() != 0) {
                         solution += " Re-run this command at https://creator.tebex.io/payments/" + command.getPayment();
                     }
@@ -301,9 +389,10 @@ public abstract class BasePluginPlatform implements PluginPlatform {
 
             List<Integer> completedCommands = new ArrayList<>();
             for (QueuedCommand command : offlineData.getCommands()) {
+                String parsedCommand = command.getParsedCommand(this);
                 final Runnable commandRunnable = () -> {
-                    info(String.format("Dispatching offline command '%s' for player '%s'.", command.getParsedCommand(), command.getPlayer().getName()));
-                    CommandResult offlineCommandResult = dispatchCommand(command.getParsedCommand());
+                    info(String.format("Dispatching offline command '%s' for player '%s'.", parsedCommand, command.getPlayer().getName()));
+                    CommandResult offlineCommandResult = dispatchCommand(parsedCommand);
 
                     // report whether the offline command succeeded or failed
                     if (!offlineCommandResult.isSuccess()) {
@@ -320,7 +409,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                         if (command.getPayment() != 0) {
                             solution += " Re-run this command at https://creator.tebex.io/payments/" + command.getPayment();
                         }
-                        warning(String.format("Command `%s` failed to execute: %s", command.getParsedCommand(), extraInfo), solution);
+                        warning(String.format("Command `%s` failed to execute: %s", parsedCommand, extraInfo), solution);
                     }
                 };
                 if (command.getDelay() > 0) {

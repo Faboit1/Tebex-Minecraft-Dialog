@@ -2,6 +2,7 @@ package io.tebex.sdk.platform;
 
 import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.sdk.SDK;
+import io.tebex.sdk.obj.QueuedPlayer;
 import io.tebex.sdk.platform.config.IPlatformConfig;
 import io.tebex.sdk.request.response.ServerInformation;
 import io.tebex.sdk.util.CommandResult;
@@ -125,6 +126,16 @@ public interface PluginPlatform {
      */
     default boolean isPlayerOnline(Object player) {
         return getPlayer(player) != null;
+    }
+
+    /**
+     * Resolves the identifier that should fill {id} and {uuid} placeholders for a queued player.
+     *
+     * @param player The queued player record from Tebex.
+     * @return The identifier to inject into queued commands.
+     */
+    default String resolveCommandPlayerId(QueuedPlayer player) {
+        return player == null ? "" : player.getDefaultCommandIdentifier();
     }
 
     /**
