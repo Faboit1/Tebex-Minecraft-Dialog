@@ -322,6 +322,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                     .title("Checkout")
                     .label("Open this checkout link in your browser to complete payment.")
                     .input("Checkout URL", "", checkoutUrl)
+                    .validResultHandler(response -> sendPlayerMessage(playerName, "Checkout link: " + checkoutUrl))
                     .closedOrInvalidResultHandler(() -> sendPlayerMessage(playerName, "Checkout link: " + checkoutUrl))
                     .build();
 
