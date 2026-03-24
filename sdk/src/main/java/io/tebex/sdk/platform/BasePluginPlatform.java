@@ -14,6 +14,7 @@ import io.tebex.sdk.triage.EnumEventLevel;
 import io.tebex.sdk.triage.PluginEvent;
 import io.tebex.sdk.util.*;
 import org.jetbrains.annotations.NotNull;
+import org.geysermc.cumulus.form.CustomForm;
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.geysermc.floodgate.util.LinkedPlayer;
@@ -247,6 +248,13 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         return player.getDefaultCommandIdentifier();
     }
 
+    @Override
+    public void sendCheckoutLink(String playerName, String checkoutUrl) {
+        if (!trySendBedrockCheckoutForm(playerName, checkoutUrl)) {
+            PluginPlatform.super.sendCheckoutLink(playerName, checkoutUrl);
+        }
+    }
+
     private UUID resolveFloodgateUniqueId(QueuedPlayer player) {
         if (!isGeyser()) {
             return null;
@@ -291,6 +299,40 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         }
 
         return null;
+    }
+
+    private boolean trySendBedrockCheckoutForm(String playerName, String checkoutUrl) {
+        UUID playerUniqueId = getPlayerUniqueId(playerName);
+        if (playerUniqueId == null) {
+            return false;
+        }
+
+        try {
+            FloodgateApi api = FloodgateApi.getInstance();
+            if (!api.isFloodgatePlayer(playerUniqueId)) {
+                return false;
+            }
+
+            FloodgatePlayer floodgatePlayer = api.getPlayer(playerUniqueId);
+            UUID recipientId = floodgatePlayer != null && floodgatePlayer.getCorrectUniqueId() != null
+                    ? floodgatePlayer.getCorrectUniqueId()
+                    : playerUniqueId;
+
+            CustomForm form = CustomForm.builder()
+                    .title("Checkout")
+                    .label("Open this checkout link in your browser to complete payment.")
+                    .input("Checkout URL", "", checkoutUrl)
+                    .closedOrInvalidResultHandler(() -> sendPlayerMessage(playerName, "Checkout link: " + checkoutUrl))
+                    .build();
+
+            if (api.sendForm(recipientId, form)) {
+                return true;
+            }
+        } catch (IllegalStateException | NoClassDefFoundError e) {
+            warnMissingFloodgateApi();
+        }
+
+        return false;
     }
 
     private void warnMissingFloodgateApi() {

@@ -111,7 +111,7 @@ public class BuyGUI {
                     // Create Checkout Url
                     platform.getSDK().createCheckoutUrl(categoryPackage.getId(), player.getName())
                             .thenAccept(checkout -> {
-                                player.sendMessage(ChatColor.GREEN + "You can checkout here: " + checkout.getUrl());
+                                platform.sendCheckoutLink(player.getName(), checkout.getUrl());
                             }).exceptionally(ex -> {
                                 player.sendMessage(ChatColor.RED
                                         + "Failed to create checkout URL. Please contact an administrator.");

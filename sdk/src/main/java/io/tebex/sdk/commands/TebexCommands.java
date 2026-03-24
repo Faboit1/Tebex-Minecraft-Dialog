@@ -162,7 +162,8 @@ public class TebexCommands {
             }
 
             platform.getSDK().createCheckoutUrl(intPackageId, ctx.getSenderUsername()).thenAccept((url) -> {
-                response.complete(new String[] { Responder.formatFancy(ctx, "Checkout started! Click here to complete payment: {0}", url.getUrl())});
+                platform.sendCheckoutLink(ctx.getSenderUsername(), url.getUrl());
+                response.complete(new String[] { Responder.formatSuccess(ctx, "Checkout link sent to you.")});
             }).exceptionally(e -> {
                 response.complete(new String[] { Responder.formatError(ctx, e.getMessage())});
                 return null;
@@ -323,7 +324,7 @@ public class TebexCommands {
             }
 
             platform.getSDK().createCheckoutUrl(intPackageId, ctx.getTargetUsername()).thenAccept(checkoutUrl -> {
-                Responder.tellOtherFancy(ctx, "A checkout link has been created for you. Click here to complete payment: {0}", checkoutUrl.getUrl());
+                platform.sendCheckoutLink(ctx.getTargetUsername(), checkoutUrl.getUrl());
                 response.complete(new String[]{Responder.formatSuccess(ctx, "Checkout link sent to " + ctx.getTargetUsername())});
             }).exceptionally(e -> {
                 response.complete(new String[]{Responder.formatError(ctx, "Failed to send checkout link: " + e.getMessage())});

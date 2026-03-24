@@ -129,6 +129,16 @@ public interface PluginPlatform {
     }
 
     /**
+     * Returns the UUID of an online player when available.
+     *
+     * @param playerName The player's username.
+     * @return The online player's UUID, or null when unavailable.
+     */
+    default java.util.UUID getPlayerUniqueId(String playerName) {
+        return null;
+    }
+
+    /**
      * Resolves the identifier that should fill {id} and {uuid} placeholders for a queued player.
      *
      * @param player The queued player record from Tebex.
@@ -142,6 +152,16 @@ public interface PluginPlatform {
      * @return Number of inventory slots free for the given player
      */
     int getFreeSlots(Object player);
+
+    /**
+     * Sends a checkout link to a player.
+     *
+     * @param playerName The player who should receive the link.
+     * @param checkoutUrl The Tebex checkout URL.
+     */
+    default void sendCheckoutLink(String playerName, String checkoutUrl) {
+        sendPlayerMessage(playerName, "Checkout started! Complete payment here: " + checkoutUrl);
+    }
 
     void setServerInformation(ServerInformation serverInformation);
 
