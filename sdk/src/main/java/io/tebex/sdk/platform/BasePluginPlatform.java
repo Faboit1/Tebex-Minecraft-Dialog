@@ -14,7 +14,7 @@ import io.tebex.sdk.triage.EnumEventLevel;
 import io.tebex.sdk.triage.PluginEvent;
 import io.tebex.sdk.util.*;
 import org.jetbrains.annotations.NotNull;
-import org.geysermc.cumulus.form.CustomForm;
+import org.geysermc.cumulus.form.SimpleForm;
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.geysermc.floodgate.util.LinkedPlayer;
@@ -318,12 +318,10 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                     ? floodgatePlayer.getCorrectUniqueId()
                     : playerUniqueId;
 
-            CustomForm form = CustomForm.builder()
+            SimpleForm form = SimpleForm.builder()
                     .title("Checkout")
-                    .label("Open this checkout link in your browser to complete payment.")
-                    .input("Checkout URL", "", checkoutUrl)
-                    .validResultHandler(response -> sendPlayerMessage(playerName, "Checkout link: " + checkoutUrl))
-                    .closedOrInvalidResultHandler(() -> sendPlayerMessage(playerName, "Checkout link: " + checkoutUrl))
+                    .content("Type the following link into your browser to checkout:\n" + checkoutUrl)
+                    .button("Close")
                     .build();
 
             if (api.sendForm(recipientId, form)) {
