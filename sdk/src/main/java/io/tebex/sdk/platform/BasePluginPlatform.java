@@ -14,7 +14,6 @@ import io.tebex.sdk.triage.EnumEventLevel;
 import io.tebex.sdk.triage.PluginEvent;
 import io.tebex.sdk.util.*;
 import org.jetbrains.annotations.NotNull;
-import org.geysermc.cumulus.form.SimpleForm;
 import org.geysermc.floodgate.api.FloodgateApi;
 import org.geysermc.floodgate.api.player.FloodgatePlayer;
 import org.geysermc.floodgate.util.LinkedPlayer;
@@ -248,13 +247,6 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         return player.getDefaultCommandIdentifier();
     }
 
-    @Override
-    public void sendCheckoutLink(String playerName, String checkoutUrl) {
-        if (!trySendBedrockCheckoutForm(playerName, checkoutUrl)) {
-            PluginPlatform.super.sendCheckoutLink(playerName, checkoutUrl);
-        }
-    }
-
     private UUID resolveFloodgateUniqueId(QueuedPlayer player) {
         if (!isGeyser()) {
             return null;
@@ -299,39 +291,6 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         }
 
         return null;
-    }
-
-    private boolean trySendBedrockCheckoutForm(String playerName, String checkoutUrl) {
-        UUID playerUniqueId = getPlayerUniqueId(playerName);
-        if (playerUniqueId == null) {
-            return false;
-        }
-
-        try {
-            FloodgateApi api = FloodgateApi.getInstance();
-            if (!api.isFloodgatePlayer(playerUniqueId)) {
-                return false;
-            }
-
-            FloodgatePlayer floodgatePlayer = api.getPlayer(playerUniqueId);
-            UUID recipientId = floodgatePlayer != null && floodgatePlayer.getCorrectUniqueId() != null
-                    ? floodgatePlayer.getCorrectUniqueId()
-                    : playerUniqueId;
-
-            SimpleForm form = SimpleForm.builder()
-                    .title("Checkout")
-                    .content("Type the following link into your browser to checkout:\n" + checkoutUrl)
-                    .button("Close")
-                    .build();
-
-            if (api.sendForm(recipientId, form)) {
-                return true;
-            }
-        } catch (IllegalStateException | NoClassDefFoundError e) {
-            warnMissingFloodgateApi();
-        }
-
-        return false;
     }
 
     private void warnMissingFloodgateApi() {

@@ -219,12 +219,6 @@ public class TebexVelocityPlugin extends BasePluginPlatform {
     }
 
     @Override
-    public UUID getPlayerUniqueId(String playerName) {
-        Player player = getPlayer(playerName);
-        return player == null ? null : player.getUniqueId();
-    }
-
-    @Override
     public boolean hasPermission(String username, String permission) {
         Player player = getPlayer(username);
         return player != null && player.hasPermission(permission);

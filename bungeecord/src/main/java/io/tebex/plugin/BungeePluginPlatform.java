@@ -125,12 +125,6 @@ public class BungeePluginPlatform extends BasePluginPlatform {
     }
 
     @Override
-    public UUID getPlayerUniqueId(String playerName) {
-        ProxiedPlayer player = getPlayer(playerName);
-        return player == null ? null : player.getUniqueId();
-    }
-
-    @Override
     public boolean hasPermission(String username, String permission) {
         ProxiedPlayer player = getPlayer(username);
         return player != null && player.hasPermission(permission);

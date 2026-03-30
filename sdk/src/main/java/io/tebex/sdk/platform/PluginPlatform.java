@@ -129,16 +129,6 @@ public interface PluginPlatform {
     }
 
     /**
-     * Returns the UUID of an online player when available.
-     *
-     * @param playerName The player's username.
-     * @return The online player's UUID, or null when unavailable.
-     */
-    default java.util.UUID getPlayerUniqueId(String playerName) {
-        return null;
-    }
-
-    /**
      * Resolves the identifier that should fill {id} and {uuid} placeholders for a queued player.
      *
      * @param player The queued player record from Tebex.
