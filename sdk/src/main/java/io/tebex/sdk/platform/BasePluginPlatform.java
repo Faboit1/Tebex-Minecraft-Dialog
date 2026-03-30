@@ -247,6 +247,16 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         return player.getDefaultCommandIdentifier();
     }
 
+    @Override
+    public void sendCheckoutLink(String playerName, String checkoutUrl) {
+        if (isOnlineFloodgatePlayer(playerName)) {
+            sendPlayerMessage(playerName, "Checkout started! Type this link into your browser: " + checkoutUrl);
+            return;
+        }
+
+        PluginPlatform.super.sendCheckoutLink(playerName, checkoutUrl);
+    }
+
     private UUID resolveFloodgateUniqueId(QueuedPlayer player) {
         if (!isGeyser()) {
             return null;
@@ -291,6 +301,20 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         }
 
         return null;
+    }
+
+    private boolean isOnlineFloodgatePlayer(String playerName) {
+        UUID playerUniqueId = getPlayerUniqueId(playerName);
+        if (playerUniqueId == null) {
+            return false;
+        }
+
+        try {
+            return FloodgateApi.getInstance().isFloodgatePlayer(playerUniqueId);
+        } catch (IllegalStateException | NoClassDefFoundError e) {
+            warnMissingFloodgateApi();
+            return false;
+        }
     }
 
     private void warnMissingFloodgateApi() {
