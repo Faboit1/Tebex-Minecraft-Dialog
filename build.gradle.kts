@@ -15,7 +15,7 @@ fun gitCommitHash(): String {
 
 plugins {
     java
-    id("com.gradleup.shadow") version "8.3.1"
+    id("com.gradleup.shadow") version "9.4.1"
 }
 
 defaultTasks("shadowJar")
@@ -99,6 +99,17 @@ project(":folia") {
         }
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
+    }
+}
+
+val fabric261Project = project(":fabric-26.1")
+fabric261Project.configure<JavaPluginExtension> {
+    sourceSets {
+        getByName("main") {
+            java {
+                srcDir("src/main/kotlin")
+            }
+        }
     }
 }
 
