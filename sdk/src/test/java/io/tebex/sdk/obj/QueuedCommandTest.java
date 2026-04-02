@@ -1,5 +1,6 @@
 package io.tebex.sdk.obj;
 
+import io.tebex.sdk.platform.MockPluginPlatform;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,5 +65,49 @@ class QueuedCommandTest {
         String parsed = command.getParsedCommand();
 
         assertEquals("lp user 12345678-1234-1234-1234-1234567890ab parent add default", parsed);
+    }
+
+    @Test
+    void bedrockPlayersFallbackToNameWithoutPlatformResolver() {
+        QueuedPlayer bedrockPlayer = new QueuedPlayer(4, "BedrockUser", null, "281474976710655");
+        QueuedCommand command = new QueuedCommand(
+                13,
+                "grant {id} {uuid}",
+                0,
+                0,
+                0,
+                0,
+                bedrockPlayer,
+                true
+        );
+
+        String parsed = command.getParsedCommand();
+
+        assertEquals("grant BedrockUser BedrockUser", parsed);
+    }
+
+    @Test
+    void bedrockPlayersUsePlatformResolvedIdentifier() {
+        QueuedPlayer bedrockPlayer = new QueuedPlayer(5, "BedrockUser", null, "281474976710655");
+        QueuedCommand command = new QueuedCommand(
+                14,
+                "grant {id} {uuid}",
+                0,
+                0,
+                0,
+                0,
+                bedrockPlayer,
+                true
+        );
+        MockPluginPlatform platform = new MockPluginPlatform() {
+            @Override
+            public String resolveCommandPlayerId(QueuedPlayer player) {
+                return "00000000-0000-0000-0001-000000000001";
+            }
+        };
+
+        String parsed = command.getParsedCommand(platform);
+
+        assertEquals("grant 00000000-0000-0000-0001-000000000001 00000000-0000-0000-0001-000000000001", parsed);
     }
 }

@@ -139,6 +139,12 @@ public class FabricPluginPlatform extends BasePluginPlatform {
     }
 
     @Override
+    public UUID getPlayerUniqueId(String playerName) {
+        ServerPlayerEntity player = getPlayer(playerName);
+        return player == null ? null : player.getUuid();
+    }
+
+    @Override
     public boolean hasPermission(String username, String permission) {
         ServerPlayerEntity player = getPlayer(username); //ops override permissions in case no manager is used
         return player != null && (Permissions.check(player, permission, false) || player.hasPermissionLevel(4));
