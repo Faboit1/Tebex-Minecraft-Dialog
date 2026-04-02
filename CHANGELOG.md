@@ -1,3 +1,27 @@
+2.4.0
+=====
+- Feature/Fix: XUIDs are now supported, verified with Floodgate API. This resolves issues delivering commands on Geyser stores. (thanks @itscainnotkain!)
+- Feature: Support for Fabric 26.1 (thanks @Manganoos!)
+- Feature: Bedrock checkout links will instruct the user to type the checkout link into their browser.
+
+- Fix: Improper class name for Bungee plugin (thanks @iiismael!)
+
+**Notice**: Fabric versions prior to 26.1 are no longer supported after this version.
+
+2.3.3
+=====
+Fix: UUID matching not working properly for offline players / Geyser servers (thanks @itscainnotkain)
+
+Fix: Duplicated command queue handling for Folia (thanks @sluhtie)
+
+Fix: Permission checks on certain Fabric versions (thanks @chaaadii )
+Fix: /buy GUI will no longer show if a store is not connected
+Fix: ArrayIndexOutOfBounds exception for multithreaded servers
+Fix: Memory optimization and thread-safety improved for Fabric and BungeeCord
+Fix: Backwards compatibility support for all GUI colors
+Fix: Incorrect telemetry sent from Fabric plugins
+Fix: ClassCastException on certain store types when commands are executed
+
 2.3.2
 =====
 Fix: Unnecessary command checks initiated during loading phase
