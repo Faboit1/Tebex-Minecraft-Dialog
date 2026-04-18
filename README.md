@@ -1,6 +1,7 @@
 ![Logo](https://www.tebex.io/assets/img/logos/tebex.svg#gh-light-mode-only)
 ![Static Badge](https://img.shields.io/badge/spigot-1.8--1.20-brightgreen)
 ![Static Badge](https://img.shields.io/badge/fabric-1.16.5+-brightgreen)
+![Static Badge](https://img.shields.io/badge/neoforge-26.1+-brightgreen)
 ![Static Badge](https://img.shields.io/badge/bungeecord-1.18+-brightgreen)
 ![Static Badge](https://img.shields.io/badge/waterfall-1.18+-brightgreen)
 ![Static Badge](https://img.shields.io/badge/velocity-1.16.5+-brightgreen)
@@ -22,7 +23,7 @@ See an interactive Tebex store using one of our free templates at https://exampl
 ## Installation and Setup
 1. Create a free webstore at https://tebex.io/
 2. Download the latest version of the plugin from the Releases tab of this repository.
-3. Place the downloaded Tebex `.jar` in the `plugins` folder of your relevant platform.
+3. Place the downloaded Tebex `.jar` in the `plugins` folder for plugin platforms, or the `mods` folder for Fabric and NeoForge.
 4. Restart your server / reload your plugins
 5. Run `tebex.secret your-key-here` as a server admin to connect the server to Tebex.
 

@@ -1,0 +1,23 @@
+license="MIT"
+
+[[mods]]
+modId="tebex"
+version="${version}"
+displayName="Tebex"
+description='''
+The Tebex adapter.
+'''
+
+[[dependencies.tebex]]
+modId="neoforge"
+type="required"
+versionRange="[26.1.0.19-beta,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.tebex]]
+modId="minecraft"
+type="required"
+versionRange="[26.1,)"
+ordering="NONE"
+side="BOTH"
