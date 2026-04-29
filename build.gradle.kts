@@ -81,7 +81,25 @@ subprojects {
     }
 
     tasks.named("processResources", Copy::class.java) {
-        val props = mapOf("version" to rootProject.version, "@VERSION@" to rootProject.version)
+        val props = mutableMapOf<String, Any>(
+            "version" to rootProject.version,
+            "@VERSION@" to rootProject.version,
+            "mod_version" to rootProject.version
+        )
+        listOf(
+            "minecraft_version",
+            "minecraft_version_range",
+            "forge_version",
+            "forge_version_range",
+            "loader_version_range",
+            "mod_id",
+            "mod_name",
+            "mod_license",
+            "mod_authors",
+            "mod_description"
+        ).forEach { key ->
+            project.findProperty(key)?.let { props[key] = it }
+        }
         inputs.properties(props)
         filteringCharset = "UTF-8"
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
@@ -110,5 +128,15 @@ fabric261Project.configure<JavaPluginExtension> {
                 srcDir("src/main/kotlin")
             }
         }
+    }
+}
+
+project(":forge-26.1") {
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(25))
+        }
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
     }
 }
