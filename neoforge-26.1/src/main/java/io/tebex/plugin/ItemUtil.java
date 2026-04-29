@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.datafix.fixes.ItemIdFix;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 
@@ -12,30 +13,80 @@ public class ItemUtil {
     private static final Map<String, Item> ITEM_CACHE = new HashMap<>();
 
     public static Optional<Item> fromString(String material) {
-        if (ITEM_CACHE.containsKey(material)) {
-            return Optional.of(ITEM_CACHE.get(material));
+        if (material == null || material.isBlank()) {
+            return Optional.empty();
         }
 
-        if (material.contains(":")) {
-            Identifier id = Identifier.tryParse(material);
-            if (id == null) {
-                return Optional.empty();
-            }
+        String cacheKey = material.trim();
+        if (ITEM_CACHE.containsKey(cacheKey)) {
+            return Optional.of(ITEM_CACHE.get(cacheKey));
+        }
 
-            Optional<Item> item = BuiltInRegistries.ITEM.getOptional(id);
-            item.ifPresent(value -> ITEM_CACHE.put(material, value));
+        Identifier id = Identifier.tryParse(toMinecraftIdentifier(cacheKey));
+        if (id == null) {
+            return Optional.empty();
+        }
 
-            if (item.isEmpty()) { // attempt block item lookup
-                Optional<Block> blockItem = BuiltInRegistries.BLOCK.getOptional(id);
-                if (blockItem.isPresent()) {
-                    item = Optional.of(blockItem.get().asItem());
-                    ITEM_CACHE.put(material, item.get());
-                }
-            }
+        Optional<Item> item = resolveItem(id);
+        if (item.isEmpty()) {
+            item = toCompatibleIdentifier(cacheKey).flatMap(ItemUtil::resolveItem);
+        }
+
+        item.ifPresent(value -> ITEM_CACHE.put(cacheKey, value));
+        return item;
+    }
+
+    private static Optional<Item> resolveItem(Identifier id) {
+        Optional<Item> item = BuiltInRegistries.ITEM.getOptional(id);
+        if (item.isPresent()) {
             return item;
         }
 
-        // no namespace in material identifier
+        Optional<Block> blockItem = BuiltInRegistries.BLOCK.getOptional(id);
+        if (blockItem.isPresent()) {
+            return Optional.of(blockItem.get().asItem());
+        }
+
         return Optional.empty();
+    }
+
+    private static String toMinecraftIdentifier(String material) {
+        String normalized = material.toLowerCase().replace(' ', '_');
+        return normalized.contains(":") ? normalized : "minecraft:" + normalized;
+    }
+
+    private static Optional<Identifier> toCompatibleIdentifier(String material) {
+        String normalized = material.toLowerCase().replace(' ', '_');
+        if (normalized.contains(":")) {
+            String[] split = normalized.split(":", 2);
+            if (split[0].matches("\\d+")) {
+                return fromLegacyNumericId(split[0]);
+            }
+
+            if (split[0].equals("minecraft")) {
+                return Optional.ofNullable(Identifier.tryParse("minecraft:" + split[1]));
+            }
+
+            return Optional.empty();
+        }
+
+        if (normalized.matches("\\d+")) {
+            return fromLegacyNumericId(normalized);
+        }
+
+        return Optional.ofNullable(Identifier.tryParse("minecraft:" + normalized));
+    }
+
+    private static Optional<Identifier> fromLegacyNumericId(String id) {
+        try {
+            String itemId = ItemIdFix.getItem(Integer.parseInt(id));
+            if ("minecraft:air".equals(itemId)) {
+                return Optional.empty();
+            }
+
+            return Optional.ofNullable(Identifier.tryParse(itemId));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
     }
 }

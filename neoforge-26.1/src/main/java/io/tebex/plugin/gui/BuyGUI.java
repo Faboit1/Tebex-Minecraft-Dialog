@@ -9,13 +9,11 @@ import io.tebex.sdk.obj.CategoryPackage;
 import io.tebex.sdk.obj.ICategory;
 import io.tebex.sdk.obj.SubCategory;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.contents.PlainTextContents;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
@@ -159,7 +157,8 @@ public class BuyGUI {
         }
 
         String itemType = section.getString("material");
-        Item material = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(itemType.toLowerCase()));
+        Item defaultItem = ItemUtil.fromString(itemType).isPresent() ? ItemUtil.fromString(itemType).get() : null;
+        Item item = ItemUtil.fromString(categoryPackage.getItemId()).isPresent() ? ItemUtil.fromString(categoryPackage.getItemId()).get() : defaultItem;
 
         String name = section.getString("name");
         List<String> lore = section.getStringList("lore");
@@ -168,7 +167,7 @@ public class BuyGUI {
         MutableComponent guiName = MutableComponent.create(PlainTextContents.create(convertToLegacyString(name != null ? handlePlaceholders(categoryPackage, name) : categoryPackage.getName()))).setStyle(Style.EMPTY.withItalic(true));
         List<String> guiLore = lore.stream().map(line -> MutableComponent.create(PlainTextContents.create(convertToLegacyString(handlePlaceholders(categoryPackage, line)))).setStyle(Style.EMPTY.withItalic(true)).getString()).collect(Collectors.toList());
 
-        TebexItemBuilder guiElementBuilder = TebexItemBuilder.from(material.asItem() != null ? material : Items.BOOK)
+        TebexItemBuilder guiElementBuilder = TebexItemBuilder.from(item != null ? item : Items.BOOK)
                 .hideFlags(DataComponents.ENCHANTMENTS, DataComponents.ATTRIBUTE_MODIFIERS, DataComponents.UNBREAKABLE)
                 .name(guiName.getString())
                 .lore(guiLore);
@@ -184,12 +183,12 @@ public class BuyGUI {
         Section section = config.getSection("gui.item.back");
 
         String itemType = section.getString("material");
-        Item material = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(itemType.toLowerCase()));
+        Item material = ItemUtil.fromString(itemType).orElse(Items.BOOK);
 
         String name = section.getString("name");
         List<String> lore = section.getStringList("lore");
 
-        return TebexItemBuilder.from(material.asItem() != null ? material : Items.BOOK)
+        return TebexItemBuilder.from(material)
                 .hideFlags(DataComponents.ENCHANTMENTS, DataComponents.ATTRIBUTE_MODIFIERS, DataComponents.UNBREAKABLE)
                 .name(Component.nullToEmpty(convertToLegacyString(name != null ? name : "§fBack")).getString())
                 .lore(lore.stream().map(line -> ((MutableComponent)(Component.nullToEmpty(convertToLegacyString(line)))).setStyle(Style.EMPTY.withItalic(true)).getString()).collect(Collectors.toList()));
