@@ -126,12 +126,8 @@ public class BuyGUI {
         ConfigurationSection section = config.getConfigurationSection("gui.item.category");
 
         String itemType = section.getString("material");
-        Material defaultMaterial = MaterialUtil.fromString(itemType).isPresent()
-                ? MaterialUtil.fromString(itemType).get().parseMaterial()
-                : null;
-        Material material = MaterialUtil.fromString(category.getGuiItem()).isPresent()
-                ? MaterialUtil.fromString(category.getGuiItem()).get().parseMaterial()
-                : defaultMaterial;
+        Material defaultMaterial = MaterialUtil.fromString(itemType).orElse(null);
+        Material material = MaterialUtil.fromString(category.getGuiItem()).orElse(defaultMaterial);
 
         String name = section.getString("name");
         List<String> lore = section.getStringList("lore");
@@ -158,12 +154,8 @@ public class BuyGUI {
 
         String itemType = section.getString("material");
 
-        Material defaultMaterial = MaterialUtil.fromString(itemType).isPresent()
-                ? MaterialUtil.fromString(itemType).get().parseMaterial()
-                : null;
-        Material material = MaterialUtil.fromString(categoryPackage.getItemId()).isPresent()
-                ? MaterialUtil.fromString(categoryPackage.getItemId()).get().parseMaterial()
-                : defaultMaterial;
+        Material defaultMaterial = MaterialUtil.fromString(itemType).orElse(null);
+        Material material = MaterialUtil.fromString(categoryPackage.getItemId()).orElse(defaultMaterial);
 
         String name = section.getString("name");
         List<String> lore = section.getStringList("lore");
@@ -195,12 +187,8 @@ public class BuyGUI {
         ConfigurationSection section = config.getConfigurationSection("gui.item.back");
 
         String itemType = section.getString("material");
-        Material defaultMaterial = MaterialUtil.fromString(itemType).isPresent()
-                ? MaterialUtil.fromString(itemType).get().parseMaterial()
-                : null;
-        Material material = MaterialUtil.fromString(section.getString("material")).isPresent()
-                ? MaterialUtil.fromString(section.getString("material")).get().parseMaterial()
-                : defaultMaterial;
+        Material defaultMaterial = MaterialUtil.fromString(itemType).orElse(null);
+        Material material = MaterialUtil.fromString(section.getString("material")).orElse(defaultMaterial);
 
         String name = section.getString("name");
         List<String> lore = section.getStringList("lore");
