@@ -350,6 +350,12 @@ public abstract class BasePluginPlatform implements PluginPlatform {
             }
 
             final Runnable commandRunnable = () -> {
+                // because the command might be running with a delay, check in its actual runnable if the player is still online at the moment of execution
+                if (!isPlayerOnline(playerId)) {
+                    info(String.format("Skipping command '%s' for player '%s' because they are no longer online", parsedCommand, playerName));
+                    return;
+                }
+
                 info(String.format("Dispatching command '%s' for player '%s'", parsedCommand, playerName));
                 CommandResult commandResult = dispatchCommand(parsedCommand);
 
@@ -374,19 +380,19 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                     }
                     warning("Command failed to execute: " + extraInfo, solution);
                 }
+
+                // At present all queued commands are reported as successful once delivery criteria are met, regardless if dispatching
+                // the command worked without errors. We *could* refactor this to only mark commands completed if they were successful, but
+                // platform-specific support for actually reporting if a command was successful and why or why not is dubious at best.
+                // This could also lead to a situation where massive stores have a continuously growing queue of bad commands, which would have to be manually invalidated and then re-sent.
+                // By marking all queued commands completed meeting in-game delivery criteria, this allows the store to visit a previously invalid command and re-run it directly from their store panel.
+                completedCommands.add(command.getId());
             };
             if (command.getDelay() > 0) {
                 executeBlockingLater(commandRunnable, command.getDelay(), TimeUnit.SECONDS);
             } else {
                 executeBlocking(commandRunnable);
             }
-
-            // At present all queued commands are reported as successful once delivery criteria are met, regardless if dispatching
-            // the command worked without errors. We *could* refactor this to only mark commands completed if they were successful, but
-            // platform-specific support for actually reporting if a command was successful and why or why not is dubious at best.
-            // This could also lead to a situation where massive stores have a continuously growing queue of bad commands, which would have to be manually invalidated and then re-sent.
-            // By marking all queued commands completed meeting in-game delivery criteria, this allows the store to visit a previously invalid command and re-run it directly from their store panel.
-            completedCommands.add(command.getId());
 
             if(completedCommands.size() % MAX_COMMANDS_PER_BATCH == 0) {
                 deleteCompletedCommands(completedCommands);
