@@ -338,7 +338,6 @@ public abstract class BasePluginPlatform implements PluginPlatform {
     public final void processOnlineCommands(String playerName, Object playerId, List<QueuedCommand> commands) {
         if(! isSetup()) return;
 
-        List<Integer> completedCommands = new ArrayList<>();
         boolean hasInventorySpace = true;
         for (QueuedCommand command : commands) {
             String parsedCommand = command.getParsedCommand(this);
@@ -386,23 +385,19 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                 // platform-specific support for actually reporting if a command was successful and why or why not is dubious at best.
                 // This could also lead to a situation where massive stores have a continuously growing queue of bad commands, which would have to be manually invalidated and then re-sent.
                 // By marking all queued commands completed meeting in-game delivery criteria, this allows the store to visit a previously invalid command and re-run it directly from their store panel.
-                completedCommands.add(command.getId());
+                //
+                // Deletion is called per-command from within the runnable because executeBlocking/executeBlockingLater on Bukkit
+                // schedule asynchronously (runTask/runTaskLater) and return immediately. If deletion were called from the outer
+                // loop it would always run against an empty list before any command runnable had a chance to execute.
+                List<Integer> completed = new ArrayList<>();
+                completed.add(command.getId());
+                deleteCompletedCommands(completed);
             };
             if (command.getDelay() > 0) {
                 executeBlockingLater(commandRunnable, command.getDelay(), TimeUnit.SECONDS);
             } else {
                 executeBlocking(commandRunnable);
             }
-
-            if(completedCommands.size() % MAX_COMMANDS_PER_BATCH == 0) {
-                deleteCompletedCommands(completedCommands);
-                completedCommands.clear();
-            }
-        }
-
-        if (!completedCommands.isEmpty()) {
-            deleteCompletedCommands(completedCommands);
-            completedCommands.clear();
         }
 
         if(! hasInventorySpace) return;
