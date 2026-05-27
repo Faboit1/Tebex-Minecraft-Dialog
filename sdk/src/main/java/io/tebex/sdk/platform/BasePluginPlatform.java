@@ -418,7 +418,6 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                 return;
             }
 
-            List<Integer> completedCommands = new ArrayList<>();
             for (QueuedCommand command : offlineData.getCommands()) {
                 String parsedCommand = command.getParsedCommand(this);
                 final Runnable commandRunnable = () -> {
@@ -442,24 +441,16 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                         }
                         warning(String.format("Command `%s` failed to execute: %s", parsedCommand, extraInfo), solution);
                     }
+
+                    List<Integer> completed = new ArrayList<>();
+                    completed.add(command.getId());
+                    deleteCompletedCommands(completed);
                 };
                 if (command.getDelay() > 0) {
                     executeBlockingLater(commandRunnable, command.getDelay(), TimeUnit.SECONDS);
                 } else {
                     executeBlocking(commandRunnable);
                 }
-
-                completedCommands.add(command.getId());
-
-                if(completedCommands.size() % MAX_COMMANDS_PER_BATCH == 0) {
-                    deleteCompletedCommands(completedCommands);
-                    completedCommands.clear();
-                }
-            }
-
-            if (! completedCommands.isEmpty()) {
-                deleteCompletedCommands(completedCommands);
-                completedCommands.clear();
             }
         }).exceptionally(ex -> {
             warning("Failed to retrieve offline commands - some commands may not have been processed. " + ex.getMessage(), "We will try again at the next due player check.", ex);
