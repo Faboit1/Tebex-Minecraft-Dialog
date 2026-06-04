@@ -188,8 +188,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
 
         debug("Processing online commands for player '" + player.getName() + "'...");
         Object playerId = getPlayerId(player.getName(), UUIDUtil.mojangIdToJavaId(player.getUuid()));
-        if(!isPlayerOnline(playerId)) {
-            debug("Player " + player.getName() + " has online commands but is not connected. Skipping.");
+        if(!canProcessOnlineCommands(player, playerId)) {
             getQueuedPlayers().put(playerId, player.getId()); // will cause commands to be processed when player connects
             return;
         }
@@ -201,11 +200,25 @@ public abstract class BasePluginPlatform implements PluginPlatform {
             }
 
             debug("Found " + onlineCommands.size() + " online " + StringUtil.pluralise(onlineCommands.size(), "command") + ".");
-            processOnlineCommands(player.getName(), playerId, onlineCommands);
+            processOnlineCommands(player, playerId, onlineCommands);
         }).exceptionally(ex -> {
             warning("Failed to get online commands: " + ex.getMessage(), "We will try again at the next due player check.", ex);
             return null;
         });
+    }
+
+    private boolean canProcessOnlineCommands(QueuedPlayer player, Object playerId) {
+        if (isOnlineMode() && !isGeyser() && !player.hasUuid()) {
+            debug("Player " + player.getName() + " has online commands but no UUID was provided for an online-mode store. Skipping.");
+            return false;
+        }
+
+        if (!isPlayerOnline(playerId)) {
+            debug("Player " + player.getName() + " has online commands but is not connected. Skipping.");
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -331,14 +344,14 @@ public abstract class BasePluginPlatform implements PluginPlatform {
     /**
      * Processes the online commands for a player.
      *
-     * @param playerName The name of the player.
+     * @param player The queued player.
      * @param playerId The Unique Identifier of the player.
      * @param commands The commands to process.
      */
-    public final void processOnlineCommands(String playerName, Object playerId, List<QueuedCommand> commands) {
+    public final void processOnlineCommands(QueuedPlayer player, Object playerId, List<QueuedCommand> commands) {
         if(! isSetup()) return;
 
-        List<Integer> completedCommands = new ArrayList<>();
+        String playerName = player.getName();
         boolean hasInventorySpace = true;
         for (QueuedCommand command : commands) {
             String parsedCommand = command.getParsedCommand(this);
@@ -350,6 +363,11 @@ public abstract class BasePluginPlatform implements PluginPlatform {
             }
 
             final Runnable commandRunnable = () -> {
+                if (!canProcessOnlineCommands(player, playerId)) {
+                    info(String.format("Skipping command '%s' for player '%s' because they are no longer verified online", parsedCommand, playerName));
+                    return;
+                }
+
                 info(String.format("Dispatching command '%s' for player '%s'", parsedCommand, playerName));
                 CommandResult commandResult = dispatchCommand(parsedCommand);
 
@@ -374,29 +392,17 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                     }
                     warning("Command failed to execute: " + extraInfo, solution);
                 }
+
+                // Mark online commands completed only after their scheduled runnable has verified the player and dispatched.
+                List<Integer> completedCommands = new ArrayList<>();
+                completedCommands.add(command.getId());
+                deleteCompletedCommands(completedCommands);
             };
             if (command.getDelay() > 0) {
                 executeBlockingLater(commandRunnable, command.getDelay(), TimeUnit.SECONDS);
             } else {
                 executeBlocking(commandRunnable);
             }
-
-            // At present all queued commands are reported as successful once delivery criteria are met, regardless if dispatching
-            // the command worked without errors. We *could* refactor this to only mark commands completed if they were successful, but
-            // platform-specific support for actually reporting if a command was successful and why or why not is dubious at best.
-            // This could also lead to a situation where massive stores have a continuously growing queue of bad commands, which would have to be manually invalidated and then re-sent.
-            // By marking all queued commands completed meeting in-game delivery criteria, this allows the store to visit a previously invalid command and re-run it directly from their store panel.
-            completedCommands.add(command.getId());
-
-            if(completedCommands.size() % MAX_COMMANDS_PER_BATCH == 0) {
-                deleteCompletedCommands(completedCommands);
-                completedCommands.clear();
-            }
-        }
-
-        if (!completedCommands.isEmpty()) {
-            deleteCompletedCommands(completedCommands);
-            completedCommands.clear();
         }
 
         if(! hasInventorySpace) return;

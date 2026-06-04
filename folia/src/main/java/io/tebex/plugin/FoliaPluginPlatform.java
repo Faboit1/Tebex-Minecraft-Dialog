@@ -109,6 +109,12 @@ public class FoliaPluginPlatform extends BasePluginPlatform {
     }
 
     @Override
+    public boolean isPlayerOnline(Object playerId) {
+        Player player = getPlayer(playerId);
+        return player != null && player.isOnline();
+    }
+
+    @Override
     public void log(Level level, String message) {
         plugin.getLogger().log(level, message);
     }

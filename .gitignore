@@ -1,6 +1,7 @@
 .gradle/
 .idea/
 ignore/
+builds/
 **/build
 **/*.iml
 **/*.jar
