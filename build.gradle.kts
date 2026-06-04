@@ -21,7 +21,7 @@ plugins {
 defaultTasks("collectBuilds")
 
 group = "io.tebex"
-version = "2.4.0"
+version = "2.4.2"
 
 val collectBuilds = tasks.register("collectBuilds", Sync::class.java) {
     group = "build"
@@ -93,7 +93,25 @@ subprojects {
     }
 
     tasks.named("processResources", Copy::class.java) {
-        val props = mapOf("version" to rootProject.version, "@VERSION@" to rootProject.version)
+        val props = mutableMapOf<String, Any>(
+            "version" to rootProject.version,
+            "@VERSION@" to rootProject.version,
+            "mod_version" to rootProject.version
+        )
+        listOf(
+            "minecraft_version",
+            "minecraft_version_range",
+            "forge_version",
+            "forge_version_range",
+            "loader_version_range",
+            "mod_id",
+            "mod_name",
+            "mod_license",
+            "mod_authors",
+            "mod_description"
+        ).forEach { key ->
+            project.findProperty(key)?.let { props[key] = it }
+        }
         inputs.properties(props)
         filteringCharset = "UTF-8"
         duplicatesStrategy = DuplicatesStrategy.INCLUDE

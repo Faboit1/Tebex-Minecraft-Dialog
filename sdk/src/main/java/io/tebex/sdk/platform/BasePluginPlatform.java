@@ -135,7 +135,6 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         getQueuedPlayers().clear();
 
         getSDK().getDuePlayers().whenComplete((duePlayersResponse, ex) -> {
-            try {
             ArrayList<String> output = new ArrayList<>();
             if (ex != null) {
                 if (ex.getMessage().contains("429")) { // handling for rate limits
@@ -151,6 +150,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                     output.add("Failed to get due players: '" + ex.getMessage() + "'. We will try again at the next due player check.");
                     executeAsyncLater(this::performCheck, 1, TimeUnit.MINUTES);
                 }
+                commandCheckInProgress.set(false);
                 forceCheckOutput.complete((String[]) output.toArray());
                 return;
             }
@@ -161,39 +161,45 @@ public abstract class BasePluginPlatform implements PluginPlatform {
             }
 
             List<QueuedPlayer> playerList = duePlayersResponse.getPlayers();
+            List<CompletableFuture<Void>> onlineCommandFutures = new ArrayList<>();
             if(! playerList.isEmpty()) {
                 String listMessage = "Found " + playerList.size() + " " + StringUtil.pluralise(playerList.size(), "player", "players") + " with pending commands.";
 
                 for (QueuedPlayer queuedPlayer : playerList) {
                     try {
-                        handleOnlineCommands(queuedPlayer);
+                        onlineCommandFutures.add(handleOnlineCommands(queuedPlayer));
                     } catch (Exception e) {
                         error("Failed to handle online commands for player '" + queuedPlayer.getName() + "': " + e.getMessage(), e);
                     }
                 }
             }
 
-            if(! duePlayersResponse.isExecuteOffline()) return;
-            handleOfflineCommands();
-            } finally {
-                commandCheckInProgress.set(false);
-            }
+            // Hold the flag until all per-player command fetches settle. Resetting it when
+            // getDuePlayers returns lets a concurrent forcecheck re-fetch and re-dispatch the
+            // same commands before they are deleted.
+            CompletableFuture.allOf(onlineCommandFutures.toArray(new CompletableFuture[0]))
+                .whenComplete((v, allEx) -> {
+                    if (duePlayersResponse.isExecuteOffline()) {
+                        handleOfflineCommands();
+                    }
+                    commandCheckInProgress.set(false);
+                });
         });
 
         return forceCheckOutput;
     }
 
-    public final void handleOnlineCommands(QueuedPlayer player) {
-        if(! isSetup()) return;
+    public final CompletableFuture<Void> handleOnlineCommands(QueuedPlayer player) {
+        if(! isSetup()) return CompletableFuture.completedFuture(null);
 
         debug("Processing online commands for player '" + player.getName() + "'...");
         Object playerId = getPlayerId(player.getName(), UUIDUtil.mojangIdToJavaId(player.getUuid()));
         if(!canProcessOnlineCommands(player, playerId)) {
             getQueuedPlayers().put(playerId, player.getId()); // will cause commands to be processed when player connects
-            return;
+            return CompletableFuture.completedFuture(null);
         }
 
-        getSDK().getOnlineCommands(player).thenAccept(onlineCommands -> {
+        return getSDK().getOnlineCommands(player).thenAccept(onlineCommands -> {
             if(onlineCommands.isEmpty()) {
                 debug("No commands found for " + player.getName() + ".");
                 return;
@@ -417,7 +423,6 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                 return;
             }
 
-            List<Integer> completedCommands = new ArrayList<>();
             for (QueuedCommand command : offlineData.getCommands()) {
                 String parsedCommand = command.getParsedCommand(this);
                 final Runnable commandRunnable = () -> {
@@ -441,24 +446,16 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                         }
                         warning(String.format("Command `%s` failed to execute: %s", parsedCommand, extraInfo), solution);
                     }
+
+                    List<Integer> completed = new ArrayList<>();
+                    completed.add(command.getId());
+                    deleteCompletedCommands(completed);
                 };
                 if (command.getDelay() > 0) {
                     executeBlockingLater(commandRunnable, command.getDelay(), TimeUnit.SECONDS);
                 } else {
                     executeBlocking(commandRunnable);
                 }
-
-                completedCommands.add(command.getId());
-
-                if(completedCommands.size() % MAX_COMMANDS_PER_BATCH == 0) {
-                    deleteCompletedCommands(completedCommands);
-                    completedCommands.clear();
-                }
-            }
-
-            if (! completedCommands.isEmpty()) {
-                deleteCompletedCommands(completedCommands);
-                completedCommands.clear();
             }
         }).exceptionally(ex -> {
             warning("Failed to retrieve offline commands - some commands may not have been processed. " + ex.getMessage(), "We will try again at the next due player check.", ex);
