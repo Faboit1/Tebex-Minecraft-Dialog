@@ -25,10 +25,16 @@ plugins {
     id("com.gradleup.shadow") version "9.4.1"
 }
 
-defaultTasks("shadowJar")
+defaultTasks("collectBuilds")
 
 group = "io.tebex"
 version = "2.4.2"
+
+val collectBuilds = tasks.register("collectBuilds", Sync::class.java) {
+    group = "build"
+    description = "Builds all shaded jars and copies them into the top-level builds directory."
+    into(layout.projectDirectory.dir("builds"))
+}
 
 tasks.register("processSources", Copy::class.java) {
     val props = mapOf("@VERSION@" to rootProject.version)
@@ -87,6 +93,12 @@ subprojects {
 
             Files.move(tempArchive.toPath(), archive.toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
+    }
+
+    collectBuilds.configure {
+        val shadowJarTask = tasks.named("shadowJar", ShadowJar::class.java)
+        dependsOn(shadowJarTask)
+        from(shadowJarTask.flatMap { it.archiveFile })
     }
 
     repositories {
