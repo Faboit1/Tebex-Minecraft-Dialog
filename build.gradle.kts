@@ -18,10 +18,16 @@ plugins {
     id("com.gradleup.shadow") version "9.4.1"
 }
 
-defaultTasks("shadowJar")
+defaultTasks("collectBuilds")
 
 group = "io.tebex"
 version = "2.4.2"
+
+val collectBuilds = tasks.register("collectBuilds", Sync::class.java) {
+    group = "build"
+    description = "Builds all shaded jars and copies them into the top-level builds directory."
+    into(layout.projectDirectory.dir("builds"))
+}
 
 tasks.register("processSources", Copy::class.java) {
     val props = mapOf("@VERSION@" to rootProject.version)
@@ -49,6 +55,12 @@ subprojects {
 
     tasks.named("shadowJar", ShadowJar::class.java) {
         archiveFileName.set("tebex-${project.name}-${rootProject.version}-${gitCommitHash()}.jar")
+    }
+
+    collectBuilds.configure {
+        val shadowJarTask = tasks.named("shadowJar", ShadowJar::class.java)
+        dependsOn(shadowJarTask)
+        from(shadowJarTask.flatMap { it.archiveFile })
     }
 
     repositories {
@@ -128,15 +140,5 @@ fabric261Project.configure<JavaPluginExtension> {
                 srcDir("src/main/kotlin")
             }
         }
-    }
-}
-
-project(":forge-26.1") {
-    java {
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(25))
-        }
-        sourceCompatibility = JavaVersion.VERSION_25
-        targetCompatibility = JavaVersion.VERSION_25
     }
 }
