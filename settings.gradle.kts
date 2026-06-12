@@ -12,6 +12,10 @@ pluginManagement {
             name = "Fabric"
             url = uri("https://maven.fabricmc.net/")
         }
+        maven {
+            name = "NeoForged"
+            url = uri("https://maven.neoforged.net/releases")
+        }
         gradlePluginPortal()
     }
 }
@@ -29,6 +33,10 @@ listOf(
     "velocity",
     "folia",
     "fabric-26.1",
+    "forge-1.20.1",
+    "forge-1.21.1",
+    "neoforge-1.20.2",
+    "neoforge-1.21.1",
     "neoforge-26.1",
     "forge-26.1"
 ).forEach(::include)

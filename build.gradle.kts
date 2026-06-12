@@ -1,4 +1,11 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.util.jar.Attributes
+import java.util.jar.Manifest
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 fun gitCommitHash(): String {
     return try {
@@ -55,6 +62,37 @@ subprojects {
 
     tasks.named("shadowJar", ShadowJar::class.java) {
         archiveFileName.set("tebex-${project.name}-${rootProject.version}-${gitCommitHash()}.jar")
+        doLast {
+            val archive = archiveFile.get().asFile
+            val tempArchive = archive.resolveSibling("${archive.name}.tmp")
+
+            ZipInputStream(archive.inputStream()).use { input ->
+                ZipOutputStream(tempArchive.outputStream()).use { output ->
+                    var entry = input.nextEntry
+                    while (entry != null) {
+                        val replacement = ZipEntry(entry.name)
+                        if (entry.time >= 0) {
+                            replacement.time = entry.time
+                        }
+                        output.putNextEntry(replacement)
+
+                        if (entry.name.equals("META-INF/MANIFEST.MF", ignoreCase = true)) {
+                            val manifest = Manifest(input)
+                            manifest.mainAttributes.remove(Attributes.Name("Multi-Release"))
+                            manifest.write(output)
+                        } else {
+                            input.copyTo(output)
+                        }
+
+                        output.closeEntry()
+                        input.closeEntry()
+                        entry = input.nextEntry
+                    }
+                }
+            }
+
+            Files.move(tempArchive.toPath(), archive.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
     }
 
     collectBuilds.configure {
@@ -90,6 +128,9 @@ subprojects {
         maven("https://maven.nucleoid.xyz/") {
             name = "nucleoid"
         }
+        maven("https://maven.neoforged.net/releases") {
+            name = "neoforged"
+        }
     }
 
     tasks.named("processResources", Copy::class.java) {
@@ -103,6 +144,8 @@ subprojects {
             "minecraft_version_range",
             "forge_version",
             "forge_version_range",
+            "neo_version",
+            "neo_version_range",
             "loader_version_range",
             "mod_id",
             "mod_name",
@@ -139,6 +182,46 @@ fabric261Project.configure<JavaPluginExtension> {
             java {
                 srcDir("src/main/kotlin")
             }
+        }
+    }
+}
+
+project(":forge-26.1") {
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(25))
+        }
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
+    }
+}
+
+listOf(
+    "forge-1.20.1",
+    "neoforge-1.20.2"
+).forEach { projectName ->
+    project(":$projectName") {
+        java {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(17))
+            }
+            sourceCompatibility = JavaVersion.VERSION_17
+            targetCompatibility = JavaVersion.VERSION_17
+        }
+    }
+}
+
+listOf(
+    "forge-1.21.1",
+    "neoforge-1.21.1"
+).forEach { projectName ->
+    project(":$projectName") {
+        java {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(21))
+            }
+            sourceCompatibility = JavaVersion.VERSION_21
+            targetCompatibility = JavaVersion.VERSION_21
         }
     }
 }
