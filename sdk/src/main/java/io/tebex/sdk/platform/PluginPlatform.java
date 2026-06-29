@@ -118,6 +118,7 @@ public interface PluginPlatform {
     /**
      * Retrieves a player entity based on the provided UUID or username.
      *
+     * @param <T> The type of the player entity.
      * @param uuidOrUsername The UUID or username of the player to retrieve.
      * @return The player entity.
      */

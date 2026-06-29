@@ -20,5 +20,8 @@ tasks.named("shadowJar", ShadowJar::class.java) {
     relocate("kotlin", "io.tebex.plugin.libs.kotlin")
     relocate("com.google.gson", "io.tebex.plugin.libs.gson")
     relocate("com.cryptomorin.xseries", "io.tebex.plugin.libs.xseries")
-    minimize()
+    minimize {
+        exclude(dependency("com.squareup.okhttp3:.*:.*"))
+        exclude(dependency("org.jetbrains.kotlin:.*:.*"))
+    }
 }

@@ -50,7 +50,10 @@ tasks.withType<JavaCompile> {
 
 // auto minimize shadowjar
 tasks.withType<ShadowJar> {
-    minimize()
+    minimize {
+        exclude(dependency("com.squareup.okhttp3:.*:.*"))
+        exclude(dependency("org.jetbrains.kotlin:.*:.*"))
+    }
 }
 
 java {
