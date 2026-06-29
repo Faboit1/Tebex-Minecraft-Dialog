@@ -35,15 +35,13 @@ dependencies {
     testImplementation("com.google.guava:guava:33.3.1-jre")
 }
 
-//tasks.named<Test>("test") {
-//    useJUnitPlatform()
-//
-//    maxHeapSize = "1G"
-//
-//    testLogging {
-//        events("passed")
-//    }
-//}
+tasks.named<Test>("test") {
+    useJUnitPlatform()
+    maxHeapSize = "1G"
+    testLogging {
+        events("passed")
+    }
+}
 
 tasks.withType<JavaCompile> {
     options.compilerArgs.addAll(listOf("-Xlint:deprecation", "-Xlint:unchecked"))

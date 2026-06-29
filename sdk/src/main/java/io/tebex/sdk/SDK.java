@@ -739,6 +739,9 @@ public class SDK {
     /**
      * Bans a user from the webstore.
      *
+     * @param playerUUID    The UUID of the player to ban
+     * @param ip            The IP address to ban
+     * @param reason        The reason for the ban
      * @return A CompletableFuture that indicates whether the operation was successful.
      */
     public CompletableFuture<Boolean> createBan(String playerUUID, String ip, String reason) {

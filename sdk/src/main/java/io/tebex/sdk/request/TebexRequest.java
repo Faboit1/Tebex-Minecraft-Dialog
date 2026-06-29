@@ -60,6 +60,7 @@ public class TebexRequest {
      * Sets the request body and method.
      *
      * @param body The request body in JSON format.
+     * @param method The HTTP method to use.
      * @return The TebexRequest instance for chaining.
      */
     public TebexRequest withBody(String body, String method) {
