@@ -131,6 +131,7 @@ subprojects {
         maven("https://maven.neoforged.net/releases") {
             name = "neoforged"
         }
+        maven("https://jitpack.io")
     }
 
     tasks.named("processResources", Copy::class.java) {
@@ -165,63 +166,3 @@ subprojects {
     }
 }
 
-project(":folia") {
-    java {
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(21))
-        }
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-}
-
-val fabric261Project = project(":fabric-26.1")
-fabric261Project.configure<JavaPluginExtension> {
-    sourceSets {
-        getByName("main") {
-            java {
-                srcDir("src/main/kotlin")
-            }
-        }
-    }
-}
-
-project(":forge-26.1") {
-    java {
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(25))
-        }
-        sourceCompatibility = JavaVersion.VERSION_25
-        targetCompatibility = JavaVersion.VERSION_25
-    }
-}
-
-listOf(
-    "forge-1.20.1",
-    "neoforge-1.20.2"
-).forEach { projectName ->
-    project(":$projectName") {
-        java {
-            toolchain {
-                languageVersion.set(JavaLanguageVersion.of(17))
-            }
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
-        }
-    }
-}
-
-listOf(
-    "forge-1.21.1",
-    "neoforge-1.21.1"
-).forEach { projectName ->
-    project(":$projectName") {
-        java {
-            toolchain {
-                languageVersion.set(JavaLanguageVersion.of(21))
-            }
-            sourceCompatibility = JavaVersion.VERSION_21
-            targetCompatibility = JavaVersion.VERSION_21
-        }
-    }
-}
