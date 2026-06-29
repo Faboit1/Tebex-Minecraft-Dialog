@@ -21,7 +21,6 @@ class SDKTest {
     @BeforeEach
     void setUp() {
         platform = new MockPluginPlatform();
-        platform.setSetup(true);
         sdk = new SDK(platform, secret);
     }
 
