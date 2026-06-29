@@ -56,6 +56,7 @@ public interface PluginPlatform {
     /**
      * Creates a new configuration file for this platform.
      * @return A reference to the platform's config file.
+     * @throws IOException If the config file cannot be created.
      */
     YamlDocument initPlatformConfig() throws IOException;
 
@@ -105,6 +106,7 @@ public interface PluginPlatform {
      * Executes a command on the server.
      *
      * @param command The command to dispatch.
+     * @return The result of the command execution.
      */
     CommandResult dispatchCommand(String command);
 
@@ -122,6 +124,7 @@ public interface PluginPlatform {
     <T> T getPlayer(Object uuidOrUsername);
 
     /**
+     * @param player The player entity or identifier.
      * @return True if the player is online.
      */
     default boolean isPlayerOnline(Object player) {
@@ -149,6 +152,7 @@ public interface PluginPlatform {
     }
 
     /**
+     * @param player The player entity or identifier.
      * @return Number of inventory slots free for the given player
      */
     int getFreeSlots(Object player);

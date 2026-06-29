@@ -605,6 +605,8 @@ public abstract class BasePluginPlatform implements PluginPlatform {
 
     /**
      * Sets whether the platform is set up and ready to use.
+     *
+     * @param setup True if the platform is set up, false otherwise.
      */
     public final void setSetup(boolean setup) {
         this.setup = setup;
