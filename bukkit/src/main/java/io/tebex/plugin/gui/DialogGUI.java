@@ -59,7 +59,7 @@ public class DialogGUI {
             actions.add(action);
         }
 
-        if (!actions.isEmpty()) {
+        if (actions.size() > 0) {
             dialog.add("actions", actions);
         }
 
@@ -161,7 +161,7 @@ public class DialogGUI {
             actions.add(action);
         }
 
-        if (!actions.isEmpty()) {
+        if (actions.size() > 0) {
             dialog.add("actions", actions);
         }
 
