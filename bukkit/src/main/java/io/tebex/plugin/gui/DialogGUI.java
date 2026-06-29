@@ -204,10 +204,8 @@ public class DialogGUI {
 
     private void dispatchDialog(Player player, JsonObject dialogJson) {
         String json = dialogJson.toString();
-        // Since Minecraft commands parse arguments by spaces, the JSON argument needs to be sent properly.
-        // It's also safer to enclose the JSON string in single quotes or simply pass it properly via escaping depending on Bukkit parsing.
+        // Enclose JSON in single quotes to prevent command parser from splitting on spaces.
         Bukkit.getScheduler().runTask(platform.getPlugin(), () -> {
-            // we enclose the json string in single quotes to not have it stripped.
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "dialog show " + player.getName() + " '" + json + "'");
         });
     }

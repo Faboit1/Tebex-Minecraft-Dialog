@@ -25,36 +25,36 @@ public class BuyCommand extends Command {
     private boolean isVersionAtLeast1_21_6() {
         String version = Bukkit.getBukkitVersion();
         Matcher match = VERSION_PATTERN.matcher(version);
-        boolean is1_21_6 = false;
+        boolean isCompatible = false;
         
         if (match.find()) {
             try {
                 int minor = Integer.parseInt(match.group(1));
                 int patch = match.group(2) != null ? Integer.parseInt(match.group(2)) : 0;
                 if (minor > 21) {
-                    is1_21_6 = true;
+                    isCompatible = true;
                 } else if (minor == 21 && patch >= 6) {
-                    is1_21_6 = true;
+                    isCompatible = true;
                 }
             } catch (Exception ignored) {
             }
         }
         
-        if (!is1_21_6) {
+        if (!isCompatible) {
             // Check for format where "1." might be omitted, e.g., "26.1.2"
             Matcher newMatch = NEW_VERSION_PATTERN.matcher(version);
             if (newMatch.find()) {
                 try {
                     int major = Integer.parseInt(newMatch.group(1));
-                    if (major >= 21) {
-                        is1_21_6 = true;
+                    if (major >= 26) {
+                        isCompatible = true;
                     }
                 } catch (Exception ignored) {
                 }
             }
         }
         
-        return is1_21_6;
+        return isCompatible;
     }
 
     @Override
