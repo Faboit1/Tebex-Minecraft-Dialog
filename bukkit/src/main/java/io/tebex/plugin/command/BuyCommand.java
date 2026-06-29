@@ -34,8 +34,10 @@ public class BuyCommand extends Command {
         String version = Bukkit.getBukkitVersion();
         Matcher match = VERSION_PATTERN.matcher(version);
         boolean isCompatible = false;
+        boolean is1_x_x = false;
         
         if (match.find()) {
+            is1_x_x = true;
             try {
                 int minor = Integer.parseInt(match.group(1));
                 int patch = match.group(2) != null ? Integer.parseInt(match.group(2)) : 0;
@@ -48,7 +50,7 @@ public class BuyCommand extends Command {
             }
         }
         
-        if (!isCompatible) {
+        if (!isCompatible && !is1_x_x) {
             // Check for alternative version format without 1. prefix, e.g., "26.1.2"
             Matcher alternativeMatch = ALTERNATIVE_VERSION_PATTERN.matcher(version);
             if (alternativeMatch.find()) {
