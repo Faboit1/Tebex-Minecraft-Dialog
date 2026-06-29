@@ -453,6 +453,7 @@ public class SDK {
     /**
      * Create a coupon.
      *
+     * @param createCouponRequest The request payload to create a coupon.
      * @return A CompletableFuture that contains the new Coupon object.
      */
     public CompletableFuture<Coupon> createCoupon(CreateCouponRequest createCouponRequest) {

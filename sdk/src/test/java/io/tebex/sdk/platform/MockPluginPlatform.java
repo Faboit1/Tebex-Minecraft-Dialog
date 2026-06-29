@@ -11,6 +11,7 @@ public class MockPluginPlatform extends BasePluginPlatform {
         super();
         config = new ServerPlatformConfig(1);
         config.setVerbose(true);
+        setSetup(true);
     }
 
     @Override
