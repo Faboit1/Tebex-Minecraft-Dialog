@@ -14,6 +14,8 @@ val ossrhPassword = System.getenv("OSSRH_PASSWORD") ?: properties["ossrhPassword
 repositories {
     mavenLocal()
     mavenCentral()
+    maven("https://repo.opencollab.dev/maven-snapshots/")
+    maven("https://repo.opencollab.dev/maven-releases/")
 }
 
 dependencies {
@@ -21,7 +23,7 @@ dependencies {
     implementation("dev.dejvokep:boosted-yaml:1.3")
     implementation("com.google.code.gson:gson:2.10.1")
 
-    compileOnly("org.geysermc.floodgate:api:2.2.5-SNAPSHOT")
+    compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
 
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")
@@ -30,18 +32,17 @@ dependencies {
 
     compileOnly("com.google.guava:guava:33.3.1-jre")
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("com.google.guava:guava:33.3.1-jre")
 }
 
-//tasks.named<Test>("test") {
-//    useJUnitPlatform()
-//
-//    maxHeapSize = "1G"
-//
-//    testLogging {
-//        events("passed")
-//    }
-//}
+tasks.named<Test>("test") {
+    useJUnitPlatform()
+    maxHeapSize = "1G"
+    testLogging {
+        events("passed")
+    }
+}
 
 tasks.withType<JavaCompile> {
     options.compilerArgs.addAll(listOf("-Xlint:deprecation", "-Xlint:unchecked"))

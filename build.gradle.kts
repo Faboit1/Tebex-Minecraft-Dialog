@@ -103,7 +103,12 @@ subprojects {
 
     repositories {
         mavenCentral()
-        maven("https://repo.papermc.io/repository/maven-public/")
+        maven("https://repo.opencollab.dev/maven-snapshots/") {
+            name = "opencollab-snapshots"
+        }
+        maven("https://repo.opencollab.dev/maven-releases/") {
+            name = "opencollab-releases"
+        }
         maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/") {
             name = "spigotmc-repo"
         }
@@ -112,12 +117,6 @@ subprojects {
         }
         maven("https://oss.sonatype.org/content/groups/public/") {
             name = "sonatype"
-        }
-        maven("https://repo.opencollab.dev/main/") {
-            name = "opencollab-snapshot-repo"
-        }
-        maven("https://repo.papermc.io/repository/maven-public/") {
-            name = "paper-repo"
         }
         maven("https://repo.extendedclip.com/content/repositories/placeholderapi/") {
             name = "extendedclip-repo"
