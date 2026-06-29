@@ -41,6 +41,7 @@ public class DialogGUI {
         JsonObject plainMessage = new JsonObject();
         JsonObject plainMessageText = new JsonObject();
         plainMessageText.addProperty("text", "Please select a category:");
+        plainMessage.addProperty("type", "plain_message");
         plainMessage.add("plain_message", plainMessageText);
         body.add(plainMessage);
         dialog.add("body", body);
@@ -58,7 +59,9 @@ public class DialogGUI {
             actions.add(action);
         }
 
-        dialog.add("actions", actions);
+        if (actions.size() > 0) {
+            dialog.add("actions", actions);
+        }
 
         JsonArray footer = new JsonArray();
         JsonObject closeAction = new JsonObject();
@@ -115,6 +118,7 @@ public class DialogGUI {
         JsonObject plainMessage = new JsonObject();
         JsonObject plainMessageText = new JsonObject();
         plainMessageText.addProperty("text", "Select a package to purchase:");
+        plainMessage.addProperty("type", "plain_message");
         plainMessage.add("plain_message", plainMessageText);
         body.add(plainMessage);
         dialog.add("body", body);
@@ -157,7 +161,9 @@ public class DialogGUI {
             actions.add(action);
         }
 
-        dialog.add("actions", actions);
+        if (actions.size() > 0) {
+            dialog.add("actions", actions);
+        }
 
         JsonArray footer = new JsonArray();
         
