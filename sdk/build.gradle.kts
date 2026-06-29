@@ -14,6 +14,7 @@ val ossrhPassword = System.getenv("OSSRH_PASSWORD") ?: properties["ossrhPassword
 repositories {
     mavenLocal()
     mavenCentral()
+    maven("https://repo.opencollab.dev/main/")
 }
 
 dependencies {
