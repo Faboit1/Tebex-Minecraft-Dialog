@@ -199,7 +199,7 @@ public class DialogGUI {
     }
 
     private String remapLegacyFormatSeparator(String input) {
-        return input.replaceAll("&", "§");
+        return input.replace("&", "§");
     }
 
     private void dispatchDialog(Player player, JsonObject dialogJson) {

@@ -14,16 +14,16 @@ import java.util.regex.Pattern;
 
 public class BuyCommand extends Command {
     private final BukkitPluginPlatform platform;
+    private static final Pattern VERSION_PATTERN = Pattern.compile("1\\.(\\d+)(?:\\.(\\d+))?");
 
     public BuyCommand(String command, BukkitPluginPlatform platform) {
         super(command);
         this.platform = platform;
     }
 
-    private boolean is1_21_6OrAbove() {
+    private boolean isVersionAtLeast1_21_6() {
         String version = Bukkit.getBukkitVersion();
-        Pattern pattern = Pattern.compile("1\\.(\\d+)(?:\\.(\\d+))?");
-        Matcher match = pattern.matcher(version);
+        Matcher match = VERSION_PATTERN.matcher(version);
         if (match.find()) {
             try {
                 int minor = Integer.parseInt(match.group(1));
@@ -50,7 +50,7 @@ public class BuyCommand extends Command {
         if (sender instanceof Player) {
             Player player = (Player) sender;
             
-            if (is1_21_6OrAbove()) {
+            if (isVersionAtLeast1_21_6()) {
                 if (args.length == 0) {
                     new DialogGUI(platform).open(player);
                 } else if (args.length >= 2 && args[0].equalsIgnoreCase("category")) {
