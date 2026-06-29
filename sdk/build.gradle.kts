@@ -14,6 +14,8 @@ val ossrhPassword = System.getenv("OSSRH_PASSWORD") ?: properties["ossrhPassword
 repositories {
     mavenLocal()
     mavenCentral()
+    maven("https://repo.opencollab.dev/maven-snapshots/")
+    maven("https://repo.opencollab.dev/maven-releases/")
 }
 
 dependencies {
@@ -21,7 +23,7 @@ dependencies {
     implementation("dev.dejvokep:boosted-yaml:1.3")
     implementation("com.google.code.gson:gson:2.10.1")
 
-    compileOnly("com.github.GeyserMC.Floodgate:api:master-SNAPSHOT")
+    compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
 
     compileOnly("org.projectlombok:lombok:1.18.38")
     annotationProcessor("org.projectlombok:lombok:1.18.38")

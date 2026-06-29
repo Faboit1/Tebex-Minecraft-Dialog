@@ -1,0 +1,10 @@
+plugins {
+    id 'java'
+}
+repositories {
+    maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
+    maven { url 'https://repo.opencollab.dev/main/' }
+}
+dependencies {
+    implementation 'org.geysermc.floodgate:api:2.2.2-SNAPSHOT'
+}

@@ -103,6 +103,12 @@ subprojects {
 
     repositories {
         mavenCentral()
+        maven("https://repo.opencollab.dev/maven-snapshots/") {
+            name = "opencollab-snapshots"
+        }
+        maven("https://repo.opencollab.dev/maven-releases/") {
+            name = "opencollab-releases"
+        }
         maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/") {
             name = "spigotmc-repo"
         }
