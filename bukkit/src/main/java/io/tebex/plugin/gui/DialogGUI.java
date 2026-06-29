@@ -59,6 +59,15 @@ public class DialogGUI {
             actions.add(action);
         }
 
+        if (actions.size() == 0) {
+            JsonObject action = new JsonObject();
+            JsonObject label = new JsonObject();
+            label.addProperty("text", "No categories available");
+            action.add("label", label);
+            action.addProperty("type", "close");
+            actions.add(action);
+        }
+
         dialog.add("actions", actions);
 
         JsonArray footer = new JsonArray();
@@ -156,6 +165,15 @@ public class DialogGUI {
             action.add("label", label);
             action.addProperty("type", "run_command");
             action.addProperty("command", "buy package " + pkg.getId());
+            actions.add(action);
+        }
+
+        if (actions.size() == 0) {
+            JsonObject action = new JsonObject();
+            JsonObject label = new JsonObject();
+            label.addProperty("text", "No packages available");
+            action.add("label", label);
+            action.addProperty("type", "close");
             actions.add(action);
         }
 
