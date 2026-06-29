@@ -16,7 +16,8 @@ public class BuyCommand extends Command {
     private final BukkitPluginPlatform platform;
     private static final Pattern VERSION_PATTERN = Pattern.compile("1\\.(\\d+)(?:\\.(\\d+))?");
     private static final Pattern ALTERNATIVE_VERSION_PATTERN = Pattern.compile("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
-    // Experimental paper APIs have mapped to versions like 26.1.2 based on issue reports. This accounts for versioning changes.
+    // Experimental paper APIs have mapped to versions like 26.1.2 based on issue reports. 
+    // This value, 26, is chosen because it was reported to map to the 1.21.6 era, which introduced the dialog API natively.
     private static final int MIN_COMPATIBLE_MAJOR_VERSION = 26; 
 
     public BuyCommand(String command, BukkitPluginPlatform platform) {
