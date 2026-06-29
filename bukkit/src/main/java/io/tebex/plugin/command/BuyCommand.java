@@ -2,10 +2,15 @@ package io.tebex.plugin.command;
 
 import io.tebex.plugin.BukkitPluginPlatform;
 import io.tebex.plugin.gui.BuyGUI;
+import io.tebex.plugin.gui.DialogGUI;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BuyCommand extends Command {
     private final BukkitPluginPlatform platform;
@@ -13,6 +18,26 @@ public class BuyCommand extends Command {
     public BuyCommand(String command, BukkitPluginPlatform platform) {
         super(command);
         this.platform = platform;
+    }
+
+    private boolean is1_21_6OrAbove() {
+        String version = Bukkit.getBukkitVersion();
+        Pattern pattern = Pattern.compile("1\\.(\\d+)(?:\\.(\\d+))?");
+        Matcher match = pattern.matcher(version);
+        if (match.find()) {
+            try {
+                int minor = Integer.parseInt(match.group(1));
+                int patch = match.group(2) != null ? Integer.parseInt(match.group(2)) : 0;
+                if (minor > 21) {
+                    return true;
+                }
+                if (minor == 21 && patch >= 6) {
+                    return true;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return false;
     }
 
     @Override
@@ -23,7 +48,31 @@ public class BuyCommand extends Command {
         }
 
         if (sender instanceof Player) {
-            new BuyGUI(platform).open((Player) sender);
+            Player player = (Player) sender;
+            
+            if (is1_21_6OrAbove()) {
+                if (args.length == 0) {
+                    new DialogGUI(platform).open(player);
+                } else if (args.length >= 2 && args[0].equalsIgnoreCase("category")) {
+                    try {
+                        int categoryId = Integer.parseInt(args[1]);
+                        new DialogGUI(platform).openCategory(player, categoryId);
+                    } catch (NumberFormatException e) {
+                        player.sendMessage(ChatColor.RED + "Invalid category ID.");
+                    }
+                } else if (args.length >= 2 && args[0].equalsIgnoreCase("package")) {
+                    try {
+                        int packageId = Integer.parseInt(args[1]);
+                        new DialogGUI(platform).openPackage(player, packageId);
+                    } catch (NumberFormatException e) {
+                        player.sendMessage(ChatColor.RED + "Invalid package ID.");
+                    }
+                } else {
+                    new DialogGUI(platform).open(player);
+                }
+            } else {
+                new BuyGUI(platform).open(player);
+            }
             return true;
         }
 

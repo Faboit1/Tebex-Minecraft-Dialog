@@ -21,22 +21,12 @@ pluginManagement {
 }
 
 plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+    //id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
 }
 
 rootProject.name = "TebexPlugin"
 
 listOf(
     "sdk",
-    "bukkit",
-    "bungeecord",
-    "velocity",
-    "folia",
-    "fabric-26.1",
-    "forge-1.20.1",
-    "forge-1.21.1",
-    "neoforge-1.20.2",
-    "neoforge-1.21.1",
-    "neoforge-26.1",
-    "forge-26.1"
+    "bukkit"
 ).forEach(::include)
