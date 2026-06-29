@@ -16,7 +16,8 @@ public class BuyCommand extends Command {
     private final BukkitPluginPlatform platform;
     private static final Pattern VERSION_PATTERN = Pattern.compile("1\\.(\\d+)(?:\\.(\\d+))?");
     private static final Pattern ALTERNATIVE_VERSION_PATTERN = Pattern.compile("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
-    private static final int MIN_COMPATIBLE_MAJOR_VERSION = 26; // 1.21.6+ protocol/API version mapping to version 26
+    // Experimental paper APIs have mapped to versions like 26.1.2 based on issue reports. This accounts for versioning changes.
+    private static final int MIN_COMPATIBLE_MAJOR_VERSION = 26; 
 
     public BuyCommand(String command, BukkitPluginPlatform platform) {
         super(command);
@@ -43,10 +44,10 @@ public class BuyCommand extends Command {
         
         if (!isCompatible) {
             // Check for alternative version format without 1. prefix, e.g., "26.1.2"
-            Matcher newMatch = ALTERNATIVE_VERSION_PATTERN.matcher(version);
-            if (newMatch.find()) {
+            Matcher alternativeMatch = ALTERNATIVE_VERSION_PATTERN.matcher(version);
+            if (alternativeMatch.find()) {
                 try {
-                    int major = Integer.parseInt(newMatch.group(1));
+                    int major = Integer.parseInt(alternativeMatch.group(1));
                     if (major >= MIN_COMPATIBLE_MAJOR_VERSION) {
                         isCompatible = true;
                     }
