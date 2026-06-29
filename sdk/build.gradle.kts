@@ -32,6 +32,7 @@ dependencies {
 
     compileOnly("com.google.guava:guava:33.3.1-jre")
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("com.google.guava:guava:33.3.1-jre")
 }
 
