@@ -1,3 +1,0 @@
-name: Tebex
-version: '${version}'
-main: io.tebex.plugin.TebexBungeePlugin
