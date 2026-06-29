@@ -15,6 +15,15 @@ import java.util.regex.Pattern;
 public class BuyCommand extends Command {
     private final BukkitPluginPlatform platform;
     private static final Pattern VERSION_PATTERN = Pattern.compile("1\\.(\\d+)(?:\\.(\\d+))?");
+    private static final Pattern ALTERNATIVE_VERSION_PATTERN = Pattern.compile("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
+    
+    /**
+     * Minimum compatible major version for the alternative versioning format (e.g., 26.1.2).
+     * Experimental Paper APIs have mapped to versions like 26.1.2 based on issue reports. 
+     * This value, 26, is chosen because it was reported to map to the 1.21.6 era, which introduced the dialog API natively.
+     * Note: this heuristic is based on issue reports and may need to be updated as Paper's experimental versioning scheme evolves.
+     */
+    private static final int MIN_COMPATIBLE_MAJOR_VERSION = 26; 
 
     public BuyCommand(String command, BukkitPluginPlatform platform) {
         super(command);
@@ -24,20 +33,38 @@ public class BuyCommand extends Command {
     private boolean isVersionAtLeast1_21_6() {
         String version = Bukkit.getBukkitVersion();
         Matcher match = VERSION_PATTERN.matcher(version);
+        boolean isCompatible = false;
+        boolean isStandardVersion = false;
+        
         if (match.find()) {
+            isStandardVersion = true;
             try {
                 int minor = Integer.parseInt(match.group(1));
                 int patch = match.group(2) != null ? Integer.parseInt(match.group(2)) : 0;
                 if (minor > 21) {
-                    return true;
-                }
-                if (minor == 21 && patch >= 6) {
-                    return true;
+                    isCompatible = true;
+                } else if (minor == 21 && patch >= 6) {
+                    isCompatible = true;
                 }
             } catch (Exception ignored) {
             }
         }
-        return false;
+        
+        if (!isStandardVersion) {
+            // Check for alternative version format without 1. prefix, e.g., "26.1.2"
+            Matcher alternativeMatch = ALTERNATIVE_VERSION_PATTERN.matcher(version);
+            if (alternativeMatch.find()) {
+                try {
+                    int major = Integer.parseInt(alternativeMatch.group(1));
+                    if (major >= MIN_COMPATIBLE_MAJOR_VERSION) {
+                        isCompatible = true;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        
+        return isCompatible;
     }
 
     @Override

@@ -204,9 +204,9 @@ public class DialogGUI {
 
     private void dispatchDialog(Player player, JsonObject dialogJson) {
         String json = dialogJson.toString();
-        // Send /dialog command via console to the player
+        // Enclose JSON in single quotes to prevent command parser from splitting on spaces.
         Bukkit.getScheduler().runTask(platform.getPlugin(), () -> {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "dialog show " + player.getName() + " " + json);
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "dialog show " + player.getName() + " '" + json + "'");
         });
     }
 }
