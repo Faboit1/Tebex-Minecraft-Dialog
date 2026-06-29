@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 public class BuyCommand extends Command {
     private final BukkitPluginPlatform platform;
     private static final Pattern VERSION_PATTERN = Pattern.compile("1\\.(\\d+)(?:\\.(\\d+))?");
+    private static final Pattern NEW_VERSION_PATTERN = Pattern.compile("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
 
     public BuyCommand(String command, BukkitPluginPlatform platform) {
         super(command);
@@ -24,20 +25,36 @@ public class BuyCommand extends Command {
     private boolean isVersionAtLeast1_21_6() {
         String version = Bukkit.getBukkitVersion();
         Matcher match = VERSION_PATTERN.matcher(version);
+        boolean is1_21_6 = false;
+        
         if (match.find()) {
             try {
                 int minor = Integer.parseInt(match.group(1));
                 int patch = match.group(2) != null ? Integer.parseInt(match.group(2)) : 0;
                 if (minor > 21) {
-                    return true;
-                }
-                if (minor == 21 && patch >= 6) {
-                    return true;
+                    is1_21_6 = true;
+                } else if (minor == 21 && patch >= 6) {
+                    is1_21_6 = true;
                 }
             } catch (Exception ignored) {
             }
         }
-        return false;
+        
+        if (!is1_21_6) {
+            // Check for format where "1." might be omitted, e.g., "26.1.2"
+            Matcher newMatch = NEW_VERSION_PATTERN.matcher(version);
+            if (newMatch.find()) {
+                try {
+                    int major = Integer.parseInt(newMatch.group(1));
+                    if (major >= 21) {
+                        is1_21_6 = true;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        
+        return is1_21_6;
     }
 
     @Override
