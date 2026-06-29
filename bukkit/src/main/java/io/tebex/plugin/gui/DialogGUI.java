@@ -59,7 +59,7 @@ public class DialogGUI {
             actions.add(action);
         }
 
-        if (actions.isEmpty()) {
+        if (actions.size() == 0) {
             JsonObject action = new JsonObject();
             JsonObject label = new JsonObject();
             label.addProperty("text", "No categories available");
@@ -168,7 +168,7 @@ public class DialogGUI {
             actions.add(action);
         }
 
-        if (actions.isEmpty()) {
+        if (actions.size() == 0) {
             JsonObject action = new JsonObject();
             JsonObject label = new JsonObject();
             label.addProperty("text", "No packages available");
