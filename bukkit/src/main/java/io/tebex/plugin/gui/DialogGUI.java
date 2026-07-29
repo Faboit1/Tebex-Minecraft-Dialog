@@ -3,6 +3,8 @@ package io.tebex.plugin.gui;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.tebex.plugin.BukkitPluginPlatform;
+import io.tebex.plugin.util.MaterialUtil;
+import io.tebex.plugin.util.SpriteUtil;
 import io.tebex.sdk.obj.Category;
 import io.tebex.sdk.obj.CategoryPackage;
 import io.tebex.sdk.obj.ICategory;
@@ -37,38 +39,19 @@ public class DialogGUI {
         title.addProperty("text", remapLegacyFormatSeparator(titleStr));
         dialog.add("title", title);
 
-        JsonArray body = new JsonArray();
-        JsonObject plainMessage = new JsonObject();
-        JsonObject plainMessageText = new JsonObject();
-        plainMessageText.addProperty("text", "Please select a category:");
-        plainMessage.addProperty("type", "plain_message");
-        plainMessage.add("contents", plainMessageText);
-        body.add(plainMessage);
-        dialog.add("body", body);
+        dialog.add("body", buildBody("Please select a category:"));
+        dialog.addProperty("columns", 1);
 
         JsonArray actions = new JsonArray();
-        
+
         categories.sort(Comparator.comparingInt(Category::getOrder));
         for (Category category : categories) {
-            JsonObject action = new JsonObject();
-            JsonObject label = new JsonObject();
-            label.addProperty("text", remapLegacyFormatSeparator(category.getName()));
-            action.add("label", label);
-            action.addProperty("type", "run_command");
-            action.addProperty("command", "buy category " + category.getId());
-            actions.add(action);
+            JsonObject label = buildLabel(category.getName(), category.getGuiItem());
+            actions.add(runCommandAction(label, "buy category " + category.getId()));
         }
 
         dialog.add("actions", actions);
-
-        JsonArray footer = new JsonArray();
-        JsonObject closeAction = new JsonObject();
-        JsonObject closeLabel = new JsonObject();
-        closeLabel.addProperty("text", "Close");
-        closeAction.add("label", closeLabel);
-        closeAction.addProperty("type", "close");
-        footer.add(closeAction);
-        dialog.add("footer", footer);
+        dialog.add("exit_action", closeAction());
 
         dispatchDialog(player, dialog);
     }
@@ -112,14 +95,8 @@ public class DialogGUI {
         title.addProperty("text", remapLegacyFormatSeparator(titleStr));
         dialog.add("title", title);
 
-        JsonArray body = new JsonArray();
-        JsonObject plainMessage = new JsonObject();
-        JsonObject plainMessageText = new JsonObject();
-        plainMessageText.addProperty("text", "Select a package to purchase:");
-        plainMessage.addProperty("type", "plain_message");
-        plainMessage.add("contents", plainMessageText);
-        body.add(plainMessage);
-        dialog.add("body", body);
+        dialog.add("body", buildBody("Select a package to purchase:"));
+        dialog.addProperty("columns", 1);
 
         JsonArray actions = new JsonArray();
 
@@ -129,13 +106,8 @@ public class DialogGUI {
             Category cat = (Category) foundCategory;
             if (cat.getSubCategories() != null) {
                 for (SubCategory subCategory : cat.getSubCategories()) {
-                    JsonObject action = new JsonObject();
-                    JsonObject label = new JsonObject();
-                    label.addProperty("text", "[+] " + remapLegacyFormatSeparator(subCategory.getName()));
-                    action.add("label", label);
-                    action.addProperty("type", "run_command");
-                    action.addProperty("command", "buy category " + subCategory.getId());
-                    actions.add(action);
+                    JsonObject label = buildLabel("[+] " + subCategory.getName(), subCategory.getGuiItem());
+                    actions.add(runCommandAction(label, "buy category " + subCategory.getId()));
                 }
             }
         }
@@ -144,46 +116,27 @@ public class DialogGUI {
         String currencySymbol = platform.getStoreInformation().getStore().getCurrency().getSymbol();
 
         for (CategoryPackage pkg : foundCategory.getPackages()) {
-            JsonObject action = new JsonObject();
-            JsonObject label = new JsonObject();
-            
             String priceStr = currencySymbol + decimalFormat.format(pkg.getPrice());
             if (pkg.hasSale()) {
                 priceStr = currencySymbol + decimalFormat.format(pkg.getPrice() - pkg.getSale().getDiscount()) + " (Sale)";
             }
-            
-            label.addProperty("text", remapLegacyFormatSeparator(pkg.getName() + " - " + priceStr));
-            action.add("label", label);
-            action.addProperty("type", "run_command");
-            action.addProperty("command", "buy package " + pkg.getId());
-            actions.add(action);
+
+            JsonObject label = buildLabel(pkg.getName() + " - " + priceStr, pkg.getItemId());
+            actions.add(runCommandAction(label, "buy package " + pkg.getId()));
         }
+
+        JsonObject backLabel = new JsonObject();
+        backLabel.addProperty("text", "« Back");
+        String backCommand;
+        if (foundCategory instanceof SubCategory) {
+            backCommand = "buy category " + ((SubCategory) foundCategory).getParent().getId();
+        } else {
+            backCommand = "buy";
+        }
+        actions.add(runCommandAction(backLabel, backCommand));
 
         dialog.add("actions", actions);
-
-        JsonArray footer = new JsonArray();
-        
-        JsonObject backAction = new JsonObject();
-        JsonObject backLabel = new JsonObject();
-        backLabel.addProperty("text", "Back");
-        backAction.add("label", backLabel);
-        backAction.addProperty("type", "run_command");
-        
-        if (foundCategory instanceof SubCategory) {
-            backAction.addProperty("command", "buy category " + ((SubCategory) foundCategory).getParent().getId());
-        } else {
-            backAction.addProperty("command", "buy");
-        }
-        footer.add(backAction);
-
-        JsonObject closeAction = new JsonObject();
-        JsonObject closeLabel = new JsonObject();
-        closeLabel.addProperty("text", "Close");
-        closeAction.add("label", closeLabel);
-        closeAction.addProperty("type", "close");
-        footer.add(closeAction);
-
-        dialog.add("footer", footer);
+        dialog.add("exit_action", closeAction());
 
         dispatchDialog(player, dialog);
     }
@@ -198,6 +151,72 @@ public class DialogGUI {
                             + "Failed to create checkout URL. Please contact an administrator.");
                     return null;
                 });
+    }
+
+    private JsonArray buildBody(String message) {
+        JsonArray body = new JsonArray();
+        JsonObject plainMessage = new JsonObject();
+        JsonObject plainMessageText = new JsonObject();
+        plainMessageText.addProperty("text", message);
+        plainMessage.addProperty("type", "plain_message");
+        plainMessage.add("contents", plainMessageText);
+        body.add(plainMessage);
+        return body;
+    }
+
+    /**
+     * Builds a button label text component, prefixing it with the material's
+     * sprite icon when the server supports sprite object components (1.21.9+)
+     * and the gui item resolves to a real material.
+     */
+    private JsonObject buildLabel(String text, String guiItem) {
+        JsonObject sprite = spriteFor(guiItem);
+        JsonObject label = new JsonObject();
+
+        if (sprite != null) {
+            label.addProperty("text", "");
+            JsonArray extra = new JsonArray();
+            extra.add(sprite);
+            JsonObject textPart = new JsonObject();
+            textPart.addProperty("text", " " + remapLegacyFormatSeparator(text));
+            extra.add(textPart);
+            label.add("extra", extra);
+        } else {
+            label.addProperty("text", remapLegacyFormatSeparator(text));
+        }
+
+        return label;
+    }
+
+    private JsonObject spriteFor(String guiItem) {
+        if (guiItem == null || !SpriteUtil.isSpriteSupported()) {
+            return null;
+        }
+        return MaterialUtil.fromString(guiItem).map(SpriteUtil::spriteComponent).orElse(null);
+    }
+
+    /**
+     * Builds a clickable action button. In the dialog schema the click behaviour
+     * lives in a nested "action" click event, not on the button object itself.
+     */
+    private JsonObject runCommandAction(JsonObject label, String command) {
+        JsonObject action = new JsonObject();
+        action.add("label", label);
+
+        JsonObject click = new JsonObject();
+        click.addProperty("type", "run_command");
+        click.addProperty("command", command);
+        action.add("action", click);
+
+        return action;
+    }
+
+    private JsonObject closeAction() {
+        JsonObject exitAction = new JsonObject();
+        JsonObject exitLabel = new JsonObject();
+        exitLabel.addProperty("text", "Close");
+        exitAction.add("label", exitLabel);
+        return exitAction;
     }
 
     private String remapLegacyFormatSeparator(String input) {
