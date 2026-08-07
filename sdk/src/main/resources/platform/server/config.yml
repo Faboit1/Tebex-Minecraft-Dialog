@@ -28,6 +28,10 @@ gui:
     sub-category:
       title: "Viewing %sub_category% (%category%)"
       rows: 1
+  dialog:
+    button-width: 200
+    free-marker: "&c[FREE]&r "
+    sale-color: "&e"
   item:
     back:
       name: "&cBack"

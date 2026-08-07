@@ -56,6 +56,7 @@ public class SpriteUtil {
         }
 
         JsonObject sprite = new JsonObject();
+        sprite.addProperty("type", "sprite");
         sprite.addProperty("atlas", atlas);
         sprite.addProperty("sprite", prefix + name.toLowerCase(Locale.ENGLISH));
         return sprite;

@@ -14,6 +14,7 @@ public class Category implements ICategory {
     private final int id;
     private final int order;
     private final String name;
+    private final String description;
     private final String guiItem;
     private final boolean onlySubcategories;
     private final List<CategoryPackage> categoryPackages;
@@ -35,6 +36,11 @@ public class Category implements ICategory {
     }
 
     @Override
+    public String getDescription() {
+        return description;
+    }
+
+    @Override
     public String getGuiItem() {
         return guiItem;
     }
@@ -43,12 +49,31 @@ public class Category implements ICategory {
         return categoryPackages;
     }
 
+    public boolean hasFreePackage() {
+        for (CategoryPackage pkg : categoryPackages) {
+            if (pkg.getEffectivePrice() <= 0) return true;
+        }
+        if (subCategories != null) {
+            for (SubCategory sub : subCategories) {
+                for (CategoryPackage pkg : sub.getPackages()) {
+                    if (pkg.getEffectivePrice() <= 0) return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static Category fromJsonObject(JsonObject jsonObject) {
+        String description = jsonObject.has("description") && !jsonObject.get("description").isJsonNull()
+                ? jsonObject.get("description").getAsString() : "";
+
         Category category = new Category(
                 jsonObject.get("id").getAsInt(),
                 jsonObject.get("order").getAsInt(),
                 jsonObject.get("name").getAsString(),
-                jsonObject.get("gui_item").getAsString(),jsonObject.has("only_subcategories") && jsonObject.get("only_subcategories").getAsBoolean(),
+                description,
+                jsonObject.get("gui_item").getAsString(),
+                jsonObject.has("only_subcategories") && jsonObject.get("only_subcategories").getAsBoolean(),
                 jsonObject.getAsJsonArray("packages").asList().stream().map(item -> CategoryPackage.fromJsonObject(item.getAsJsonObject())).collect(Collectors.toList())
         );
 

@@ -7,6 +7,7 @@ import io.tebex.plugin.command.TebexCommandExecutor;
 import io.tebex.plugin.event.InventoryClickListener;
 import io.tebex.plugin.event.PlayerJoinListener;
 import io.tebex.plugin.placeholder.BukkitNamePlaceholder;
+import io.tebex.plugin.placeholder.TebexPlaceholderExpansion;
 import io.tebex.sdk.Tebex;
 import io.tebex.sdk.obj.ServerEvent;
 import io.tebex.sdk.placeholder.PlaceholderManager;
@@ -66,6 +67,10 @@ public final class TebexBukkitPlugin extends JavaPlugin {
 
         PlaceholderManager placeholderManager = platform.getPlaceholderManager();
         placeholderManager.register(new BukkitNamePlaceholder(placeholderManager));
+
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new TebexPlaceholderExpansion(platform).register();
+        }
 
         // Refresh store listings every 5 minutes
         getServer().getScheduler().runTaskTimerAsynchronously(this, platform::refreshListings, 0, 20 * 60 * 5);

@@ -4,6 +4,7 @@ main: io.tebex.plugin.TebexBukkitPlugin
 api-version: 1.13
 softdepend:
   - BuycraftX
+  - PlaceholderAPI
 commands:
   tebex:
     description: The main command

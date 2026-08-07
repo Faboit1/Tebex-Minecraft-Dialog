@@ -42,12 +42,22 @@ public class DialogGUI {
         dialog.add("body", buildBody("Please select a category:"));
         dialog.addProperty("columns", 1);
 
+        String freeMarker = getConfigString("gui.dialog.free-marker", "&c[FREE]&r ");
+        int buttonWidth = getConfigInt("gui.dialog.button-width", 200);
+
         JsonArray actions = new JsonArray();
 
         categories.sort(Comparator.comparingInt(Category::getOrder));
         for (Category category : categories) {
-            JsonObject label = buildLabel(category.getName(), category.getGuiItem());
-            actions.add(runCommandAction(label, "buy category " + category.getId()));
+            String displayName = category.getName();
+            if (category.hasFreePackage()) {
+                displayName = freeMarker + displayName;
+            }
+            JsonObject label = buildLabel(displayName, category.getGuiItem());
+            JsonObject action = runCommandAction(label, "buy category " + category.getId());
+            action.addProperty("width", buttonWidth);
+            addTooltip(action, category.getDescription());
+            actions.add(action);
         }
 
         dialog.add("actions", actions);
@@ -98,6 +108,10 @@ public class DialogGUI {
         dialog.add("body", buildBody("Select a package to purchase:"));
         dialog.addProperty("columns", 1);
 
+        String freeMarker = getConfigString("gui.dialog.free-marker", "&c[FREE]&r ");
+        String saleColor = getConfigString("gui.dialog.sale-color", "&e");
+        int buttonWidth = getConfigInt("gui.dialog.button-width", 200);
+
         JsonArray actions = new JsonArray();
 
         foundCategory.getPackages().sort(Comparator.comparingInt(CategoryPackage::getOrder));
@@ -106,8 +120,15 @@ public class DialogGUI {
             Category cat = (Category) foundCategory;
             if (cat.getSubCategories() != null) {
                 for (SubCategory subCategory : cat.getSubCategories()) {
-                    JsonObject label = buildLabel("[+] " + subCategory.getName(), subCategory.getGuiItem());
-                    actions.add(runCommandAction(label, "buy category " + subCategory.getId()));
+                    String displayName = "[+] " + subCategory.getName();
+                    if (subCategory.hasFreePackage()) {
+                        displayName = freeMarker + displayName;
+                    }
+                    JsonObject label = buildLabel(displayName, subCategory.getGuiItem());
+                    JsonObject action = runCommandAction(label, "buy category " + subCategory.getId());
+                    action.addProperty("width", buttonWidth);
+                    addTooltip(action, subCategory.getDescription());
+                    actions.add(action);
                 }
             }
         }
@@ -116,13 +137,22 @@ public class DialogGUI {
         String currencySymbol = platform.getStoreInformation().getStore().getCurrency().getSymbol();
 
         for (CategoryPackage pkg : foundCategory.getPackages()) {
-            String priceStr = currencySymbol + decimalFormat.format(pkg.getPrice());
-            if (pkg.hasSale()) {
-                priceStr = currencySymbol + decimalFormat.format(pkg.getPrice() - pkg.getSale().getDiscount()) + " (Sale)";
+            double effectivePrice = pkg.getEffectivePrice();
+            String priceStr;
+            if (effectivePrice <= 0) {
+                priceStr = pkg.getName() + " - " + freeMarker + "Free";
+            } else if (pkg.hasSale()) {
+                priceStr = pkg.getName() + " - " + currencySymbol + decimalFormat.format(effectivePrice)
+                        + " " + saleColor + "(Sale)";
+            } else {
+                priceStr = pkg.getName() + " - " + currencySymbol + decimalFormat.format(pkg.getPrice());
             }
 
-            JsonObject label = buildLabel(pkg.getName() + " - " + priceStr, pkg.getItemId());
-            actions.add(runCommandAction(label, "buy package " + pkg.getId()));
+            JsonObject label = buildLabel(priceStr, pkg.getItemId());
+            JsonObject action = runCommandAction(label, "buy package " + pkg.getId());
+            action.addProperty("width", buttonWidth);
+            addTooltip(action, pkg.getDescription());
+            actions.add(action);
         }
 
         JsonObject backLabel = new JsonObject();
@@ -133,7 +163,9 @@ public class DialogGUI {
         } else {
             backCommand = "buy";
         }
-        actions.add(runCommandAction(backLabel, backCommand));
+        JsonObject backAction = runCommandAction(backLabel, backCommand);
+        backAction.addProperty("width", buttonWidth);
+        actions.add(backAction);
 
         dialog.add("actions", actions);
         dialog.add("exit_action", closeAction());
@@ -164,11 +196,6 @@ public class DialogGUI {
         return body;
     }
 
-    /**
-     * Builds a button label text component, prefixing it with the material's
-     * sprite icon when the server supports sprite object components (1.21.9+)
-     * and the gui item resolves to a real material.
-     */
     private JsonObject buildLabel(String text, String guiItem) {
         JsonObject sprite = spriteFor(guiItem);
         JsonObject label = new JsonObject();
@@ -195,10 +222,6 @@ public class DialogGUI {
         return MaterialUtil.fromString(guiItem).map(SpriteUtil::spriteComponent).orElse(null);
     }
 
-    /**
-     * Builds a clickable action button. In the dialog schema the click behaviour
-     * lives in a nested "action" click event, not on the button object itself.
-     */
     private JsonObject runCommandAction(JsonObject label, String command) {
         JsonObject action = new JsonObject();
         action.add("label", label);
@@ -211,6 +234,14 @@ public class DialogGUI {
         return action;
     }
 
+    private void addTooltip(JsonObject action, String description) {
+        String cleaned = stripHtml(description);
+        if (cleaned.isEmpty()) return;
+        JsonObject tooltip = new JsonObject();
+        tooltip.addProperty("text", cleaned);
+        action.add("tooltip", tooltip);
+    }
+
     private JsonObject closeAction() {
         JsonObject exitAction = new JsonObject();
         JsonObject exitLabel = new JsonObject();
@@ -221,6 +252,19 @@ public class DialogGUI {
 
     private String remapLegacyFormatSeparator(String input) {
         return input.replace("&", "§");
+    }
+
+    private String stripHtml(String html) {
+        if (html == null || html.isEmpty()) return "";
+        return html.replaceAll("<[^>]*>", "").trim();
+    }
+
+    private String getConfigString(String path, String defaultValue) {
+        return platform.getPlugin().getConfig().getString(path, defaultValue);
+    }
+
+    private int getConfigInt(String path, int defaultValue) {
+        return platform.getPlugin().getConfig().getInt(path, defaultValue);
     }
 
     private void dispatchDialog(Player player, JsonObject dialogJson) {
