@@ -6,6 +6,7 @@ import io.tebex.plugin.command.BuyCommand;
 import io.tebex.plugin.command.TebexCommandExecutor;
 import io.tebex.plugin.event.InventoryClickListener;
 import io.tebex.plugin.event.PlayerJoinListener;
+import io.tebex.plugin.manager.CooldownManager;
 import io.tebex.plugin.placeholder.BukkitNamePlaceholder;
 import io.tebex.plugin.placeholder.TebexPlaceholderExpansion;
 import io.tebex.sdk.Tebex;
@@ -52,6 +53,9 @@ public final class TebexBukkitPlugin extends JavaPlugin {
 
         platform.initStore(); // uses loaded key to set current store and cache the available packages
 
+        CooldownManager cooldownManager = new CooldownManager(getDataFolder(), getLogger());
+        platform.setCooldownManager(cooldownManager);
+
         // Bukkit specific registration
         TebexCommandExecutor tebexCommands = new TebexCommandExecutor(platform);
         PluginCommand pluginCommand = platform.getPlugin().getCommand("tebex");
@@ -71,6 +75,12 @@ public final class TebexBukkitPlugin extends JavaPlugin {
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new TebexPlaceholderExpansion(platform).register();
         }
+
+        // Cleanup expired cooldowns every 10 minutes (async)
+        getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
+            CooldownManager cm = platform.getCooldownManager();
+            if (cm != null) cm.cleanup();
+        }, 20 * 60 * 10, 20 * 60 * 10);
 
         // Refresh store listings every 5 minutes
         getServer().getScheduler().runTaskTimerAsynchronously(this, platform::refreshListings, 0, 20 * 60 * 5);
@@ -103,10 +113,14 @@ public final class TebexBukkitPlugin extends JavaPlugin {
         //platform.checkCommandQueue(true);
     }
 
-    /**
-     * Registers the specified listener with the plugin manager.
-     * @param l the listener to register
-     */
+    @Override
+    public void onDisable() {
+        CooldownManager cm = platform != null ? platform.getCooldownManager() : null;
+        if (cm != null) {
+            cm.close();
+        }
+    }
+
     public <T extends Listener> void registerEvents(T l) {
         getServer().getPluginManager().registerEvents(l, this);
     }

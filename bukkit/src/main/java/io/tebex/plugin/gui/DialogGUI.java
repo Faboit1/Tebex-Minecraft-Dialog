@@ -3,6 +3,7 @@ package io.tebex.plugin.gui;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.tebex.plugin.BukkitPluginPlatform;
+import io.tebex.plugin.manager.CooldownManager;
 import io.tebex.plugin.util.MaterialUtil;
 import io.tebex.plugin.util.SpriteUtil;
 import io.tebex.sdk.obj.Category;
@@ -35,7 +36,7 @@ public class DialogGUI {
         dialog.addProperty("type", "minecraft:multi_action");
 
         JsonObject title = new JsonObject();
-        String titleStr = platform.getPlugin().getConfig().getString("gui.menu.home.title", "Server Shop");
+        String titleStr = getConfigString("gui.menu.home.title", "Server Shop");
         title.addProperty("text", remapLegacyFormatSeparator(titleStr));
         dialog.add("title", title);
 
@@ -44,13 +45,14 @@ public class DialogGUI {
 
         String freeMarker = getConfigString("gui.dialog.free-marker", "&c[FREE]&r ");
         int buttonWidth = getConfigInt("gui.dialog.button-width", 200);
+        String playerName = player.getName();
 
         JsonArray actions = new JsonArray();
 
         categories.sort(Comparator.comparingInt(Category::getOrder));
         for (Category category : categories) {
             String displayName = category.getName();
-            if (category.hasFreePackage()) {
+            if (categoryHasFreeForPlayer(category, playerName)) {
                 displayName = freeMarker + displayName;
             }
             JsonObject label = buildLabel(displayName, category.getGuiItem());
@@ -100,7 +102,7 @@ public class DialogGUI {
         dialog.addProperty("type", "minecraft:multi_action");
 
         JsonObject title = new JsonObject();
-        String titleStr = platform.getPlugin().getConfig().getString("gui.menu.category.title", "Category: %category%");
+        String titleStr = getConfigString("gui.menu.category.title", "Category: %category%");
         titleStr = titleStr.replace("%category%", foundCategory.getName());
         title.addProperty("text", remapLegacyFormatSeparator(titleStr));
         dialog.add("title", title);
@@ -111,6 +113,7 @@ public class DialogGUI {
         String freeMarker = getConfigString("gui.dialog.free-marker", "&c[FREE]&r ");
         String saleColor = getConfigString("gui.dialog.sale-color", "&e");
         int buttonWidth = getConfigInt("gui.dialog.button-width", 200);
+        String playerName = player.getName();
 
         JsonArray actions = new JsonArray();
 
@@ -121,7 +124,7 @@ public class DialogGUI {
             if (cat.getSubCategories() != null) {
                 for (SubCategory subCategory : cat.getSubCategories()) {
                     String displayName = "[+] " + subCategory.getName();
-                    if (subCategory.hasFreePackage()) {
+                    if (subCategoryHasFreeForPlayer(subCategory, playerName)) {
                         displayName = freeMarker + displayName;
                     }
                     JsonObject label = buildLabel(displayName, subCategory.getGuiItem());
@@ -139,8 +142,10 @@ public class DialogGUI {
         for (CategoryPackage pkg : foundCategory.getPackages()) {
             double effectivePrice = pkg.getEffectivePrice();
             String priceStr;
-            if (effectivePrice <= 0) {
+            if (pkg.isFree() && isPackageFreeForPlayer(pkg, playerName)) {
                 priceStr = pkg.getName() + " - " + freeMarker + "Free";
+            } else if (pkg.isFree()) {
+                priceStr = pkg.getName() + " - " + currencySymbol + "0";
             } else if (pkg.hasSale()) {
                 priceStr = pkg.getName() + " - " + currencySymbol + decimalFormat.format(effectivePrice)
                         + " " + saleColor + "(Sale)";
@@ -174,6 +179,14 @@ public class DialogGUI {
     }
 
     public void openPackage(Player player, int packageId) {
+        CategoryPackage pkg = findPackageById(packageId);
+        if (pkg != null && pkg.isFree() && pkg.hasCooldown()) {
+            CooldownManager cm = platform.getCooldownManager();
+            if (cm != null) {
+                cm.recordClaim(player.getName(), packageId, pkg.getCooldownSeconds());
+            }
+        }
+
         player.closeInventory();
         platform.getSDK().createCheckoutUrl(packageId, player.getName())
                 .thenAccept(checkout -> {
@@ -183,6 +196,55 @@ public class DialogGUI {
                             + "Failed to create checkout URL. Please contact an administrator.");
                     return null;
                 });
+    }
+
+    private boolean categoryHasFreeForPlayer(Category category, String playerName) {
+        if (hasFreeAvailable(category.getPackages(), playerName)) return true;
+        if (category.getSubCategories() != null) {
+            for (SubCategory sub : category.getSubCategories()) {
+                if (hasFreeAvailable(sub.getPackages(), playerName)) return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean subCategoryHasFreeForPlayer(SubCategory subCategory, String playerName) {
+        return hasFreeAvailable(subCategory.getPackages(), playerName);
+    }
+
+    private boolean hasFreeAvailable(List<CategoryPackage> packages, String playerName) {
+        for (CategoryPackage pkg : packages) {
+            if (pkg.isFree() && isPackageFreeForPlayer(pkg, playerName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isPackageFreeForPlayer(CategoryPackage pkg, String playerName) {
+        if (!pkg.isFree()) return false;
+        if (!pkg.hasCooldown()) return true;
+        CooldownManager cm = platform.getCooldownManager();
+        if (cm == null) return true;
+        return !cm.isOnCooldown(playerName, pkg.getId(), pkg.getCooldownSeconds());
+    }
+
+    private CategoryPackage findPackageById(int packageId) {
+        List<Category> categories = platform.getStoreCategories();
+        if (categories == null) return null;
+        for (Category cat : categories) {
+            for (CategoryPackage pkg : cat.getPackages()) {
+                if (pkg.getId() == packageId) return pkg;
+            }
+            if (cat.getSubCategories() != null) {
+                for (SubCategory sub : cat.getSubCategories()) {
+                    for (CategoryPackage pkg : sub.getPackages()) {
+                        if (pkg.getId() == packageId) return pkg;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private JsonArray buildBody(String message) {

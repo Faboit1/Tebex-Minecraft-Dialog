@@ -13,6 +13,7 @@ public class CategoryPackage {
     private final String image;
     private final String itemId;
     private final Sale sale;
+    private final int cooldownSeconds;
 
     public boolean hasSale() {
         return sale != null && sale.isActive();
@@ -20,6 +21,14 @@ public class CategoryPackage {
 
     public double getEffectivePrice() {
         return hasSale() ? price - sale.getDiscount() : price;
+    }
+
+    public boolean isFree() {
+        return getEffectivePrice() <= 0;
+    }
+
+    public boolean hasCooldown() {
+        return cooldownSeconds > 0;
     }
 
     @Data
@@ -33,6 +42,14 @@ public class CategoryPackage {
         String description = jsonObject.has("description") && !jsonObject.get("description").isJsonNull()
                 ? jsonObject.get("description").getAsString() : "";
 
+        int cooldownSeconds = 0;
+        if (jsonObject.has("meta") && !jsonObject.get("meta").isJsonNull()) {
+            JsonObject meta = jsonObject.getAsJsonObject("meta");
+            if (meta.has("cooldown_seconds") && !meta.get("cooldown_seconds").isJsonNull()) {
+                cooldownSeconds = meta.get("cooldown_seconds").getAsInt();
+            }
+        }
+
         return new CategoryPackage(
                 jsonObject.get("id").getAsInt(),
                 jsonObject.get("order").getAsInt(),
@@ -41,7 +58,8 @@ public class CategoryPackage {
                 jsonObject.get("price").getAsDouble(),
                 jsonObject.get("image").getAsString(),
                 jsonObject.get("gui_item").getAsString(),
-                new Sale(sale.get("active").getAsBoolean(), sale.get("discount").getAsDouble())
+                new Sale(sale.get("active").getAsBoolean(), sale.get("discount").getAsDouble()),
+                cooldownSeconds
         );
     }
 }

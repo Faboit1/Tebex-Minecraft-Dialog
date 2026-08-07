@@ -2,6 +2,7 @@ package io.tebex.plugin;
 
 import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.gui.BuyGUI;
+import io.tebex.plugin.manager.CooldownManager;
 import io.tebex.sdk.SDK;
 import io.tebex.sdk.platform.BasePluginPlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
@@ -25,10 +26,19 @@ import java.util.regex.Pattern;
 public class BukkitPluginPlatform extends BasePluginPlatform {
     private BuyGUI buyGUI;
     private final TebexBukkitPlugin plugin;
+    private CooldownManager cooldownManager;
 
     public BukkitPluginPlatform(TebexBukkitPlugin plugin) {
         this.plugin = plugin;
         this.buyGUI = new BuyGUI(this);
+    }
+
+    public CooldownManager getCooldownManager() {
+        return cooldownManager;
+    }
+
+    public void setCooldownManager(CooldownManager cooldownManager) {
+        this.cooldownManager = cooldownManager;
     }
 
     @Override

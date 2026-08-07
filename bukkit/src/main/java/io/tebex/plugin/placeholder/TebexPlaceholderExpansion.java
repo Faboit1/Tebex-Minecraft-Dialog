@@ -1,6 +1,7 @@
 package io.tebex.plugin.placeholder;
 
 import io.tebex.plugin.BukkitPluginPlatform;
+import io.tebex.plugin.manager.CooldownManager;
 import io.tebex.sdk.obj.Category;
 import io.tebex.sdk.obj.CategoryPackage;
 import io.tebex.sdk.obj.SubCategory;
@@ -38,11 +39,13 @@ public class TebexPlaceholderExpansion extends PlaceholderExpansion {
 
     @Override
     public String onRequest(OfflinePlayer player, String params) {
+        String playerName = player != null ? player.getName() : null;
+
         if (params.equalsIgnoreCase("free_in_store")) {
-            return hasFreeItems() ? "true" : "false";
+            return hasFreeForPlayer(playerName) ? "true" : "false";
         }
         if (params.equalsIgnoreCase("free_marker")) {
-            if (hasFreeItems()) {
+            if (hasFreeForPlayer(playerName)) {
                 String marker = platform.getPlugin().getConfig()
                         .getString("gui.dialog.free-marker", "&c[FREE]&r ");
                 return marker.replace("&", "§");
@@ -52,11 +55,30 @@ public class TebexPlaceholderExpansion extends PlaceholderExpansion {
         return null;
     }
 
-    private boolean hasFreeItems() {
+    private boolean hasFreeForPlayer(String playerName) {
         List<Category> categories = platform.getStoreCategories();
         if (categories == null) return false;
         for (Category category : categories) {
-            if (category.hasFreePackage()) return true;
+            if (hasFreeAvailable(category.getPackages(), playerName)) return true;
+            if (category.getSubCategories() != null) {
+                for (SubCategory sub : category.getSubCategories()) {
+                    if (hasFreeAvailable(sub.getPackages(), playerName)) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasFreeAvailable(List<CategoryPackage> packages, String playerName) {
+        CooldownManager cm = platform.getCooldownManager();
+        for (CategoryPackage pkg : packages) {
+            if (pkg.isFree()) {
+                if (!pkg.hasCooldown()) return true;
+                if (playerName == null) return true;
+                if (cm == null || !cm.isOnCooldown(playerName, pkg.getId(), pkg.getCooldownSeconds())) {
+                    return true;
+                }
+            }
         }
         return false;
     }
