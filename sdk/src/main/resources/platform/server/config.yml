@@ -29,9 +29,21 @@ gui:
       title: "Viewing %sub_category% (%category%)"
       rows: 1
   dialog:
+    enabled: true
+    sprites: true
     button-width: 200
-    free-marker: "&c[FREE]&r "
-    sale-color: "&e"
+    columns: 1
+    body-text: "Please select a category:"
+    category-body-text: "Select a package to purchase:"
+    close-button: "Close"
+    back-button: "« Back"
+    subcategory-prefix: "[+] "
+    free-marker: "<red>[FREE]<reset> "
+    free-text: "Free"
+    sale-suffix: "(Sale)"
+    sale-color: "<yellow>"
+    price-format: "%currency%%price%"
+    free-on-cooldown-format: "%currency%0"
   item:
     back:
       name: "&cBack"

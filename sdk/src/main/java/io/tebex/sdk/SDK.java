@@ -22,6 +22,7 @@ import okhttp3.ResponseBody;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -688,6 +689,36 @@ public class SDK {
             } catch (IOException e) {
                 throw new CompletionException(new IOException("Unexpected response " + e.getMessage()));
             }
+        });
+    }
+
+    public CompletableFuture<Map<Integer, Integer>> getPackagesMeta() {
+        if (!platform.isSetup()) {
+            CompletableFuture<Map<Integer, Integer>> future = new CompletableFuture<>();
+            future.completeExceptionally(new ServerNotSetupException());
+            return future;
+        }
+
+        return request("/packages").withSecretKey(secretKey).sendAsync().thenApply(response -> {
+            Map<Integer, Integer> cooldowns = new HashMap<>();
+            if (response.code() != 200) return cooldowns;
+
+            try {
+                JsonArray packages = GSON.fromJson(response.body().string(), JsonArray.class);
+                for (JsonElement el : packages) {
+                    JsonObject pkg = el.getAsJsonObject();
+                    int id = pkg.get("id").getAsInt();
+                    if (pkg.has("meta") && !pkg.get("meta").isJsonNull()) {
+                        JsonObject meta = pkg.getAsJsonObject("meta");
+                        if (meta.has("cooldown_seconds") && !meta.get("cooldown_seconds").isJsonNull()) {
+                            cooldowns.put(id, meta.get("cooldown_seconds").getAsInt());
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                platform.debug("Failed to fetch package meta: " + e.getMessage());
+            }
+            return cooldowns;
         });
     }
 

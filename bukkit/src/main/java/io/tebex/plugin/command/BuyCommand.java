@@ -77,7 +77,8 @@ public class BuyCommand extends Command {
         if (sender instanceof Player) {
             Player player = (Player) sender;
             
-            if (isVersionAtLeast1_21_6()) {
+            boolean dialogEnabled = platform.getPlugin().getConfig().getBoolean("gui.dialog.enabled", true);
+            if (dialogEnabled && isVersionAtLeast1_21_6()) {
                 if (args.length == 0) {
                     new DialogGUI(platform).open(player);
                 } else if (args.length >= 2 && args[0].equalsIgnoreCase("category")) {

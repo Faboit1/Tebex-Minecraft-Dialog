@@ -1,9 +1,11 @@
 package io.tebex.sdk.obj;
 
 import com.google.gson.JsonObject;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class CategoryPackage {
     private final int id;
     private final int order;
@@ -13,7 +15,7 @@ public class CategoryPackage {
     private final String image;
     private final String itemId;
     private final Sale sale;
-    private final int cooldownSeconds;
+    private int cooldownSeconds;
 
     public boolean hasSale() {
         return sale != null && sale.isActive();

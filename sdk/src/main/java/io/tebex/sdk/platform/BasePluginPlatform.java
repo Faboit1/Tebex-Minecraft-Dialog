@@ -561,7 +561,29 @@ public abstract class BasePluginPlatform implements PluginPlatform {
     }
 
     public final void refreshListings() {
-        getSDK().getListing().thenAccept(this::setStoreCategories);
+        getSDK().getListing().thenAccept(categories -> {
+            setStoreCategories(categories);
+            getSDK().getPackagesMeta().thenAccept(cooldowns -> {
+                if (cooldowns.isEmpty()) return;
+                for (Category cat : categories) {
+                    applyMeta(cat.getPackages(), cooldowns);
+                    if (cat.getSubCategories() != null) {
+                        for (SubCategory sub : cat.getSubCategories()) {
+                            applyMeta(sub.getPackages(), cooldowns);
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    private void applyMeta(List<CategoryPackage> packages, Map<Integer, Integer> cooldowns) {
+        for (CategoryPackage pkg : packages) {
+            Integer cd = cooldowns.get(pkg.getId());
+            if (cd != null) {
+                pkg.setCooldownSeconds(cd);
+            }
+        }
     }
 
     public final void clearPluginEvents() {

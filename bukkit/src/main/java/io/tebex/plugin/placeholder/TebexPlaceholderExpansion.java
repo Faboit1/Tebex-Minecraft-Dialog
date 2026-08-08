@@ -2,6 +2,7 @@ package io.tebex.plugin.placeholder;
 
 import io.tebex.plugin.BukkitPluginPlatform;
 import io.tebex.plugin.manager.CooldownManager;
+import io.tebex.plugin.util.MiniMessageUtil;
 import io.tebex.sdk.obj.Category;
 import io.tebex.sdk.obj.CategoryPackage;
 import io.tebex.sdk.obj.SubCategory;
@@ -47,8 +48,8 @@ public class TebexPlaceholderExpansion extends PlaceholderExpansion {
         if (params.equalsIgnoreCase("free_marker")) {
             if (hasFreeForPlayer(playerName)) {
                 String marker = platform.getPlugin().getConfig()
-                        .getString("gui.dialog.free-marker", "&c[FREE]&r ");
-                return marker.replace("&", "§");
+                        .getString("gui.dialog.free-marker", "<red>[FREE]<reset> ");
+                return MiniMessageUtil.toSection(marker);
             }
             return "";
         }

@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import io.tebex.plugin.BukkitPluginPlatform;
 import io.tebex.plugin.manager.CooldownManager;
 import io.tebex.plugin.util.MaterialUtil;
+import io.tebex.plugin.util.MiniMessageUtil;
 import io.tebex.plugin.util.SpriteUtil;
 import io.tebex.sdk.obj.Category;
 import io.tebex.sdk.obj.CategoryPackage;
@@ -36,15 +37,16 @@ public class DialogGUI {
         dialog.addProperty("type", "minecraft:multi_action");
 
         JsonObject title = new JsonObject();
-        String titleStr = getConfigString("gui.menu.home.title", "Server Shop");
-        title.addProperty("text", remapLegacyFormatSeparator(titleStr));
+        String titleStr = cfg("gui.menu.home.title", "Server Shop");
+        title.addProperty("text", mm(titleStr));
         dialog.add("title", title);
 
-        dialog.add("body", buildBody("Please select a category:"));
-        dialog.addProperty("columns", 1);
+        dialog.add("body", buildBody(cfg("gui.dialog.body-text", "Please select a category:")));
+        dialog.addProperty("columns", cfgInt("gui.dialog.columns", 1));
 
-        String freeMarker = getConfigString("gui.dialog.free-marker", "&c[FREE]&r ");
-        int buttonWidth = getConfigInt("gui.dialog.button-width", 200);
+        String freeMarker = cfg("gui.dialog.free-marker", "<red>[FREE]<reset> ");
+        int buttonWidth = cfgInt("gui.dialog.button-width", 200);
+        boolean spritesEnabled = cfgBool("gui.dialog.sprites", true);
         String playerName = player.getName();
 
         JsonArray actions = new JsonArray();
@@ -55,7 +57,7 @@ public class DialogGUI {
             if (categoryHasFreeForPlayer(category, playerName)) {
                 displayName = freeMarker + displayName;
             }
-            JsonObject label = buildLabel(displayName, category.getGuiItem());
+            JsonObject label = buildLabel(displayName, spritesEnabled ? category.getGuiItem() : null);
             JsonObject action = runCommandAction(label, "buy category " + category.getId());
             action.addProperty("width", buttonWidth);
             addTooltip(action, category.getDescription());
@@ -102,17 +104,23 @@ public class DialogGUI {
         dialog.addProperty("type", "minecraft:multi_action");
 
         JsonObject title = new JsonObject();
-        String titleStr = getConfigString("gui.menu.category.title", "Category: %category%");
+        String titleStr = cfg("gui.menu.category.title", "Viewing %category%");
         titleStr = titleStr.replace("%category%", foundCategory.getName());
-        title.addProperty("text", remapLegacyFormatSeparator(titleStr));
+        title.addProperty("text", mm(titleStr));
         dialog.add("title", title);
 
-        dialog.add("body", buildBody("Select a package to purchase:"));
-        dialog.addProperty("columns", 1);
+        dialog.add("body", buildBody(cfg("gui.dialog.category-body-text", "Select a package to purchase:")));
+        dialog.addProperty("columns", cfgInt("gui.dialog.columns", 1));
 
-        String freeMarker = getConfigString("gui.dialog.free-marker", "&c[FREE]&r ");
-        String saleColor = getConfigString("gui.dialog.sale-color", "&e");
-        int buttonWidth = getConfigInt("gui.dialog.button-width", 200);
+        String freeMarker = cfg("gui.dialog.free-marker", "<red>[FREE]<reset> ");
+        String saleColor = cfg("gui.dialog.sale-color", "<yellow>");
+        String saleSuffix = cfg("gui.dialog.sale-suffix", "(Sale)");
+        String freeText = cfg("gui.dialog.free-text", "Free");
+        String freeOnCooldownFmt = cfg("gui.dialog.free-on-cooldown-format", "%currency%0");
+        String priceFmt = cfg("gui.dialog.price-format", "%currency%%price%");
+        String subCategoryPrefix = cfg("gui.dialog.subcategory-prefix", "[+] ");
+        int buttonWidth = cfgInt("gui.dialog.button-width", 200);
+        boolean spritesEnabled = cfgBool("gui.dialog.sprites", true);
         String playerName = player.getName();
 
         JsonArray actions = new JsonArray();
@@ -123,11 +131,11 @@ public class DialogGUI {
             Category cat = (Category) foundCategory;
             if (cat.getSubCategories() != null) {
                 for (SubCategory subCategory : cat.getSubCategories()) {
-                    String displayName = "[+] " + subCategory.getName();
+                    String displayName = subCategoryPrefix + subCategory.getName();
                     if (subCategoryHasFreeForPlayer(subCategory, playerName)) {
                         displayName = freeMarker + displayName;
                     }
-                    JsonObject label = buildLabel(displayName, subCategory.getGuiItem());
+                    JsonObject label = buildLabel(displayName, spritesEnabled ? subCategory.getGuiItem() : null);
                     JsonObject action = runCommandAction(label, "buy category " + subCategory.getId());
                     action.addProperty("width", buttonWidth);
                     addTooltip(action, subCategory.getDescription());
@@ -143,25 +151,34 @@ public class DialogGUI {
             double effectivePrice = pkg.getEffectivePrice();
             String priceStr;
             if (pkg.isFree() && isPackageFreeForPlayer(pkg, playerName)) {
-                priceStr = pkg.getName() + " - " + freeMarker + "Free";
+                priceStr = pkg.getName() + " - " + freeMarker + freeText;
             } else if (pkg.isFree()) {
-                priceStr = pkg.getName() + " - " + currencySymbol + "0";
+                String cooldownPrice = freeOnCooldownFmt
+                        .replace("%currency%", currencySymbol);
+                priceStr = pkg.getName() + " - " + cooldownPrice;
             } else if (pkg.hasSale()) {
-                priceStr = pkg.getName() + " - " + currencySymbol + decimalFormat.format(effectivePrice)
-                        + " " + saleColor + "(Sale)";
+                String formattedPrice = priceFmt
+                        .replace("%currency%", currencySymbol)
+                        .replace("%price%", decimalFormat.format(effectivePrice));
+                priceStr = pkg.getName() + " - " + formattedPrice
+                        + " " + saleColor + saleSuffix;
             } else {
-                priceStr = pkg.getName() + " - " + currencySymbol + decimalFormat.format(pkg.getPrice());
+                String formattedPrice = priceFmt
+                        .replace("%currency%", currencySymbol)
+                        .replace("%price%", decimalFormat.format(pkg.getPrice()));
+                priceStr = pkg.getName() + " - " + formattedPrice;
             }
 
-            JsonObject label = buildLabel(priceStr, pkg.getItemId());
+            JsonObject label = buildLabel(priceStr, spritesEnabled ? pkg.getItemId() : null);
             JsonObject action = runCommandAction(label, "buy package " + pkg.getId());
             action.addProperty("width", buttonWidth);
             addTooltip(action, pkg.getDescription());
             actions.add(action);
         }
 
+        String backText = cfg("gui.dialog.back-button", "« Back");
         JsonObject backLabel = new JsonObject();
-        backLabel.addProperty("text", "« Back");
+        backLabel.addProperty("text", mm(backText));
         String backCommand;
         if (foundCategory instanceof SubCategory) {
             backCommand = "buy category " + ((SubCategory) foundCategory).getParent().getId();
@@ -251,7 +268,7 @@ public class DialogGUI {
         JsonArray body = new JsonArray();
         JsonObject plainMessage = new JsonObject();
         JsonObject plainMessageText = new JsonObject();
-        plainMessageText.addProperty("text", message);
+        plainMessageText.addProperty("text", mm(message));
         plainMessage.addProperty("type", "plain_message");
         plainMessage.add("contents", plainMessageText);
         body.add(plainMessage);
@@ -267,11 +284,11 @@ public class DialogGUI {
             JsonArray extra = new JsonArray();
             extra.add(sprite);
             JsonObject textPart = new JsonObject();
-            textPart.addProperty("text", " " + remapLegacyFormatSeparator(text));
+            textPart.addProperty("text", " " + mm(text));
             extra.add(textPart);
             label.add("extra", extra);
         } else {
-            label.addProperty("text", remapLegacyFormatSeparator(text));
+            label.addProperty("text", mm(text));
         }
 
         return label;
@@ -307,13 +324,14 @@ public class DialogGUI {
     private JsonObject closeAction() {
         JsonObject exitAction = new JsonObject();
         JsonObject exitLabel = new JsonObject();
-        exitLabel.addProperty("text", "Close");
+        String closeText = cfg("gui.dialog.close-button", "Close");
+        exitLabel.addProperty("text", mm(closeText));
         exitAction.add("label", exitLabel);
         return exitAction;
     }
 
-    private String remapLegacyFormatSeparator(String input) {
-        return input.replace("&", "§");
+    private String mm(String input) {
+        return MiniMessageUtil.toSection(input);
     }
 
     private String stripHtml(String html) {
@@ -321,12 +339,16 @@ public class DialogGUI {
         return html.replaceAll("<[^>]*>", "").trim();
     }
 
-    private String getConfigString(String path, String defaultValue) {
+    private String cfg(String path, String defaultValue) {
         return platform.getPlugin().getConfig().getString(path, defaultValue);
     }
 
-    private int getConfigInt(String path, int defaultValue) {
+    private int cfgInt(String path, int defaultValue) {
         return platform.getPlugin().getConfig().getInt(path, defaultValue);
+    }
+
+    private boolean cfgBool(String path, boolean defaultValue) {
+        return platform.getPlugin().getConfig().getBoolean(path, defaultValue);
     }
 
     private void dispatchDialog(Player player, JsonObject dialogJson) {
