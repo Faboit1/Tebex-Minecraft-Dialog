@@ -10,7 +10,7 @@ public class CategoryPackage {
     private final int id;
     private final int order;
     private final String name;
-    private final String description;
+    private String description;
     private final double price;
     private final String image;
     private final String itemId;

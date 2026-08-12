@@ -563,13 +563,13 @@ public abstract class BasePluginPlatform implements PluginPlatform {
     public final void refreshListings() {
         getSDK().getListing().thenAccept(categories -> {
             setStoreCategories(categories);
-            getSDK().getPackagesMeta().thenAccept(cooldowns -> {
-                if (cooldowns.isEmpty()) return;
+            getSDK().getPackageExtras().thenAccept(extras -> {
+                if (extras.isEmpty()) return;
                 for (Category cat : categories) {
-                    applyMeta(cat.getPackages(), cooldowns);
+                    applyExtras(cat.getPackages(), extras);
                     if (cat.getSubCategories() != null) {
                         for (SubCategory sub : cat.getSubCategories()) {
-                            applyMeta(sub.getPackages(), cooldowns);
+                            applyExtras(sub.getPackages(), extras);
                         }
                     }
                 }
@@ -577,11 +577,23 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         });
     }
 
-    private void applyMeta(List<CategoryPackage> packages, Map<Integer, Integer> cooldowns) {
+    private void applyExtras(List<CategoryPackage> packages, Map<Integer, com.google.gson.JsonObject> extras) {
         for (CategoryPackage pkg : packages) {
-            Integer cd = cooldowns.get(pkg.getId());
-            if (cd != null) {
-                pkg.setCooldownSeconds(cd);
+            com.google.gson.JsonObject raw = extras.get(pkg.getId());
+            if (raw == null) continue;
+
+            if (raw.has("description") && !raw.get("description").isJsonNull()) {
+                String desc = raw.get("description").getAsString();
+                if (!desc.isEmpty()) {
+                    pkg.setDescription(desc);
+                }
+            }
+
+            if (raw.has("meta") && !raw.get("meta").isJsonNull()) {
+                com.google.gson.JsonObject meta = raw.getAsJsonObject("meta");
+                if (meta.has("cooldown_seconds") && !meta.get("cooldown_seconds").isJsonNull()) {
+                    pkg.setCooldownSeconds(meta.get("cooldown_seconds").getAsInt());
+                }
             }
         }
     }

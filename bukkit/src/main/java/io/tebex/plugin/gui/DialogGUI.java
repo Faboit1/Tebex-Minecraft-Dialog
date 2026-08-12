@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.tebex.plugin.BukkitPluginPlatform;
 import io.tebex.plugin.manager.CooldownManager;
+import io.tebex.plugin.util.FoliaUtil;
 import io.tebex.plugin.util.MaterialUtil;
 import io.tebex.plugin.util.MiniMessageUtil;
 import io.tebex.plugin.util.SpriteUtil;
@@ -353,7 +354,7 @@ public class DialogGUI {
 
     private void dispatchDialog(Player player, JsonObject dialogJson) {
         String json = dialogJson.toString();
-        Bukkit.getScheduler().runTask(platform.getPlugin(), () -> {
+        FoliaUtil.runForEntity(platform.getPlugin(), player, () -> {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "dialog show " + player.getName() + " " + json);
         });
     }

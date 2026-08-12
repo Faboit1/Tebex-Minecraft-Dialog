@@ -692,33 +692,28 @@ public class SDK {
         });
     }
 
-    public CompletableFuture<Map<Integer, Integer>> getPackagesMeta() {
+    public CompletableFuture<Map<Integer, JsonObject>> getPackageExtras() {
         if (!platform.isSetup()) {
-            CompletableFuture<Map<Integer, Integer>> future = new CompletableFuture<>();
+            CompletableFuture<Map<Integer, JsonObject>> future = new CompletableFuture<>();
             future.completeExceptionally(new ServerNotSetupException());
             return future;
         }
 
         return request("/packages").withSecretKey(secretKey).sendAsync().thenApply(response -> {
-            Map<Integer, Integer> cooldowns = new HashMap<>();
-            if (response.code() != 200) return cooldowns;
+            Map<Integer, JsonObject> extras = new HashMap<>();
+            if (response.code() != 200) return extras;
 
             try {
                 JsonArray packages = GSON.fromJson(response.body().string(), JsonArray.class);
                 for (JsonElement el : packages) {
                     JsonObject pkg = el.getAsJsonObject();
                     int id = pkg.get("id").getAsInt();
-                    if (pkg.has("meta") && !pkg.get("meta").isJsonNull()) {
-                        JsonObject meta = pkg.getAsJsonObject("meta");
-                        if (meta.has("cooldown_seconds") && !meta.get("cooldown_seconds").isJsonNull()) {
-                            cooldowns.put(id, meta.get("cooldown_seconds").getAsInt());
-                        }
-                    }
+                    extras.put(id, pkg);
                 }
             } catch (IOException e) {
-                platform.debug("Failed to fetch package meta: " + e.getMessage());
+                platform.debug("Failed to fetch package extras: " + e.getMessage());
             }
-            return cooldowns;
+            return extras;
         });
     }
 
