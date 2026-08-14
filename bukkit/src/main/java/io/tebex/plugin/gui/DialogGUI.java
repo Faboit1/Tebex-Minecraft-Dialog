@@ -354,7 +354,7 @@ public class DialogGUI {
 
     private void dispatchDialog(Player player, JsonObject dialogJson) {
         String json = dialogJson.toString();
-        FoliaUtil.runForEntity(platform.getPlugin(), player, () -> {
+        FoliaUtil.runSync(platform.getPlugin(), () -> {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "dialog show " + player.getName() + " " + json);
         });
     }
