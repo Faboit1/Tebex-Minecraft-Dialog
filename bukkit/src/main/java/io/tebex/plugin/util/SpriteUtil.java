@@ -10,8 +10,6 @@ import java.util.regex.Pattern;
 
 public class SpriteUtil {
     private static final Pattern VERSION_PATTERN = Pattern.compile("1\\.(\\d+)(?:\\.(\\d+))?");
-    private static final Pattern ALT_VERSION_PATTERN = Pattern.compile("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
-    private static final int MIN_ALT_MAJOR = 26;
 
     public static boolean isSpriteSupported() {
         return isVersionAtLeast(21, 9);
@@ -58,27 +56,28 @@ public class SpriteUtil {
     }
 
     private static boolean isVersionAtLeast(int targetMinor, int targetPatch) {
+        // Paper/Folia/Canvas expose the real MC version via getMinecraftVersion()
+        try {
+            String mcVersion = (String) Bukkit.class.getMethod("getMinecraftVersion").invoke(null);
+            Matcher match = VERSION_PATTERN.matcher(mcVersion);
+            if (match.find()) {
+                int minor = Integer.parseInt(match.group(1));
+                int patch = match.group(2) != null ? Integer.parseInt(match.group(2)) : 0;
+                if (minor != targetMinor) return minor > targetMinor;
+                return patch >= targetPatch;
+            }
+        } catch (Exception ignored) {
+        }
+
+        // Fallback to getBukkitVersion() for vanilla Spigot/CraftBukkit
         String version = Bukkit.getBukkitVersion();
         try {
             Matcher match = VERSION_PATTERN.matcher(version);
             if (match.find()) {
                 int minor = Integer.parseInt(match.group(1));
                 int patch = match.group(2) != null ? Integer.parseInt(match.group(2)) : 0;
-                if (minor != targetMinor) {
-                    return minor > targetMinor;
-                }
+                if (minor != targetMinor) return minor > targetMinor;
                 return patch >= targetPatch;
-            }
-        } catch (Exception ignored) {
-        }
-
-        try {
-            Matcher alt = ALT_VERSION_PATTERN.matcher(version);
-            if (alt.find()) {
-                int major = Integer.parseInt(alt.group(1));
-                if (major >= MIN_ALT_MAJOR) {
-                    return true;
-                }
             }
         } catch (Exception ignored) {
         }
