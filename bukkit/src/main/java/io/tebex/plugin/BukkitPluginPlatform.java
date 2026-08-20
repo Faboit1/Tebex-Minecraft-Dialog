@@ -2,6 +2,8 @@ package io.tebex.plugin;
 
 import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.gui.BuyGUI;
+import io.tebex.plugin.manager.CooldownManager;
+import io.tebex.plugin.util.FoliaUtil;
 import io.tebex.sdk.SDK;
 import io.tebex.sdk.platform.BasePluginPlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
@@ -25,10 +27,19 @@ import java.util.regex.Pattern;
 public class BukkitPluginPlatform extends BasePluginPlatform {
     private BuyGUI buyGUI;
     private final TebexBukkitPlugin plugin;
+    private CooldownManager cooldownManager;
 
     public BukkitPluginPlatform(TebexBukkitPlugin plugin) {
         this.plugin = plugin;
         this.buyGUI = new BuyGUI(this);
+    }
+
+    public CooldownManager getCooldownManager() {
+        return cooldownManager;
+    }
+
+    public void setCooldownManager(CooldownManager cooldownManager) {
+        this.cooldownManager = cooldownManager;
     }
 
     @Override
@@ -70,27 +81,25 @@ public class BukkitPluginPlatform extends BasePluginPlatform {
     @Override
     public void executeAsync(Runnable runnable) {
         if (!plugin.isEnabled()) return;
-
-        Bukkit.getServer().getScheduler().runTaskAsynchronously(plugin, runnable);
+        FoliaUtil.runAsync(plugin, runnable);
     }
 
     @Override
     public void executeAsyncLater(Runnable runnable, long time, TimeUnit unit) {
         if (!plugin.isEnabled()) return;
-
-        Bukkit.getServer().getScheduler().runTaskLaterAsynchronously(plugin, runnable, unit.toMillis(time) / 50);
+        FoliaUtil.runAsyncLater(plugin, runnable, unit.toMillis(time) / 50);
     }
 
     @Override
     public void executeBlocking(Runnable runnable) {
         if (!plugin.isEnabled()) return;
-        Bukkit.getServer().getScheduler().runTask(plugin, runnable);
+        FoliaUtil.runSync(plugin, runnable);
     }
 
     @Override
     public void executeBlockingLater(Runnable runnable, long time, TimeUnit unit) {
         if (!plugin.isEnabled()) return;
-        Bukkit.getServer().getScheduler().runTaskLater(plugin, runnable, unit.toMillis(time) / 50);
+        FoliaUtil.runSyncLater(plugin, runnable, unit.toMillis(time) / 50);
     }
 
     @Override

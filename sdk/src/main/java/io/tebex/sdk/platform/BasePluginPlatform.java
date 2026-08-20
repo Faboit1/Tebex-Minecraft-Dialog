@@ -117,16 +117,18 @@ public abstract class BasePluginPlatform implements PluginPlatform {
     public final CompletableFuture<String[]> checkCommandQueue(boolean useRemoteNextCheck) {
         CompletableFuture<String[]> forceCheckOutput = new CompletableFuture<>();
 
+        int checkInterval = getCheckIntervalSeconds();
+
         if(!isSetup()) {
             debug("Tebex is not set up. Skipping check.");
-            executeAsyncLater(this::performCheck, 1, TimeUnit.MINUTES);
+            executeAsyncLater(this::performCheck, checkInterval, TimeUnit.SECONDS);
             return forceCheckOutput;
         }
 
         if (!commandCheckInProgress.compareAndSet(false, true)) {
             debug("Command queue check already in progress. Skipping to avoid duplicate execution.");
             if (useRemoteNextCheck) {
-                executeAsyncLater(this::performCheck, 60, TimeUnit.SECONDS);
+                executeAsyncLater(this::performCheck, checkInterval, TimeUnit.SECONDS);
             }
             return forceCheckOutput;
         }
@@ -156,8 +158,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
             }
 
             if (useRemoteNextCheck) {
-                int nextCheck = duePlayersResponse == null ? 60 : duePlayersResponse.getNextCheck();
-                executeAsyncLater(this::performCheck, nextCheck, TimeUnit.SECONDS);
+                executeAsyncLater(this::performCheck, checkInterval, TimeUnit.SECONDS);
             }
 
             List<QueuedPlayer> playerList = duePlayersResponse.getPlayers();
@@ -556,12 +557,47 @@ public abstract class BasePluginPlatform implements PluginPlatform {
 
         config.setProxyMode(configFile.getBoolean("server.proxy", false));
         config.setAutoReportEnabled(configFile.getBoolean("auto-report-enabled", true));
+        config.setCheckIntervalSeconds(configFile.getInt("check-interval", 3));
 
         return config;
     }
 
     public final void refreshListings() {
-        getSDK().getListing().thenAccept(this::setStoreCategories);
+        getSDK().getListing().thenAccept(categories -> {
+            setStoreCategories(categories);
+            getSDK().getPackageExtras().thenAccept(extras -> {
+                if (extras.isEmpty()) return;
+                for (Category cat : categories) {
+                    applyExtras(cat.getPackages(), extras);
+                    if (cat.getSubCategories() != null) {
+                        for (SubCategory sub : cat.getSubCategories()) {
+                            applyExtras(sub.getPackages(), extras);
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    private void applyExtras(List<CategoryPackage> packages, Map<Integer, com.google.gson.JsonObject> extras) {
+        for (CategoryPackage pkg : packages) {
+            com.google.gson.JsonObject raw = extras.get(pkg.getId());
+            if (raw == null) continue;
+
+            if (raw.has("description") && !raw.get("description").isJsonNull()) {
+                String desc = raw.get("description").getAsString();
+                if (!desc.isEmpty()) {
+                    pkg.setDescription(desc);
+                }
+            }
+
+            if (raw.has("meta") && !raw.get("meta").isJsonNull()) {
+                com.google.gson.JsonObject meta = raw.getAsJsonObject("meta");
+                if (meta.has("cooldown_seconds") && !meta.get("cooldown_seconds").isJsonNull()) {
+                    pkg.setCooldownSeconds(meta.get("cooldown_seconds").getAsInt());
+                }
+            }
+        }
     }
 
     public final void clearPluginEvents() {
@@ -662,6 +698,14 @@ public abstract class BasePluginPlatform implements PluginPlatform {
      */
     public IPlatformConfig getPlatformConfig() {
         return config;
+    }
+
+    public int getCheckIntervalSeconds() {
+        if (config instanceof ServerPlatformConfig) {
+            int interval = ((ServerPlatformConfig) config).getCheckIntervalSeconds();
+            return interval > 0 ? interval : 3;
+        }
+        return 3;
     }
 
     public void executeAsync(Runnable runnable) {

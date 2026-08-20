@@ -7,6 +7,11 @@ buy-command:
   enabled: true
   name: buy
 
+# How often (in seconds) to check for new purchases.
+# Lower values mean faster delivery but more API requests.
+# Default: 3
+check-interval: 3
+
 # Whether to check for updates or not.
 check-for-updates: true
 
@@ -28,6 +33,22 @@ gui:
     sub-category:
       title: "Viewing %sub_category% (%category%)"
       rows: 1
+  dialog:
+    enabled: true
+    sprites: true
+    button-width: 200
+    columns: 1
+    body-text: "Please select a category:"
+    category-body-text: "Select a package to purchase:"
+    close-button: "Close"
+    back-button: "« Back"
+    subcategory-prefix: "[+] "
+    free-marker: "<red>[FREE]<reset> "
+    free-text: "Free"
+    sale-suffix: "(Sale)"
+    sale-color: "<yellow>"
+    price-format: "%currency%%price%"
+    free-on-cooldown-format: "%currency%0"
   item:
     back:
       name: "&cBack"

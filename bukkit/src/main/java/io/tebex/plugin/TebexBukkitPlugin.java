@@ -6,7 +6,10 @@ import io.tebex.plugin.command.BuyCommand;
 import io.tebex.plugin.command.TebexCommandExecutor;
 import io.tebex.plugin.event.InventoryClickListener;
 import io.tebex.plugin.event.PlayerJoinListener;
+import io.tebex.plugin.manager.CooldownManager;
 import io.tebex.plugin.placeholder.BukkitNamePlaceholder;
+import io.tebex.plugin.placeholder.TebexPlaceholderExpansion;
+import io.tebex.plugin.util.FoliaUtil;
 import io.tebex.sdk.Tebex;
 import io.tebex.sdk.obj.ServerEvent;
 import io.tebex.sdk.placeholder.PlaceholderManager;
@@ -27,9 +30,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
-/**
- * The Bukkit platform.
- */
 public final class TebexBukkitPlugin extends JavaPlugin {
     private BukkitPluginPlatform platform;
 
@@ -37,21 +37,20 @@ public final class TebexBukkitPlugin extends JavaPlugin {
         return platform;
     }
 
-    /**
-     * Starts the Bukkit platform.
-     */
     @Override
     public void onEnable() {
         platform = new BukkitPluginPlatform(this);
         Tebex.init(platform);
 
-        migrateConfig(); // Migrate old config from BuycraftX
+        migrateConfig();
 
-        platform.loadPlatformConfig(); // loads the configuration file for the platform
+        platform.loadPlatformConfig();
 
-        platform.initStore(); // uses loaded key to set current store and cache the available packages
+        platform.initStore();
 
-        // Bukkit specific registration
+        CooldownManager cooldownManager = new CooldownManager(getDataFolder(), getLogger());
+        platform.setCooldownManager(cooldownManager);
+
         TebexCommandExecutor tebexCommands = new TebexCommandExecutor(platform);
         PluginCommand pluginCommand = platform.getPlugin().getCommand("tebex");
         if (pluginCommand == null) {
@@ -67,14 +66,20 @@ public final class TebexBukkitPlugin extends JavaPlugin {
         PlaceholderManager placeholderManager = platform.getPlaceholderManager();
         placeholderManager.register(new BukkitNamePlaceholder(placeholderManager));
 
-        // Refresh store listings every 5 minutes
-        getServer().getScheduler().runTaskTimerAsynchronously(this, platform::refreshListings, 0, 20 * 60 * 5);
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new TebexPlaceholderExpansion(platform).register();
+        }
 
-        // Every 10 minutes clear the plugin event queue
-        getServer().getScheduler().runTaskTimerAsynchronously(this, () -> platform.getSDK().sendPluginEvents(), 0, 60 * 20 * 10);
+        FoliaUtil.runAsyncTimer(this, () -> {
+            CooldownManager cm = platform.getCooldownManager();
+            if (cm != null) cm.cleanup();
+        }, 20 * 60 * 10, 20 * 60 * 10);
 
-        // clear server events every minute
-        getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
+        FoliaUtil.runAsyncTimer(this, platform::refreshListings, 20, 20 * 60 * 5);
+
+        FoliaUtil.runAsyncTimer(this, () -> platform.getSDK().sendPluginEvents(), 20, 60 * 20 * 10);
+
+        FoliaUtil.runAsyncTimer(this, () -> {
             List<ServerEvent> allServerEvents = platform.getJoinEvents();
             List<ServerEvent> runEvents;
             synchronized (allServerEvents) {
@@ -92,16 +97,17 @@ public final class TebexBukkitPlugin extends JavaPlugin {
                         platform.debug("Failed to send join events: " + throwable.getMessage());
                         return null;
                     });
-        }, 0, 20 * 60);
-
-        // start the initial check, which is rescheduled according to the next_check from remote
-        //platform.checkCommandQueue(true);
+        }, 20, 20 * 60);
     }
 
-    /**
-     * Registers the specified listener with the plugin manager.
-     * @param l the listener to register
-     */
+    @Override
+    public void onDisable() {
+        CooldownManager cm = platform != null ? platform.getCooldownManager() : null;
+        if (cm != null) {
+            cm.close();
+        }
+    }
+
     public <T extends Listener> void registerEvents(T l) {
         getServer().getPluginManager().registerEvents(l, this);
     }
@@ -116,7 +122,6 @@ public final class TebexBukkitPlugin extends JavaPlugin {
         platform.info("Detected legacy BuycraftX configuration. Attempting to migrate...");
 
         try {
-            // Load old properties
             Properties properties = new Properties();
             properties.load(Files.newInputStream(oldConfigFile.toPath()));
 
@@ -125,7 +130,6 @@ public final class TebexBukkitPlugin extends JavaPlugin {
 
             if(secretKey != null) {
                 YamlDocument configYaml = platform.initPlatformConfig();
-                // Migrate their existing config.
                 configYaml.set("buy-command.name", properties.getProperty("buy-command-name", null));
                 configYaml.set("buy-command.enabled", ! Boolean.parseBoolean(properties.getProperty("disable-buy-command", null)));
 
@@ -135,7 +139,6 @@ public final class TebexBukkitPlugin extends JavaPlugin {
                 configYaml.set("server.proxy", properties.getOrDefault("is-bungeecord", false));
                 configYaml.set("server.secret-key", secretKey);
 
-                // Save new config
                 configYaml.save();
 
                 platform.setPlatformConfigYaml(configYaml);
@@ -145,7 +148,6 @@ public final class TebexBukkitPlugin extends JavaPlugin {
                 platform.info("Successfully migrated your config from BuycraftX.");
             }
 
-            // If BuycraftX is installed, delete the plugin JAR.
             boolean legacyPluginEnabled = Bukkit.getPluginManager().isPluginEnabled("BuycraftX");
             if(legacyPluginEnabled) {
                 try {

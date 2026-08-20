@@ -8,6 +8,7 @@ dependencies {
     implementation("com.github.cryptomorin:XSeries:9.3.1") { isTransitive = false }
     compileOnly("org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT")
     compileOnly("dev.dejvokep:boosted-yaml:1.3")
+    compileOnly("me.clip:placeholderapi:2.11.5")
 }
 
 tasks.named("shadowJar", ShadowJar::class.java) {
