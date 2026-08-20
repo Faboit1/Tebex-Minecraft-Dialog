@@ -7,6 +7,11 @@ buy-command:
   enabled: true
   name: buy
 
+# How often (in seconds) to check for new purchases.
+# Lower values mean faster delivery but more API requests.
+# Default: 3
+check-interval: 3
+
 # Whether to check for updates or not.
 check-for-updates: true
 

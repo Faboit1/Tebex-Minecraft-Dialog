@@ -30,7 +30,7 @@ On servers running MC 1.21.6+, the `/buy` command opens a dialog window instead 
 - **Package view**: Lists packages in a category with prices, sale indicators, and optional sprite icons. Clicking a package opens the Tebex checkout link.
 - **Tooltips**: Hovering over a package button shows its description (if available from the store).
 
-Purchase commands are fulfilled automatically based on the Tebex API's polling interval (typically every ~60 seconds). Store listings refresh every 5 minutes.
+Purchase commands are fulfilled automatically every 3 seconds by default (configurable via `check-interval` in `config.yml`). Store listings refresh every 5 minutes.
 
 ## Dialog Configuration
 

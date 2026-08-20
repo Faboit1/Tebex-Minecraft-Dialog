@@ -21,6 +21,7 @@ public class ServerPlatformConfig implements IPlatformConfig {
     private String secretKey;
 
     private boolean autoReportEnabled;
+    private int checkIntervalSeconds;
 
     /**
      * Creates a PlatformConfig instance with the provided configuration version.
