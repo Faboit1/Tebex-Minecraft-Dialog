@@ -35,6 +35,10 @@ import static io.tebex.sdk.util.ResourceUtil.getBundledFile;
 public abstract class BasePluginPlatform implements PluginPlatform {
     public final int MAX_COMMANDS_PER_BATCH = 3;
 
+    public static final String DEFAULT_CHECKOUT_MESSAGE = "<green>Checkout started! Complete payment here: <yellow>%url%";
+    public static final String DEFAULT_BEDROCK_CHECKOUT_MESSAGE = "<green>Checkout started! Type this link into your browser: <yellow>%url%";
+    public static final String DEFAULT_FREE_REMINDER_MESSAGE = "<green>You have free items waiting! Use <yellow>/buy<green> to claim them.";
+
     protected SDK sdk;
     protected ServerPlatformConfig config;
     protected YamlDocument configYaml;
@@ -269,12 +273,35 @@ public abstract class BasePluginPlatform implements PluginPlatform {
 
     @Override
     public void sendCheckoutLink(String playerName, String checkoutUrl) {
-        if (isOnlineFloodgatePlayer(playerName)) {
-            sendPlayerMessage(playerName, "Checkout started! Type this link into your browser: " + checkoutUrl);
+        boolean bedrock = isOnlineFloodgatePlayer(playerName);
+        String template = getCheckoutMessage(bedrock);
+
+        if (template == null || template.isEmpty()) {
             return;
         }
 
-        PluginPlatform.super.sendCheckoutLink(playerName, checkoutUrl);
+        String message = template
+                .replace("%url%", checkoutUrl)
+                .replace("%player%", playerName);
+
+        sendPlayerMessage(playerName, formatMessage(message));
+    }
+
+    /**
+     * @param bedrock Whether the player is a Bedrock player, who cannot click links in chat.
+     * @return The configured checkout message template.
+     */
+    public String getCheckoutMessage(boolean bedrock) {
+        String fallback = bedrock ? DEFAULT_BEDROCK_CHECKOUT_MESSAGE : DEFAULT_CHECKOUT_MESSAGE;
+
+        if (!(config instanceof ServerPlatformConfig)) {
+            return fallback;
+        }
+
+        ServerPlatformConfig serverConfig = (ServerPlatformConfig) config;
+        String message = bedrock ? serverConfig.getBedrockCheckoutMessage() : serverConfig.getCheckoutMessage();
+
+        return message != null ? message : fallback;
     }
 
     private UUID resolveFloodgateUniqueId(QueuedPlayer player) {
@@ -559,7 +586,48 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         config.setAutoReportEnabled(configFile.getBoolean("auto-report-enabled", true));
         config.setCheckIntervalSeconds(configFile.getInt("check-interval", 3));
 
+        config.setCheckoutMessage(configFile.getString("messages.checkout", DEFAULT_CHECKOUT_MESSAGE));
+        config.setBedrockCheckoutMessage(configFile.getString("messages.checkout-bedrock", DEFAULT_BEDROCK_CHECKOUT_MESSAGE));
+
         return config;
+    }
+
+    /**
+     * Writes any configuration keys added by newer plugin versions into an existing
+     * config.yml, leaving every value the user has already set untouched. Without this,
+     * upgrading installs keep a config file that never shows the new options.
+     */
+    private void applyMissingConfigDefaults(YamlDocument configFile) {
+        Map<String, Object> defaults = new LinkedHashMap<>();
+        defaults.put("check-interval", 3);
+        defaults.put("messages.checkout", DEFAULT_CHECKOUT_MESSAGE);
+        defaults.put("messages.checkout-bedrock", DEFAULT_BEDROCK_CHECKOUT_MESSAGE);
+        defaults.put("free-packages.default-cooldown", 0);
+        defaults.put("free-packages.cooldowns", new LinkedHashMap<String, Object>());
+        defaults.put("free-packages.reminder.enabled", true);
+        defaults.put("free-packages.reminder.interval-minutes", 10);
+        defaults.put("free-packages.reminder.message", DEFAULT_FREE_REMINDER_MESSAGE);
+        defaults.put("gui.dialog.tooltips.enabled", true);
+        defaults.put("gui.dialog.tooltips.categories", new LinkedHashMap<String, Object>());
+        defaults.put("gui.dialog.tooltips.packages", new LinkedHashMap<String, Object>());
+
+        boolean changed = false;
+        for (Map.Entry<String, Object> entry : defaults.entrySet()) {
+            if (!configFile.contains(entry.getKey())) {
+                configFile.set(entry.getKey(), entry.getValue());
+                changed = true;
+            }
+        }
+
+        if (!changed) return;
+
+        try {
+            configFile.save();
+            debug("Added new configuration options to config.yml.");
+        } catch (IOException e) {
+            warning("Failed to add new configuration options to config.yml: " + e.getMessage(),
+                    "You may need to add the new options manually or regenerate the file.");
+        }
     }
 
     public final void refreshListings() {
@@ -575,7 +643,13 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                         }
                     }
                 }
+            }).exceptionally(throwable -> {
+                debug("Failed to apply package extras: " + throwable.getMessage());
+                return null;
             });
+        }).exceptionally(throwable -> {
+            debug("Failed to refresh store listings: " + throwable.getMessage());
+            return null;
         });
     }
 
@@ -591,12 +665,52 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                 }
             }
 
+            if (pkg.getDescription() == null || pkg.getDescription().isEmpty()) {
+                debug("Package " + pkg.getId() + " (" + pkg.getName() + ") has no description from the store API"
+                        + "; set gui.dialog.tooltips.packages." + pkg.getId() + " in config.yml to give it a tooltip.");
+            }
+
+            int cooldownSeconds = readCooldownSeconds(raw);
+            if (cooldownSeconds > 0) {
+                pkg.setCooldownSeconds(cooldownSeconds);
+                debug("Package " + pkg.getId() + " has a " + cooldownSeconds + "s cooldown from the store API.");
+            }
+        }
+    }
+
+    /**
+     * Reads a free-package cooldown out of a raw package payload.
+     *
+     * <p>Not every store exposes package meta through the plugin API, and the stores that
+     * do are inconsistent about it: meta arrives as a nested object on some and as an
+     * embedded JSON string on others, with the value itself either a number or a string.
+     * Anything unreadable yields 0 so the config-based cooldown takes over, and a parse
+     * failure here must never abort the listing refresh.
+     */
+    private int readCooldownSeconds(com.google.gson.JsonObject raw) {
+        try {
+            com.google.gson.JsonObject meta = null;
+
             if (raw.has("meta") && !raw.get("meta").isJsonNull()) {
-                com.google.gson.JsonObject meta = raw.getAsJsonObject("meta");
-                if (meta.has("cooldown_seconds") && !meta.get("cooldown_seconds").isJsonNull()) {
-                    pkg.setCooldownSeconds(meta.get("cooldown_seconds").getAsInt());
+                com.google.gson.JsonElement metaElement = raw.get("meta");
+                if (metaElement.isJsonObject()) {
+                    meta = metaElement.getAsJsonObject();
+                } else if (metaElement.isJsonPrimitive()) {
+                    meta = new com.google.gson.Gson().fromJson(metaElement.getAsString(), com.google.gson.JsonObject.class);
                 }
             }
+
+            // Fall back to the package root, in case the field is not nested under meta.
+            com.google.gson.JsonObject source = meta != null && meta.has("cooldown_seconds") ? meta : raw;
+            if (!source.has("cooldown_seconds") || source.get("cooldown_seconds").isJsonNull()) {
+                return 0;
+            }
+
+            String value = source.get("cooldown_seconds").getAsString().trim();
+            return value.isEmpty() ? 0 : Math.max(0, (int) Double.parseDouble(value));
+        } catch (Exception e) {
+            debug("Unable to read cooldown_seconds from package meta: " + e.getMessage());
+            return 0;
         }
     }
 
@@ -748,6 +862,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
     public void loadPlatformConfig() {
         try {
             configYaml = initPlatformConfig();
+            applyMissingConfigDefaults(configYaml);
             config = loadServerPlatformConfig(configYaml);
             String envKey = System.getenv("TEBEX_SECRET_KEY");
             if (envKey != null && !envKey.isEmpty()) {

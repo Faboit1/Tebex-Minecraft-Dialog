@@ -45,11 +45,16 @@ public class CategoryPackage {
                 ? jsonObject.get("description").getAsString() : "";
 
         int cooldownSeconds = 0;
-        if (jsonObject.has("meta") && !jsonObject.get("meta").isJsonNull()) {
-            JsonObject meta = jsonObject.getAsJsonObject("meta");
-            if (meta.has("cooldown_seconds") && !meta.get("cooldown_seconds").isJsonNull()) {
-                cooldownSeconds = meta.get("cooldown_seconds").getAsInt();
+        try {
+            if (jsonObject.has("meta") && jsonObject.get("meta").isJsonObject()) {
+                JsonObject meta = jsonObject.getAsJsonObject("meta");
+                if (meta.has("cooldown_seconds") && !meta.get("cooldown_seconds").isJsonNull()) {
+                    cooldownSeconds = Math.max(0, Integer.parseInt(meta.get("cooldown_seconds").getAsString().trim()));
+                }
             }
+        } catch (Exception ignored) {
+            // The listing endpoint does not reliably carry package meta; the cooldown is
+            // resolved from config.yml instead when it is missing or malformed here.
         }
 
         return new CategoryPackage(

@@ -23,6 +23,9 @@ public class ServerPlatformConfig implements IPlatformConfig {
     private boolean autoReportEnabled;
     private int checkIntervalSeconds;
 
+    private String checkoutMessage;
+    private String bedrockCheckoutMessage;
+
     /**
      * Creates a PlatformConfig instance with the provided configuration version.
      *

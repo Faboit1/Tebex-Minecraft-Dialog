@@ -18,7 +18,8 @@ This is a fork of the official [Tebex-Minecraft](https://github.com/tebexio/Tebe
 - **Folia and Canvas support** with reflection-based scheduler detection
 - **MiniMessage formatting** in all dialog text strings (e.g. `<red>`, `<bold>`, `<gradient:red:blue>`)
 - **Sale display** with configurable sale suffix, color, and strikethrough pricing
-- **Free package tracking** via SQLite cooldown database with per-player claim limits
+- **Free package cooldowns** configured per package ID, tracked in a local SQLite database
+- **Free package reminders** that periodically tell players when they have something to claim
 - **Package descriptions** shown as tooltips on hover (fetched from the full `/packages` API)
 - **Fully configurable** text, button widths, columns, price formats, and free/sale markers via `config.yml`
 - Falls back to the original chest GUI on servers below 1.21.6
@@ -54,9 +55,93 @@ gui:
     sale-color: "<yellow>"
     price-format: "%currency%%price%"
     free-on-cooldown-format: "%currency%0"
+    tooltips:
+      enabled: true
+      categories: {}
+      packages: {}
 ```
 
+### Tooltips
+
+Hovering a button shows the store description for that category or package. The Tebex API does
+not return descriptions for every store, so you can supply the text yourself, keyed by ID:
+
+```yaml
+gui:
+  dialog:
+    tooltips:
+      enabled: true
+      categories:
+        98765: "Our best deals"
+      packages:
+        1234567: "Claimable once every 12 hours"
+```
+
+Configured text wins over the store description, and supports MiniMessage tags. Run
+`/tebex debug true` then `/tebex refresh` to log which packages arrived without a description.
+
+### Sprite icons
+
+Sprites are native atlas icons and need no resource pack, but they require **MC 1.21.9+** —
+on 1.21.6–1.21.8 buttons fall back to plain text. Sprite paths resolve as `block/<material>` or
+`item/<material>`, so a material whose texture is not a flat atlas entry (chests, beds, banners
+and other block-entity models) has no sprite to draw. Pick a material with a normal texture for
+those categories, or set `gui.dialog.sprites: false`.
+
 Text values support MiniMessage tags (`<red>`, `<bold>`, `<italic>`, `<gradient:red:blue>`, etc.) which are converted to Minecraft's section-sign color codes.
+
+## Free Packages
+
+A package counts as free when its price is 0 after any sale is applied. By default free packages
+can be claimed as often as a player likes; a cooldown makes them claimable once per period.
+
+```yaml
+free-packages:
+  # Cooldown in seconds for every free package with no entry under 'cooldowns'.
+  # 0 means free packages can always be claimed.
+  default-cooldown: 0
+
+  # Per-package cooldowns in seconds, keyed by Tebex package ID.
+  cooldowns:
+    1234567: 43200   # this package is claimable once every 12 hours
+
+  # Periodically reminds players who have something free waiting.
+  reminder:
+    enabled: true
+    interval-minutes: 10
+    message: "<green>You have free items waiting! Use <yellow>/buy<green> to claim them."
+```
+
+Find a package's ID in the URL when you edit it in the Tebex creator panel. Useful values:
+`3600` (1 hour), `43200` (12 hours), `86400` (24 hours).
+
+Cooldowns are resolved in this order, so config always wins:
+
+1. `free-packages.cooldowns.<packageId>`
+2. `meta.cooldown_seconds` from the Tebex API, on stores that expose package meta
+3. `free-packages.default-cooldown`
+
+The API meta path is a convenience for stores that return it — the Tebex plugin API does not
+expose package meta for every store, so the config is the reliable place to set a cooldown.
+
+Claims are recorded in `plugins/Tebex/data.db` (SQLite) per player and package, and expired
+entries are pruned every 10 minutes.
+
+## Messages
+
+```yaml
+messages:
+  checkout: "<green>Checkout started! Complete payment here: <yellow>%url%"
+  # Sent instead to Bedrock players, who cannot click links in chat.
+  checkout-bedrock: "<green>Checkout started! Type this link into your browser: <yellow>%url%"
+```
+
+`%url%` is the checkout link and `%player%` is the player's name. Setting a message to an empty
+string suppresses it. These apply to the Bukkit/Paper/Folia plugin; Fabric, NeoForge, and the
+proxy platforms keep their built-in checkout text.
+
+New options are added to an existing `config.yml` automatically on startup, so upgrading does not
+require deleting the file. Values you have already changed are left alone.
 
 ## Installation and Setup
 

@@ -15,6 +15,33 @@ check-interval: 3
 # Whether to check for updates or not.
 check-for-updates: true
 
+# Messages sent to players.
+# Supports MiniMessage tags (<green>, <bold>, <gradient:red:blue>) and & colour codes.
+# %url% is the checkout link, %player% is the player's name.
+messages:
+  checkout: "<green>Checkout started! Complete payment here: <yellow>%url%"
+  # Sent instead to Bedrock players, who cannot click links in chat.
+  checkout-bedrock: "<green>Checkout started! Type this link into your browser: <yellow>%url%"
+
+# Free package settings.
+# A package counts as free when its price (after any sale) is 0.
+free-packages:
+  # Cooldown in seconds applied to every free package that has no entry under
+  # 'cooldowns' below. 0 means free packages can always be claimed.
+  default-cooldown: 0
+
+  # Per-package cooldowns in seconds, keyed by the Tebex package ID.
+  # The package ID is shown in the URL when you edit a package in the Tebex panel.
+  # Common values: 3600 = 1 hour, 43200 = 12 hours, 86400 = 24 hours.
+  cooldowns: {}
+  #  1234567: 43200
+
+  # Reminds online players when they have free packages waiting for them.
+  reminder:
+    enabled: true
+    interval-minutes: 10
+    message: "<green>You have free items waiting! Use <yellow>/buy<green> to claim them."
+
 # Automatic reporting of exceptions to Tebex
 auto-report-enabled: true
 
@@ -49,6 +76,15 @@ gui:
     sale-color: "<yellow>"
     price-format: "%currency%%price%"
     free-on-cooldown-format: "%currency%0"
+    # Text shown when hovering a button. Store descriptions are used when available,
+    # but the Tebex API does not return them for every store, so you can set the text
+    # yourself here keyed by category or package ID.
+    tooltips:
+      enabled: true
+      categories: {}
+      #  98765: "Our best deals"
+      packages: {}
+      #  1234567: "Claimable once every 12 hours"
   item:
     back:
       name: "&cBack"

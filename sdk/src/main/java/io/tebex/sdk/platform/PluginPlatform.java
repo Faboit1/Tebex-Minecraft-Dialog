@@ -168,6 +168,18 @@ public interface PluginPlatform {
         sendPlayerMessage(playerName, "Checkout started! Complete payment here: " + checkoutUrl);
     }
 
+    /**
+     * Applies platform-specific formatting (colour codes, MiniMessage tags) to a
+     * configurable message before it is sent to a player. Platforms that have no
+     * formatting of their own leave the message untouched.
+     *
+     * @param message The raw message from the configuration.
+     * @return The formatted message.
+     */
+    default String formatMessage(String message) {
+        return message;
+    }
+
     void setServerInformation(ServerInformation serverInformation);
 
     /**

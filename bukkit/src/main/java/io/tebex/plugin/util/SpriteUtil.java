@@ -34,21 +34,13 @@ public class SpriteUtil {
             atlas = itemsHaveDedicatedAtlas() ? "minecraft:items" : "minecraft:blocks";
         }
 
+        // An atlas sprite is an "object" content type, inferred from the atlas/sprite
+        // pair rather than declared, which is how every documented example writes it.
+        // The sprite path is relative to the atlas, so it carries no namespace itself.
         JsonObject sprite = new JsonObject();
-        sprite.addProperty("type", "sprite");
         sprite.addProperty("atlas", atlas);
-        sprite.addProperty("sprite", "minecraft:" + prefix + name.toLowerCase(Locale.ENGLISH));
+        sprite.addProperty("sprite", prefix + name.toLowerCase(Locale.ENGLISH));
         return sprite;
-    }
-
-    public static String getMiniMessageSprite(Material material) {
-        JsonObject sprite = spriteComponent(material);
-        if (sprite == null) {
-            return "";
-        }
-        return String.format("<sprite:\"%s\":\"%s\">",
-                sprite.get("atlas").getAsString(),
-                sprite.get("sprite").getAsString());
     }
 
     private static boolean itemsHaveDedicatedAtlas() {

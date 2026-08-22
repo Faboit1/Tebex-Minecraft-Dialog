@@ -3,7 +3,7 @@ package io.tebex.plugin.gui;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.tebex.plugin.BukkitPluginPlatform;
-import io.tebex.plugin.manager.CooldownManager;
+import io.tebex.plugin.manager.FreePackageTracker;
 import io.tebex.plugin.util.FoliaUtil;
 import io.tebex.plugin.util.MaterialUtil;
 import io.tebex.plugin.util.MiniMessageUtil;
@@ -61,7 +61,7 @@ public class DialogGUI {
             JsonObject label = buildLabel(displayName, spritesEnabled ? category.getGuiItem() : null);
             JsonObject action = runCommandAction(label, "buy category " + category.getId());
             action.addProperty("width", buttonWidth);
-            addTooltip(action, category.getDescription());
+            addTooltip(action, category.getDescription(), "categories", category.getId());
             actions.add(action);
         }
 
@@ -139,7 +139,7 @@ public class DialogGUI {
                     JsonObject label = buildLabel(displayName, spritesEnabled ? subCategory.getGuiItem() : null);
                     JsonObject action = runCommandAction(label, "buy category " + subCategory.getId());
                     action.addProperty("width", buttonWidth);
-                    addTooltip(action, subCategory.getDescription());
+                    addTooltip(action, subCategory.getDescription(), "categories", subCategory.getId());
                     actions.add(action);
                 }
             }
@@ -173,7 +173,7 @@ public class DialogGUI {
             JsonObject label = buildLabel(priceStr, spritesEnabled ? pkg.getItemId() : null);
             JsonObject action = runCommandAction(label, "buy package " + pkg.getId());
             action.addProperty("width", buttonWidth);
-            addTooltip(action, pkg.getDescription());
+            addTooltip(action, pkg.getDescription(), "packages", pkg.getId());
             actions.add(action);
         }
 
@@ -198,11 +198,8 @@ public class DialogGUI {
 
     public void openPackage(Player player, int packageId) {
         CategoryPackage pkg = findPackageById(packageId);
-        if (pkg != null && pkg.isFree() && pkg.hasCooldown()) {
-            CooldownManager cm = platform.getCooldownManager();
-            if (cm != null) {
-                cm.recordClaim(player.getName(), packageId, pkg.getCooldownSeconds());
-            }
+        if (pkg != null) {
+            platform.getFreePackageTracker().recordClaim(pkg, player.getName());
         }
 
         player.closeInventory();
@@ -217,34 +214,22 @@ public class DialogGUI {
     }
 
     private boolean categoryHasFreeForPlayer(Category category, String playerName) {
-        if (hasFreeAvailable(category.getPackages(), playerName)) return true;
+        FreePackageTracker tracker = platform.getFreePackageTracker();
+        if (tracker.anyClaimable(category.getPackages(), playerName)) return true;
         if (category.getSubCategories() != null) {
             for (SubCategory sub : category.getSubCategories()) {
-                if (hasFreeAvailable(sub.getPackages(), playerName)) return true;
+                if (tracker.anyClaimable(sub.getPackages(), playerName)) return true;
             }
         }
         return false;
     }
 
     private boolean subCategoryHasFreeForPlayer(SubCategory subCategory, String playerName) {
-        return hasFreeAvailable(subCategory.getPackages(), playerName);
-    }
-
-    private boolean hasFreeAvailable(List<CategoryPackage> packages, String playerName) {
-        for (CategoryPackage pkg : packages) {
-            if (pkg.isFree() && isPackageFreeForPlayer(pkg, playerName)) {
-                return true;
-            }
-        }
-        return false;
+        return platform.getFreePackageTracker().anyClaimable(subCategory.getPackages(), playerName);
     }
 
     private boolean isPackageFreeForPlayer(CategoryPackage pkg, String playerName) {
-        if (!pkg.isFree()) return false;
-        if (!pkg.hasCooldown()) return true;
-        CooldownManager cm = platform.getCooldownManager();
-        if (cm == null) return true;
-        return !cm.isOnCooldown(playerName, pkg.getId(), pkg.getCooldownSeconds());
+        return platform.getFreePackageTracker().isClaimable(pkg, playerName);
     }
 
     private CategoryPackage findPackageById(int packageId) {
@@ -314,11 +299,20 @@ public class DialogGUI {
         return action;
     }
 
-    private void addTooltip(JsonObject action, String description) {
-        String cleaned = stripHtml(description);
-        if (cleaned.isEmpty()) return;
+    /**
+     * Adds the hover tooltip to a button. Text configured under
+     * {@code gui.dialog.tooltips.<section>.<id>} wins over the store description, which
+     * the Tebex API does not return for every store.
+     */
+    private void addTooltip(JsonObject action, String description, String section, int id) {
+        if (!cfgBool("gui.dialog.tooltips.enabled", true)) return;
+
+        String configured = cfg("gui.dialog.tooltips." + section + "." + id, "");
+        String text = configured != null && !configured.isEmpty() ? configured : stripHtml(description);
+        if (text.isEmpty()) return;
+
         JsonObject tooltip = new JsonObject();
-        tooltip.addProperty("text", cleaned);
+        tooltip.addProperty("text", mm(text));
         action.add("tooltip", tooltip);
     }
 
