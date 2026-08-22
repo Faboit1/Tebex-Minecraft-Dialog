@@ -7,16 +7,20 @@ import io.tebex.plugin.command.TebexCommandExecutor;
 import io.tebex.plugin.event.InventoryClickListener;
 import io.tebex.plugin.event.PlayerJoinListener;
 import io.tebex.plugin.manager.CooldownManager;
+import io.tebex.plugin.manager.FreePackageTracker;
 import io.tebex.plugin.placeholder.BukkitNamePlaceholder;
 import io.tebex.plugin.placeholder.TebexPlaceholderExpansion;
 import io.tebex.plugin.util.FoliaUtil;
+import io.tebex.plugin.util.MiniMessageUtil;
 import io.tebex.sdk.Tebex;
 import io.tebex.sdk.obj.ServerEvent;
 import io.tebex.sdk.placeholder.PlaceholderManager;
+import io.tebex.sdk.platform.BasePluginPlatform;
 import io.tebex.sdk.platform.config.ServerPlatformConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -77,6 +81,8 @@ public final class TebexBukkitPlugin extends JavaPlugin {
 
         FoliaUtil.runAsyncTimer(this, platform::refreshListings, 20, 20 * 60 * 5);
 
+        scheduleFreePackageReminder();
+
         FoliaUtil.runAsyncTimer(this, () -> platform.getSDK().sendPluginEvents(), 20, 60 * 20 * 10);
 
         FoliaUtil.runAsyncTimer(this, () -> {
@@ -110,6 +116,34 @@ public final class TebexBukkitPlugin extends JavaPlugin {
 
     public <T extends Listener> void registerEvents(T l) {
         getServer().getPluginManager().registerEvents(l, this);
+    }
+
+    /**
+     * Periodically reminds online players that they have free packages they can still claim.
+     * Runs off the main thread because deciding what is claimable reads the cooldown database.
+     */
+    private void scheduleFreePackageReminder() {
+        if (!getConfig().getBoolean("free-packages.reminder.enabled", true)) return;
+
+        int intervalMinutes = Math.max(1, getConfig().getInt("free-packages.reminder.interval-minutes", 10));
+        long periodTicks = 20L * 60L * intervalMinutes;
+
+        FoliaUtil.runAsyncTimer(this, () -> {
+            if (!platform.isSetup()) return;
+
+            String template = getConfig().getString("free-packages.reminder.message",
+                    BasePluginPlatform.DEFAULT_FREE_REMINDER_MESSAGE);
+            if (template == null || template.isEmpty()) return;
+
+            FreePackageTracker tracker = platform.getFreePackageTracker();
+
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (!tracker.hasClaimable(player.getName())) continue;
+
+                player.sendMessage(MiniMessageUtil.toSection(
+                        template.replace("%player%", player.getName())));
+            }
+        }, periodTicks, periodTicks);
     }
 
     public void migrateConfig() {

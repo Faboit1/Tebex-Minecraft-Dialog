@@ -3,7 +3,7 @@ package io.tebex.plugin.gui;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.tebex.plugin.BukkitPluginPlatform;
-import io.tebex.plugin.manager.CooldownManager;
+import io.tebex.plugin.manager.FreePackageTracker;
 import io.tebex.plugin.util.FoliaUtil;
 import io.tebex.plugin.util.MaterialUtil;
 import io.tebex.plugin.util.MiniMessageUtil;
@@ -198,11 +198,8 @@ public class DialogGUI {
 
     public void openPackage(Player player, int packageId) {
         CategoryPackage pkg = findPackageById(packageId);
-        if (pkg != null && pkg.isFree() && pkg.hasCooldown()) {
-            CooldownManager cm = platform.getCooldownManager();
-            if (cm != null) {
-                cm.recordClaim(player.getName(), packageId, pkg.getCooldownSeconds());
-            }
+        if (pkg != null) {
+            platform.getFreePackageTracker().recordClaim(pkg, player.getName());
         }
 
         player.closeInventory();
@@ -217,34 +214,22 @@ public class DialogGUI {
     }
 
     private boolean categoryHasFreeForPlayer(Category category, String playerName) {
-        if (hasFreeAvailable(category.getPackages(), playerName)) return true;
+        FreePackageTracker tracker = platform.getFreePackageTracker();
+        if (tracker.anyClaimable(category.getPackages(), playerName)) return true;
         if (category.getSubCategories() != null) {
             for (SubCategory sub : category.getSubCategories()) {
-                if (hasFreeAvailable(sub.getPackages(), playerName)) return true;
+                if (tracker.anyClaimable(sub.getPackages(), playerName)) return true;
             }
         }
         return false;
     }
 
     private boolean subCategoryHasFreeForPlayer(SubCategory subCategory, String playerName) {
-        return hasFreeAvailable(subCategory.getPackages(), playerName);
-    }
-
-    private boolean hasFreeAvailable(List<CategoryPackage> packages, String playerName) {
-        for (CategoryPackage pkg : packages) {
-            if (pkg.isFree() && isPackageFreeForPlayer(pkg, playerName)) {
-                return true;
-            }
-        }
-        return false;
+        return platform.getFreePackageTracker().anyClaimable(subCategory.getPackages(), playerName);
     }
 
     private boolean isPackageFreeForPlayer(CategoryPackage pkg, String playerName) {
-        if (!pkg.isFree()) return false;
-        if (!pkg.hasCooldown()) return true;
-        CooldownManager cm = platform.getCooldownManager();
-        if (cm == null) return true;
-        return !cm.isOnCooldown(playerName, pkg.getId(), pkg.getCooldownSeconds());
+        return platform.getFreePackageTracker().isClaimable(pkg, playerName);
     }
 
     private CategoryPackage findPackageById(int packageId) {

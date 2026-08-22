@@ -3,7 +3,9 @@ package io.tebex.plugin;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.gui.BuyGUI;
 import io.tebex.plugin.manager.CooldownManager;
+import io.tebex.plugin.manager.FreePackageTracker;
 import io.tebex.plugin.util.FoliaUtil;
+import io.tebex.plugin.util.MiniMessageUtil;
 import io.tebex.sdk.SDK;
 import io.tebex.sdk.platform.BasePluginPlatform;
 import io.tebex.sdk.platform.PlatformTelemetry;
@@ -27,11 +29,13 @@ import java.util.regex.Pattern;
 public class BukkitPluginPlatform extends BasePluginPlatform {
     private BuyGUI buyGUI;
     private final TebexBukkitPlugin plugin;
+    private final FreePackageTracker freePackageTracker;
     private CooldownManager cooldownManager;
 
     public BukkitPluginPlatform(TebexBukkitPlugin plugin) {
         this.plugin = plugin;
         this.buyGUI = new BuyGUI(this);
+        this.freePackageTracker = new FreePackageTracker(this);
     }
 
     public CooldownManager getCooldownManager() {
@@ -40,6 +44,15 @@ public class BukkitPluginPlatform extends BasePluginPlatform {
 
     public void setCooldownManager(CooldownManager cooldownManager) {
         this.cooldownManager = cooldownManager;
+    }
+
+    public FreePackageTracker getFreePackageTracker() {
+        return freePackageTracker;
+    }
+
+    @Override
+    public String formatMessage(String message) {
+        return MiniMessageUtil.toSection(message);
     }
 
     @Override
