@@ -55,7 +55,38 @@ gui:
     sale-color: "<yellow>"
     price-format: "%currency%%price%"
     free-on-cooldown-format: "%currency%0"
+    tooltips:
+      enabled: true
+      categories: {}
+      packages: {}
 ```
+
+### Tooltips
+
+Hovering a button shows the store description for that category or package. The Tebex API does
+not return descriptions for every store, so you can supply the text yourself, keyed by ID:
+
+```yaml
+gui:
+  dialog:
+    tooltips:
+      enabled: true
+      categories:
+        98765: "Our best deals"
+      packages:
+        1234567: "Claimable once every 12 hours"
+```
+
+Configured text wins over the store description, and supports MiniMessage tags. Run
+`/tebex debug true` then `/tebex refresh` to log which packages arrived without a description.
+
+### Sprite icons
+
+Sprites are native atlas icons and need no resource pack, but they require **MC 1.21.9+** —
+on 1.21.6–1.21.8 buttons fall back to plain text. Sprite paths resolve as `block/<material>` or
+`item/<material>`, so a material whose texture is not a flat atlas entry (chests, beds, banners
+and other block-entity models) has no sprite to draw. Pick a material with a normal texture for
+those categories, or set `gui.dialog.sprites: false`.
 
 Text values support MiniMessage tags (`<red>`, `<bold>`, `<italic>`, `<gradient:red:blue>`, etc.) which are converted to Minecraft's section-sign color codes.
 

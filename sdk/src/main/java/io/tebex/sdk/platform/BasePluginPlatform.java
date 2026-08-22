@@ -607,6 +607,9 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         defaults.put("free-packages.reminder.enabled", true);
         defaults.put("free-packages.reminder.interval-minutes", 10);
         defaults.put("free-packages.reminder.message", DEFAULT_FREE_REMINDER_MESSAGE);
+        defaults.put("gui.dialog.tooltips.enabled", true);
+        defaults.put("gui.dialog.tooltips.categories", new LinkedHashMap<String, Object>());
+        defaults.put("gui.dialog.tooltips.packages", new LinkedHashMap<String, Object>());
 
         boolean changed = false;
         for (Map.Entry<String, Object> entry : defaults.entrySet()) {
@@ -660,6 +663,11 @@ public abstract class BasePluginPlatform implements PluginPlatform {
                 if (!desc.isEmpty()) {
                     pkg.setDescription(desc);
                 }
+            }
+
+            if (pkg.getDescription() == null || pkg.getDescription().isEmpty()) {
+                debug("Package " + pkg.getId() + " (" + pkg.getName() + ") has no description from the store API"
+                        + "; set gui.dialog.tooltips.packages." + pkg.getId() + " in config.yml to give it a tooltip.");
             }
 
             int cooldownSeconds = readCooldownSeconds(raw);

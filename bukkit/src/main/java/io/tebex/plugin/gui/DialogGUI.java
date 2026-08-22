@@ -61,7 +61,7 @@ public class DialogGUI {
             JsonObject label = buildLabel(displayName, spritesEnabled ? category.getGuiItem() : null);
             JsonObject action = runCommandAction(label, "buy category " + category.getId());
             action.addProperty("width", buttonWidth);
-            addTooltip(action, category.getDescription());
+            addTooltip(action, category.getDescription(), "categories", category.getId());
             actions.add(action);
         }
 
@@ -139,7 +139,7 @@ public class DialogGUI {
                     JsonObject label = buildLabel(displayName, spritesEnabled ? subCategory.getGuiItem() : null);
                     JsonObject action = runCommandAction(label, "buy category " + subCategory.getId());
                     action.addProperty("width", buttonWidth);
-                    addTooltip(action, subCategory.getDescription());
+                    addTooltip(action, subCategory.getDescription(), "categories", subCategory.getId());
                     actions.add(action);
                 }
             }
@@ -173,7 +173,7 @@ public class DialogGUI {
             JsonObject label = buildLabel(priceStr, spritesEnabled ? pkg.getItemId() : null);
             JsonObject action = runCommandAction(label, "buy package " + pkg.getId());
             action.addProperty("width", buttonWidth);
-            addTooltip(action, pkg.getDescription());
+            addTooltip(action, pkg.getDescription(), "packages", pkg.getId());
             actions.add(action);
         }
 
@@ -299,11 +299,20 @@ public class DialogGUI {
         return action;
     }
 
-    private void addTooltip(JsonObject action, String description) {
-        String cleaned = stripHtml(description);
-        if (cleaned.isEmpty()) return;
+    /**
+     * Adds the hover tooltip to a button. Text configured under
+     * {@code gui.dialog.tooltips.<section>.<id>} wins over the store description, which
+     * the Tebex API does not return for every store.
+     */
+    private void addTooltip(JsonObject action, String description, String section, int id) {
+        if (!cfgBool("gui.dialog.tooltips.enabled", true)) return;
+
+        String configured = cfg("gui.dialog.tooltips." + section + "." + id, "");
+        String text = configured != null && !configured.isEmpty() ? configured : stripHtml(description);
+        if (text.isEmpty()) return;
+
         JsonObject tooltip = new JsonObject();
-        tooltip.addProperty("text", cleaned);
+        tooltip.addProperty("text", mm(text));
         action.add("tooltip", tooltip);
     }
 

@@ -76,6 +76,15 @@ gui:
     sale-color: "<yellow>"
     price-format: "%currency%%price%"
     free-on-cooldown-format: "%currency%0"
+    # Text shown when hovering a button. Store descriptions are used when available,
+    # but the Tebex API does not return them for every store, so you can set the text
+    # yourself here keyed by category or package ID.
+    tooltips:
+      enabled: true
+      categories: {}
+      #  98765: "Our best deals"
+      packages: {}
+      #  1234567: "Claimable once every 12 hours"
   item:
     back:
       name: "&cBack"
