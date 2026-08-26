@@ -179,16 +179,18 @@ public class DialogGUI {
             backCommand = "buy";
         }
 
+        // A multi_action dialog needs at least one action, and a category with no
+        // packages and no subcategories would otherwise send an empty list.
+        if (actions.size() == 0) {
+            actions.add(backButton(backCommand, buttonWidth));
+        }
+
         dialog.add("actions", actions);
 
         // Escape runs the exit action, so pointing it at the parent level walks the
         // player back up the shop instead of dropping them out of it entirely. Only
         // the top-level menu exits outright.
-        JsonObject backAction = new JsonObject();
-        backAction.add("label", ComponentUtil.parse(cfg("gui.dialog.back-button", "« Back")));
-        backAction.add("action", runCommandClick(backCommand));
-        backAction.addProperty("width", buttonWidth);
-        dialog.add("exit_action", backAction);
+        dialog.add("exit_action", backButton(backCommand, buttonWidth));
 
         dispatchDialog(player, dialog);
     }
@@ -314,6 +316,14 @@ public class DialogGUI {
         if (text.isEmpty()) return;
 
         action.add("tooltip", ComponentUtil.parse(text));
+    }
+
+    private JsonObject backButton(String backCommand, int buttonWidth) {
+        JsonObject backAction = new JsonObject();
+        backAction.add("label", ComponentUtil.parse(cfg("gui.dialog.back-button", "« Back")));
+        backAction.add("action", runCommandClick(backCommand));
+        backAction.addProperty("width", buttonWidth);
+        return backAction;
     }
 
     private JsonObject closeAction() {
