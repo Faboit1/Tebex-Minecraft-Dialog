@@ -42,6 +42,7 @@ gui:
   dialog:
     enabled: true          # Use dialogs instead of chest GUI (1.21.6+ only)
     sprites: true          # Show item/block icons on buttons (1.21.9+ only)
+    sprite-version-check: true  # Set false to send sprites regardless of detected version
     button-width: 200      # Button width in pixels
     columns: 1             # Number of button columns (1 or 2)
     body-text: "Please select a category:"
@@ -88,7 +89,43 @@ on 1.21.6–1.21.8 buttons fall back to plain text. Sprite paths resolve as `blo
 and other block-entity models) has no sprite to draw. Pick a material with a normal texture for
 those categories, or set `gui.dialog.sprites: false`.
 
-Text values support MiniMessage tags (`<red>`, `<bold>`, `<italic>`, `<gradient:red:blue>`, etc.) which are converted to Minecraft's section-sign color codes.
+If sprites do not appear on a server that should support them, run `/tebex debug true` and open
+the shop. Every dialog is logged with the full JSON that was sent and what the version probes
+saw, for example:
+
+```
+[DEBUG] Dialog for Steve [sprites=false, minecraftVersion=1.21.6, bukkitVersion=1.21.6-R0.1-SNAPSHOT, dedicatedItemAtlas=false]: {...}
+```
+
+`sprites=false` with a version below 1.21.9 is the check working correctly. If the version shown
+is 1.21.9 or newer and sprites are still off, the fork is reporting its version unusually — set
+`gui.dialog.sprite-version-check: false` to send them anyway.
+
+## Escape and back navigation
+
+Pressing Escape runs the dialog's exit action. In a category or subcategory that action is the
+Back button, so Escape walks the player up one level instead of closing the shop; only the
+top-level menu exits outright.
+
+## Text Formatting
+
+Dialog text values are parsed into real JSON text components, so styling that legacy colour
+codes cannot express works too:
+
+| Tag | Effect |
+|-----|--------|
+| `<red>`, `<yellow>`, … | Named colours (all 16) |
+| `<#ff8800>`, `<color:#ff8800>` | Hex colours |
+| `<bold>`/`<b>`, `<italic>`/`<i>`, `<underlined>`/`<u>`, `<strikethrough>`/`<st>`, `<obfuscated>` | Formatting |
+| `<shadow:black>`, `<shadow:#00ff00:0.5>` | Text shadow colour and alpha |
+| `<reset>`, `</red>`, `</bold>` | Clear all styling, or close one tag |
+| `&c`, `&l`, `&r` | Legacy codes, still accepted |
+
+So `free-marker: "<red><shadow:black:1>[FREE] "` renders red text with a solid black shadow.
+Unrecognised tags (`<gradient:…>`, for example) are left in the text as-is rather than dropped.
+
+Chat messages (`messages.checkout`, the free package reminder) go through the legacy colour-code
+path instead, so `<shadow:…>` has no effect there.
 
 ## Free Packages
 

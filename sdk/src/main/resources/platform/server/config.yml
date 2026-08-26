@@ -63,6 +63,10 @@ gui:
   dialog:
     enabled: true
     sprites: true
+    # Sprites need MC 1.21.9+, so they are skipped on older servers. Set this to false
+    # to send them anyway — useful for checking whether a fork is reporting its version
+    # in a way the check does not recognise. Run /tebex debug true to log what it saw.
+    sprite-version-check: true
     button-width: 200
     columns: 1
     body-text: "Please select a category:"

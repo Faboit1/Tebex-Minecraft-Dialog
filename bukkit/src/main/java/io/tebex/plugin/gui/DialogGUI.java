@@ -4,9 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.tebex.plugin.BukkitPluginPlatform;
 import io.tebex.plugin.manager.FreePackageTracker;
+import io.tebex.plugin.util.ComponentUtil;
 import io.tebex.plugin.util.FoliaUtil;
 import io.tebex.plugin.util.MaterialUtil;
-import io.tebex.plugin.util.MiniMessageUtil;
 import io.tebex.plugin.util.SpriteUtil;
 import io.tebex.sdk.obj.Category;
 import io.tebex.sdk.obj.CategoryPackage;
@@ -37,10 +37,7 @@ public class DialogGUI {
         JsonObject dialog = new JsonObject();
         dialog.addProperty("type", "minecraft:multi_action");
 
-        JsonObject title = new JsonObject();
-        String titleStr = cfg("gui.menu.home.title", "Server Shop");
-        title.addProperty("text", mm(titleStr));
-        dialog.add("title", title);
+        dialog.add("title", ComponentUtil.parse(cfg("gui.menu.home.title", "Server Shop")));
 
         dialog.add("body", buildBody(cfg("gui.dialog.body-text", "Please select a category:")));
         dialog.addProperty("columns", cfgInt("gui.dialog.columns", 1));
@@ -104,11 +101,9 @@ public class DialogGUI {
         JsonObject dialog = new JsonObject();
         dialog.addProperty("type", "minecraft:multi_action");
 
-        JsonObject title = new JsonObject();
-        String titleStr = cfg("gui.menu.category.title", "Viewing %category%");
-        titleStr = titleStr.replace("%category%", foundCategory.getName());
-        title.addProperty("text", mm(titleStr));
-        dialog.add("title", title);
+        String titleStr = cfg("gui.menu.category.title", "Viewing %category%")
+                .replace("%category%", foundCategory.getName());
+        dialog.add("title", ComponentUtil.parse(titleStr));
 
         dialog.add("body", buildBody(cfg("gui.dialog.category-body-text", "Select a package to purchase:")));
         dialog.addProperty("columns", cfgInt("gui.dialog.columns", 1));
@@ -177,21 +172,25 @@ public class DialogGUI {
             actions.add(action);
         }
 
-        String backText = cfg("gui.dialog.back-button", "« Back");
-        JsonObject backLabel = new JsonObject();
-        backLabel.addProperty("text", mm(backText));
         String backCommand;
         if (foundCategory instanceof SubCategory) {
             backCommand = "buy category " + ((SubCategory) foundCategory).getParent().getId();
         } else {
             backCommand = "buy";
         }
-        JsonObject backAction = runCommandAction(backLabel, backCommand);
-        backAction.addProperty("width", buttonWidth);
-        actions.add(backAction);
+
+        // A multi_action dialog needs at least one action, and a category with no
+        // packages and no subcategories would otherwise send an empty list.
+        if (actions.size() == 0) {
+            actions.add(backButton(backCommand, buttonWidth));
+        }
 
         dialog.add("actions", actions);
-        dialog.add("exit_action", closeAction());
+
+        // Escape runs the exit action, so pointing it at the parent level walks the
+        // player back up the shop instead of dropping them out of it entirely. Only
+        // the top-level menu exits outright.
+        dialog.add("exit_action", backButton(backCommand, buttonWidth));
 
         dispatchDialog(player, dialog);
     }
@@ -253,10 +252,8 @@ public class DialogGUI {
     private JsonArray buildBody(String message) {
         JsonArray body = new JsonArray();
         JsonObject plainMessage = new JsonObject();
-        JsonObject plainMessageText = new JsonObject();
-        plainMessageText.addProperty("text", mm(message));
         plainMessage.addProperty("type", "plain_message");
-        plainMessage.add("contents", plainMessageText);
+        plainMessage.add("contents", ComponentUtil.parse(message));
         body.add(plainMessage);
         return body;
     }
@@ -264,24 +261,29 @@ public class DialogGUI {
     private JsonObject buildLabel(String text, String guiItem) {
         JsonObject sprite = spriteFor(guiItem);
         JsonObject label = new JsonObject();
+        label.addProperty("text", "");
 
+        JsonArray extra = new JsonArray();
         if (sprite != null) {
-            label.addProperty("text", "");
-            JsonArray extra = new JsonArray();
             extra.add(sprite);
-            JsonObject textPart = new JsonObject();
-            textPart.addProperty("text", " " + mm(text));
-            extra.add(textPart);
+            JsonObject spacer = new JsonObject();
+            spacer.addProperty("text", " ");
+            extra.add(spacer);
+        }
+        extra.addAll(ComponentUtil.parseParts(text));
+
+        if (extra.size() > 0) {
             label.add("extra", extra);
-        } else {
-            label.addProperty("text", mm(text));
         }
 
         return label;
     }
 
     private JsonObject spriteFor(String guiItem) {
-        if (guiItem == null || !SpriteUtil.isSpriteSupported()) {
+        if (guiItem == null) {
+            return null;
+        }
+        if (cfgBool("gui.dialog.sprite-version-check", true) && !SpriteUtil.isSpriteSupported()) {
             return null;
         }
         return MaterialUtil.fromString(guiItem).map(SpriteUtil::spriteComponent).orElse(null);
@@ -290,13 +292,15 @@ public class DialogGUI {
     private JsonObject runCommandAction(JsonObject label, String command) {
         JsonObject action = new JsonObject();
         action.add("label", label);
+        action.add("action", runCommandClick(command));
+        return action;
+    }
 
+    private JsonObject runCommandClick(String command) {
         JsonObject click = new JsonObject();
         click.addProperty("type", "run_command");
         click.addProperty("command", command);
-        action.add("action", click);
-
-        return action;
+        return click;
     }
 
     /**
@@ -311,22 +315,21 @@ public class DialogGUI {
         String text = configured != null && !configured.isEmpty() ? configured : stripHtml(description);
         if (text.isEmpty()) return;
 
-        JsonObject tooltip = new JsonObject();
-        tooltip.addProperty("text", mm(text));
-        action.add("tooltip", tooltip);
+        action.add("tooltip", ComponentUtil.parse(text));
+    }
+
+    private JsonObject backButton(String backCommand, int buttonWidth) {
+        JsonObject backAction = new JsonObject();
+        backAction.add("label", ComponentUtil.parse(cfg("gui.dialog.back-button", "« Back")));
+        backAction.add("action", runCommandClick(backCommand));
+        backAction.addProperty("width", buttonWidth);
+        return backAction;
     }
 
     private JsonObject closeAction() {
         JsonObject exitAction = new JsonObject();
-        JsonObject exitLabel = new JsonObject();
-        String closeText = cfg("gui.dialog.close-button", "Close");
-        exitLabel.addProperty("text", mm(closeText));
-        exitAction.add("label", exitLabel);
+        exitAction.add("label", ComponentUtil.parse(cfg("gui.dialog.close-button", "Close")));
         return exitAction;
-    }
-
-    private String mm(String input) {
-        return MiniMessageUtil.toSection(input);
     }
 
     private String stripHtml(String html) {
@@ -348,6 +351,7 @@ public class DialogGUI {
 
     private void dispatchDialog(Player player, JsonObject dialogJson) {
         String json = dialogJson.toString();
+        platform.debug("Dialog for " + player.getName() + " [" + SpriteUtil.describeSupport() + "]: " + json);
         FoliaUtil.runSync(platform.getPlugin(), () -> {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "dialog show " + player.getName() + " " + json);
         });
