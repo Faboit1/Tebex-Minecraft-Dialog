@@ -43,6 +43,7 @@ gui:
     enabled: true          # Use dialogs instead of chest GUI (1.21.6+ only)
     sprites: true          # Show item/block icons on buttons (1.21.9+ only)
     sprite-version-check: true  # Set false to send sprites regardless of detected version
+    log-json: false        # Log the dialog JSON and detected version each time the shop opens
     button-width: 200      # Button width in pixels
     columns: 1             # Number of button columns (1 or 2)
     body-text: "Please select a category:"
@@ -89,13 +90,16 @@ on 1.21.6–1.21.8 buttons fall back to plain text. Sprite paths resolve as `blo
 and other block-entity models) has no sprite to draw. Pick a material with a normal texture for
 those categories, or set `gui.dialog.sprites: false`.
 
-If sprites do not appear on a server that should support them, run `/tebex debug true` and open
-the shop. Every dialog is logged with the full JSON that was sent and what the version probes
-saw, for example:
+If sprites do not appear on a server that should support them, set `gui.dialog.log-json: true`
+and open the shop. Every dialog is logged with the full JSON that was sent and what the version
+probes saw, for example:
 
 ```
-[DEBUG] Dialog for Steve [sprites=false, minecraftVersion=1.21.6, bukkitVersion=1.21.6-R0.1-SNAPSHOT, dedicatedItemAtlas=false]: {...}
+[Tebex] Dialog for Steve [sprites=false, minecraftVersion=1.21.6, bukkitVersion=1.21.6-R0.1-SNAPSHOT, dedicatedItemAtlas=false]: {...}
 ```
+
+Prefer this over `/tebex debug true`, which also enables the purchase queue check's own
+logging — that runs every few seconds and buries everything else.
 
 `sprites=false` with a version below 1.21.9 is the check working correctly. If the version shown
 is 1.21.9 or newer and sprites are still off, the fork is reporting its version unusually — set
@@ -149,6 +153,11 @@ free-packages:
     message: "<green>You have free items waiting! Use <yellow>/buy<green> to claim them."
 ```
 
+The cadence can be changed in game with `/showfreereminder <off|1m|5m|10m>` (permission
+`tebex.showfreereminder`). It writes the new setting into `config.yml`, keeping the file's
+comments intact, and takes effect immediately. Only players who actually have something
+claimable are messaged.
+
 Find a package's ID in the URL when you edit it in the Tebex creator panel. Useful values:
 `3600` (1 hour), `43200` (12 hours), `86400` (24 hours).
 
@@ -200,6 +209,7 @@ commands.
 
 ### User Commands
 ```
+showfreereminder <off|1m|5m|10m>    Sets how often free package reminders are sent
 tebex.help                          Shows available commands
 tebex.secret <key>                  Sets your store's secret key
 tebex.info                          Shows store information

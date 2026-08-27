@@ -67,6 +67,10 @@ gui:
     # to send them anyway — useful for checking whether a fork is reporting its version
     # in a way the check does not recognise. Run /tebex debug true to log what it saw.
     sprite-version-check: true
+    # Logs the exact dialog JSON and the detected server version every time a shop
+    # dialog opens. Useful for diagnosing missing sprites without turning on full
+    # debug logging, which the purchase queue check floods.
+    log-json: false
     button-width: 200
     columns: 1
     body-text: "Please select a category:"

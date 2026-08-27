@@ -351,7 +351,15 @@ public class DialogGUI {
 
     private void dispatchDialog(Player player, JsonObject dialogJson) {
         String json = dialogJson.toString();
-        platform.debug("Dialog for " + player.getName() + " [" + SpriteUtil.describeSupport() + "]: " + json);
+
+        // The purchase queue check logs on every poll, so full debug drowns this out.
+        // gui.dialog.log-json surfaces it on its own without enabling debug at all.
+        String report = "Dialog for " + player.getName() + " [" + SpriteUtil.describeSupport() + "]: " + json;
+        if (cfgBool("gui.dialog.log-json", false)) {
+            platform.info(report);
+        } else {
+            platform.debug(report);
+        }
         FoliaUtil.runSync(platform.getPlugin(), () -> {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "dialog show " + player.getName() + " " + json);
         });
