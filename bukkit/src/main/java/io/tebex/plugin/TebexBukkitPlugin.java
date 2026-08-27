@@ -3,6 +3,7 @@ package io.tebex.plugin;
 import com.google.common.collect.Lists;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.command.BuyCommand;
+import io.tebex.plugin.command.FreeReminderCommand;
 import io.tebex.plugin.command.TebexCommandExecutor;
 import io.tebex.plugin.event.InventoryClickListener;
 import io.tebex.plugin.event.PlayerJoinListener;
@@ -33,9 +34,11 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class TebexBukkitPlugin extends JavaPlugin {
     private BukkitPluginPlatform platform;
+    private final AtomicInteger minutesSinceFreeReminder = new AtomicInteger();
 
     public BukkitPluginPlatform getPlatform() {
         return platform;
@@ -63,7 +66,7 @@ public final class TebexBukkitPlugin extends JavaPlugin {
         pluginCommand.setExecutor(tebexCommands);
         pluginCommand.setTabCompleter(tebexCommands);
 
-        registerBuyCommandIfEnabled();
+        registerCommands();
         registerEvents(new PlayerJoinListener(platform));
         registerEvents(new InventoryClickListener());
 
@@ -119,31 +122,52 @@ public final class TebexBukkitPlugin extends JavaPlugin {
     }
 
     /**
-     * Periodically reminds online players that they have free packages they can still claim.
-     * Runs off the main thread because deciding what is claimable reads the cooldown database.
+     * Ticks once a minute and compares the elapsed minutes against the configured
+     * interval, so /showfreereminder can change the cadence without rescheduling the
+     * task. Runs off the main thread because deciding what is claimable reads the
+     * cooldown database.
      */
     private void scheduleFreePackageReminder() {
-        if (!getConfig().getBoolean("free-packages.reminder.enabled", true)) return;
-
-        int intervalMinutes = Math.max(1, getConfig().getInt("free-packages.reminder.interval-minutes", 10));
-        long periodTicks = 20L * 60L * intervalMinutes;
-
         FoliaUtil.runAsyncTimer(this, () -> {
-            if (!platform.isSetup()) return;
-
-            String template = getConfig().getString("free-packages.reminder.message",
-                    BasePluginPlatform.DEFAULT_FREE_REMINDER_MESSAGE);
-            if (template == null || template.isEmpty()) return;
-
-            FreePackageTracker tracker = platform.getFreePackageTracker();
-
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                if (!tracker.hasClaimable(player.getName())) continue;
-
-                player.sendMessage(MiniMessageUtil.toSection(
-                        template.replace("%player%", player.getName())));
+            if (!getConfig().getBoolean("free-packages.reminder.enabled", true)) {
+                minutesSinceFreeReminder.set(0);
+                return;
             }
-        }, periodTicks, periodTicks);
+
+            int intervalMinutes = Math.max(1, getConfig().getInt("free-packages.reminder.interval-minutes", 10));
+            if (minutesSinceFreeReminder.incrementAndGet() < intervalMinutes) return;
+
+            minutesSinceFreeReminder.set(0);
+            sendFreePackageReminders();
+        }, 20L * 60L, 20L * 60L);
+    }
+
+    /**
+     * Restarts the countdown so a cadence change takes effect from now rather than
+     * partway through the previous interval.
+     */
+    public void resetFreeReminderCountdown() {
+        minutesSinceFreeReminder.set(0);
+    }
+
+    /**
+     * Messages every online player who has a free package they can still claim.
+     */
+    public void sendFreePackageReminders() {
+        if (!platform.isSetup()) return;
+
+        String template = getConfig().getString("free-packages.reminder.message",
+                BasePluginPlatform.DEFAULT_FREE_REMINDER_MESSAGE);
+        if (template == null || template.isEmpty()) return;
+
+        FreePackageTracker tracker = platform.getFreePackageTracker();
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (!tracker.hasClaimable(player.getName())) continue;
+
+            player.sendMessage(MiniMessageUtil.toSection(
+                    template.replace("%player%", player.getName())));
+        }
     }
 
     public void migrateConfig() {
@@ -208,7 +232,7 @@ public final class TebexBukkitPlugin extends JavaPlugin {
         }
     }
 
-    public void registerBuyCommandIfEnabled() {
+    public void registerCommands() {
         try {
             final Field bukkitCommandMap = Bukkit.getServer().getClass().getDeclaredField("commandMap");
 
@@ -219,8 +243,10 @@ public final class TebexBukkitPlugin extends JavaPlugin {
             if (config.isBuyCommandEnabled()) {
                 commandMap.register(config.getBuyCommandName(), new BuyCommand(config.getBuyCommandName(), platform));
             }
+
+            commandMap.register("tebex", new FreeReminderCommand("showfreereminder", platform));
         } catch (Throwable e) {
-            platform.error("Failed to register buy command: " + e.getMessage(), e);
+            platform.error("Failed to register commands: " + e.getMessage(), e);
         }
     }
 }
