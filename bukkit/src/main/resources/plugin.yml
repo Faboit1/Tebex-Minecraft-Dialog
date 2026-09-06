@@ -6,6 +6,7 @@ folia-supported: true
 softdepend:
   - BuycraftX
   - PlaceholderAPI
+  - CheeseCore
 commands:
   tebex:
     description: The main command

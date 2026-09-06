@@ -9,7 +9,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SpriteUtil {
-    private static final Pattern VERSION_PATTERN = Pattern.compile("1\\.(\\d+)(?:\\.(\\d+))?");
+    // Anchored at the start so "26.1.2" is read as 26.1.2 rather than matching the "1.2"
+    // buried inside it, which is what an unanchored "1\.(\d+)" pattern finds.
+    private static final Pattern VERSION_PATTERN = Pattern.compile("^(\\d+)\\.(\\d+)(?:\\.(\\d+))?");
 
     public static boolean isSpriteSupported() {
         return isVersionAtLeast(21, 9);
@@ -88,14 +90,25 @@ public class SpriteUtil {
         return fromBukkit != null && fromBukkit;
     }
 
+    /**
+     * Compares a server version string against a {@code 1.<minor>.<patch>} target.
+     *
+     * <p>Minecraft left the {@code 1.x} scheme behind after 1.21.11 and now versions by
+     * year, so 26.1 and later are newer than every 1.x release. Treating them as a major
+     * version above 1 gets that ordering right; the previous pattern only recognised
+     * {@code 1.x} at all, which quietly turned sprites off on every 26.x server.</p>
+     */
     private static Boolean compare(String version, int targetMinor, int targetPatch) {
         if (version == null) return null;
 
-        Matcher match = VERSION_PATTERN.matcher(version);
+        Matcher match = VERSION_PATTERN.matcher(version.trim());
         if (!match.find()) return null;
 
-        int minor = Integer.parseInt(match.group(1));
-        int patch = match.group(2) != null ? Integer.parseInt(match.group(2)) : 0;
+        int major = Integer.parseInt(match.group(1));
+        if (major != 1) return major > 1;
+
+        int minor = Integer.parseInt(match.group(2));
+        int patch = match.group(3) != null ? Integer.parseInt(match.group(3)) : 0;
         if (minor != targetMinor) return minor > targetMinor;
         return patch >= targetPatch;
     }

@@ -608,6 +608,10 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         defaults.put("free-packages.reminder.interval-minutes", 10);
         defaults.put("free-packages.reminder.message", DEFAULT_FREE_REMINDER_MESSAGE);
         defaults.put("gui.dialog.sprite-version-check", true);
+        defaults.put("gui.dialog.cheesecore", true);
+        defaults.put("gui.dialog.approximate-sprites", true);
+        defaults.put("gui.dialog.home-columns", 1);
+        defaults.put("gui.dialog.category-columns", 1);
         defaults.put("gui.dialog.log-json", false);
         defaults.put("gui.dialog.tooltips.enabled", true);
         defaults.put("gui.dialog.tooltips.categories", new LinkedHashMap<String, Object>());
