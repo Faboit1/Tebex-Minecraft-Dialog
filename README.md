@@ -14,7 +14,8 @@ This is a fork of the official [Tebex-Minecraft](https://github.com/tebexio/Tebe
 ### Fork Features
 
 - **Dialog-based shop UI** using the Minecraft 1.21.6+ Dialog API (`/dialog show`)
-- **Sprite icons** on buttons for item/block textures (MC 1.21.9+, auto-detected)
+- **Sprite icons** on buttons for item/block textures (MC 1.21.9+), resolved per client
+  version via [CheeseCore](https://github.com/Faboit1/CheeseCore) when it is installed
 - **Folia and Canvas support** with reflection-based scheduler detection
 - **MiniMessage formatting** in all dialog text strings (e.g. `<red>`, `<bold>`, `<gradient:red:blue>`)
 - **Sale display** with configurable sale suffix, color, and strikethrough pricing
@@ -44,8 +45,12 @@ gui:
     sprites: true          # Show item/block icons on buttons (1.21.9+ only)
     sprite-version-check: true  # Set false to send sprites regardless of detected version
     log-json: false        # Log the dialog JSON and detected version each time the shop opens
+    cheesecore: true       # Use CheeseCore for sprites when installed (recommended)
+    approximate-sprites: true  # Show the colour swatch for chests, banners and similar
     button-width: 200      # Button width in pixels
-    columns: 1             # Number of button columns (1 or 2)
+    columns: 1             # Fallback column count for views without their own setting
+    home-columns: 1        # Columns in the top-level category list
+    category-columns: 1    # Columns when viewing a category's packages
     body-text: "Please select a category:"
     category-body-text: "Select a package to purchase:"
     close-button: "Close"
@@ -79,31 +84,73 @@ gui:
         1234567: "Claimable once every 12 hours"
 ```
 
-Configured text wins over the store description, and supports MiniMessage tags. Run
-`/tebex debug true` then `/tebex refresh` to log which packages arrived without a description.
+Configured text wins over the store description, and supports MiniMessage tags.
+
+**If no tooltips appear at all**, the store is not returning descriptions. Set
+`gui.dialog.log-json: true` and open the shop: `withTooltip=0` in the log line confirms it, and
+`/tebex debug true` then `/tebex refresh` names each package that arrived without one, along
+with the HTTP status of the request that should have carried them. The Tebex plugin API's
+`/packages` endpoint is deprecated and does not expose descriptions for every store, so the
+config above is the reliable way to set them.
 
 ### Sprite icons
 
 Sprites are native atlas icons and need no resource pack, but they require **MC 1.21.9+** —
-on 1.21.6–1.21.8 buttons fall back to plain text. Sprite paths resolve as `block/<material>` or
-`item/<material>`, so a material whose texture is not a flat atlas entry (chests, beds, banners
-and other block-entity models) has no sprite to draw. Pick a material with a normal texture for
-those categories, or set `gui.dialog.sprites: false`.
+on 1.21.6–1.21.8 buttons fall back to plain text.
 
-If sprites do not appear on a server that should support them, set `gui.dialog.log-json: true`
-and open the shop. Every dialog is logged with the full JSON that was sent and what the version
-probes saw, for example:
+**Install [CheeseCore](https://github.com/Faboit1/CheeseCore) for these to work properly.**
+Resolving a material to a sprite is not something that can be done from the material name:
+
+- Which atlas holds a texture changed between versions. Item textures lived in
+  `minecraft:blocks` until 1.21.10 and moved to a dedicated `minecraft:items` atlas in 1.21.11.
+- A material's sprite is often not named after the material. `GRASS_BLOCK` draws
+  `block/grass_block_side`, `CRAFTING_TABLE` draws `block/crafting_table_front`.
+
+CheeseCore derives both from the real client assets for every supported version, and with
+ViaVersion installed resolves against each player's own client, so a mixed-version server
+renders correctly for everyone. Drop it in `plugins/` and it is picked up automatically —
+no configuration needed. Set `gui.dialog.cheesecore: false` to ignore it.
+
+Without CheeseCore the built-in resolver guesses `block/<material>` or `item/<material>`,
+which is right for plain blocks and items and wrong for everything else.
+
+Chests, banners, shulker boxes, mob heads and shields are drawn by a block entity and have no
+flat texture anywhere in the client's assets. The best that can be shown for them is the colour
+Minecraft uses for their break particles, which reads as a solid swatch — relevant because
+`CHEST` is the default category material. Set `gui.dialog.approximate-sprites: false` to leave
+those buttons text-only instead.
+
+#### If sprites still do not appear
+
+Set `gui.dialog.log-json: true` and open the shop. Every dialog is logged with the JSON that
+was sent and what the version probes saw:
 
 ```
-[Tebex] Dialog for Steve [sprites=false, minecraftVersion=1.21.6, bukkitVersion=1.21.6-R0.1-SNAPSHOT, dedicatedItemAtlas=false]: {...}
+[Tebex] Dialog for Steve [cheesecore=available, sprites=true, minecraftVersion=26.2, bukkitVersion=26.2-R0.1-SNAPSHOT, dedicatedItemAtlas=true, buttons=4, withSprite=4, withTooltip=0]: {...}
 ```
 
 Prefer this over `/tebex debug true`, which also enables the purchase queue check's own
 logging — that runs every few seconds and buries everything else.
 
-`sprites=false` with a version below 1.21.9 is the check working correctly. If the version shown
-is 1.21.9 or newer and sprites are still off, the fork is reporting its version unusually — set
-`gui.dialog.sprite-version-check: false` to send them anyway.
+`withSprite=0` means no button got an icon. Read `cheesecore=` for why: `not installed` falls
+back to the built-in resolver, `installed but not enabled` means it failed to start (check its
+own startup errors), and `available` means CheeseCore itself declined — the client is below
+1.21.9, or the configured material genuinely has no sprite.
+
+## Columns
+
+`gui.dialog.columns` sets the default, and each view can override it:
+
+```yaml
+gui:
+  dialog:
+    columns: 1
+    home-columns: 2       # two columns of categories
+    category-columns: 1   # one column of packages
+```
+
+A view with no setting of its own falls back to `columns`, so an existing config that only
+sets `columns` keeps behaving exactly as before.
 
 ## Escape and back navigation
 

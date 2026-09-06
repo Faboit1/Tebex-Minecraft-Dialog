@@ -701,17 +701,42 @@ public class SDK {
 
         return request("/packages").withSecretKey(secretKey).sendAsync().thenApply(response -> {
             Map<Integer, JsonObject> extras = new HashMap<>();
-            if (response.code() != 200) return extras;
+
+            if (response.code() != 200) {
+                platform.debug("Package extras request returned HTTP " + response.code()
+                        + "; package descriptions and meta will be unavailable.");
+                return extras;
+            }
 
             try {
-                JsonArray packages = GSON.fromJson(response.body().string(), JsonArray.class);
-                for (JsonElement el : packages) {
-                    JsonObject pkg = el.getAsJsonObject();
-                    int id = pkg.get("id").getAsInt();
-                    extras.put(id, pkg);
+                JsonElement body = GSON.fromJson(response.body().string(), JsonElement.class);
+
+                // The endpoint has returned a bare array historically and a {"data": [...]}
+                // envelope on some stores. Anything else leaves descriptions empty rather
+                // than throwing, because this must never abort the listing refresh.
+                JsonArray packages = null;
+                if (body != null && body.isJsonArray()) {
+                    packages = body.getAsJsonArray();
+                } else if (body != null && body.isJsonObject() && body.getAsJsonObject().has("data")
+                        && body.getAsJsonObject().get("data").isJsonArray()) {
+                    packages = body.getAsJsonObject().getAsJsonArray("data");
                 }
-            } catch (IOException e) {
-                platform.debug("Failed to fetch package extras: " + e.getMessage());
+
+                if (packages == null) {
+                    platform.debug("Package extras response was not a package list: " + body);
+                    return extras;
+                }
+
+                for (JsonElement el : packages) {
+                    if (!el.isJsonObject()) continue;
+                    JsonObject pkg = el.getAsJsonObject();
+                    if (!pkg.has("id") || pkg.get("id").isJsonNull()) continue;
+                    extras.put(pkg.get("id").getAsInt(), pkg);
+                }
+
+                platform.debug("Fetched extras for " + extras.size() + " packages.");
+            } catch (Throwable e) {
+                platform.debug("Failed to fetch package extras: " + e);
             }
             return extras;
         });

@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.tebex.plugin.BukkitPluginPlatform;
 import io.tebex.plugin.manager.FreePackageTracker;
+import io.tebex.plugin.util.CheeseCoreSprites;
 import io.tebex.plugin.util.ComponentUtil;
 import io.tebex.plugin.util.FoliaUtil;
 import io.tebex.plugin.util.MaterialUtil;
@@ -14,6 +15,7 @@ import io.tebex.sdk.obj.ICategory;
 import io.tebex.sdk.obj.SubCategory;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 import java.text.DecimalFormat;
@@ -40,7 +42,7 @@ public class DialogGUI {
         dialog.add("title", ComponentUtil.parse(cfg("gui.menu.home.title", "Server Shop")));
 
         dialog.add("body", buildBody(cfg("gui.dialog.body-text", "Please select a category:")));
-        dialog.addProperty("columns", cfgInt("gui.dialog.columns", 1));
+        dialog.addProperty("columns", columnsFor("home-columns"));
 
         String freeMarker = cfg("gui.dialog.free-marker", "<red>[FREE]<reset> ");
         int buttonWidth = cfgInt("gui.dialog.button-width", 200);
@@ -55,7 +57,7 @@ public class DialogGUI {
             if (categoryHasFreeForPlayer(category, playerName)) {
                 displayName = freeMarker + displayName;
             }
-            JsonObject label = buildLabel(displayName, spritesEnabled ? category.getGuiItem() : null);
+            JsonObject label = buildLabel(displayName, spritesEnabled ? category.getGuiItem() : null, player);
             JsonObject action = runCommandAction(label, "buy category " + category.getId());
             action.addProperty("width", buttonWidth);
             addTooltip(action, category.getDescription(), "categories", category.getId());
@@ -106,7 +108,7 @@ public class DialogGUI {
         dialog.add("title", ComponentUtil.parse(titleStr));
 
         dialog.add("body", buildBody(cfg("gui.dialog.category-body-text", "Select a package to purchase:")));
-        dialog.addProperty("columns", cfgInt("gui.dialog.columns", 1));
+        dialog.addProperty("columns", columnsFor("category-columns"));
 
         String freeMarker = cfg("gui.dialog.free-marker", "<red>[FREE]<reset> ");
         String saleColor = cfg("gui.dialog.sale-color", "<yellow>");
@@ -131,7 +133,7 @@ public class DialogGUI {
                     if (subCategoryHasFreeForPlayer(subCategory, playerName)) {
                         displayName = freeMarker + displayName;
                     }
-                    JsonObject label = buildLabel(displayName, spritesEnabled ? subCategory.getGuiItem() : null);
+                    JsonObject label = buildLabel(displayName, spritesEnabled ? subCategory.getGuiItem() : null, player);
                     JsonObject action = runCommandAction(label, "buy category " + subCategory.getId());
                     action.addProperty("width", buttonWidth);
                     addTooltip(action, subCategory.getDescription(), "categories", subCategory.getId());
@@ -165,7 +167,7 @@ public class DialogGUI {
                 priceStr = pkg.getName() + " - " + formattedPrice;
             }
 
-            JsonObject label = buildLabel(priceStr, spritesEnabled ? pkg.getItemId() : null);
+            JsonObject label = buildLabel(priceStr, spritesEnabled ? pkg.getItemId() : null, player);
             JsonObject action = runCommandAction(label, "buy package " + pkg.getId());
             action.addProperty("width", buttonWidth);
             addTooltip(action, pkg.getDescription(), "packages", pkg.getId());
@@ -258,8 +260,8 @@ public class DialogGUI {
         return body;
     }
 
-    private JsonObject buildLabel(String text, String guiItem) {
-        JsonObject sprite = spriteFor(guiItem);
+    private JsonObject buildLabel(String text, String guiItem, Player player) {
+        JsonObject sprite = spriteFor(guiItem, player);
         JsonObject label = new JsonObject();
         label.addProperty("text", "");
 
@@ -279,14 +281,53 @@ public class DialogGUI {
         return label;
     }
 
-    private JsonObject spriteFor(String guiItem) {
+    /**
+     * Resolves the icon for a button.
+     *
+     * <p>CheeseCore is preferred when installed: it knows which atlas holds a texture on
+     * the viewer's own client version and what a material's sprite is actually called,
+     * neither of which can be derived from the material name alone. The built-in
+     * resolver is the fallback for servers without it.</p>
+     */
+    private JsonObject spriteFor(String guiItem, Player player) {
         if (guiItem == null) {
             return null;
         }
+
+        Material material = MaterialUtil.fromString(guiItem).orElse(null);
+        if (material == null) {
+            return null;
+        }
+
+        if (cfgBool("gui.dialog.cheesecore", true)) {
+            CheeseCoreSprites.SpriteRef resolved = CheeseCoreSprites.resolve(material, player);
+            if (resolved != null) {
+                // Chests, banners and other block-entity items have no flat texture, so
+                // all CheeseCore can offer is their break-particle colour: a solid
+                // swatch. Skipping those leaves a plain text button instead.
+                if (resolved.isApproximate() && !cfgBool("gui.dialog.approximate-sprites", true)) {
+                    return null;
+                }
+                return spriteComponent(resolved.getAtlas(), resolved.getSprite());
+            }
+            if (CheeseCoreSprites.isAvailable()) {
+                // CheeseCore is authoritative when present: it returning nothing means
+                // this client cannot draw sprites, or this material has none.
+                return null;
+            }
+        }
+
         if (cfgBool("gui.dialog.sprite-version-check", true) && !SpriteUtil.isSpriteSupported()) {
             return null;
         }
-        return MaterialUtil.fromString(guiItem).map(SpriteUtil::spriteComponent).orElse(null);
+        return SpriteUtil.spriteComponent(material);
+    }
+
+    private JsonObject spriteComponent(String atlas, String sprite) {
+        JsonObject component = new JsonObject();
+        component.addProperty("atlas", atlas);
+        component.addProperty("sprite", sprite);
+        return component;
     }
 
     private JsonObject runCommandAction(JsonObject label, String command) {
@@ -308,14 +349,15 @@ public class DialogGUI {
      * {@code gui.dialog.tooltips.<section>.<id>} wins over the store description, which
      * the Tebex API does not return for every store.
      */
-    private void addTooltip(JsonObject action, String description, String section, int id) {
-        if (!cfgBool("gui.dialog.tooltips.enabled", true)) return;
+    private boolean addTooltip(JsonObject action, String description, String section, int id) {
+        if (!cfgBool("gui.dialog.tooltips.enabled", true)) return false;
 
         String configured = cfg("gui.dialog.tooltips." + section + "." + id, "");
         String text = configured != null && !configured.isEmpty() ? configured : stripHtml(description);
-        if (text.isEmpty()) return;
+        if (text.isEmpty()) return false;
 
         action.add("tooltip", ComponentUtil.parse(text));
+        return true;
     }
 
     private JsonObject backButton(String backCommand, int buttonWidth) {
@@ -345,8 +387,44 @@ public class DialogGUI {
         return platform.getPlugin().getConfig().getInt(path, defaultValue);
     }
 
+    /**
+     * Column count for one view, falling back to the shared {@code gui.dialog.columns}
+     * so an existing config that only sets that keeps working.
+     */
+    private int columnsFor(String key) {
+        int shared = cfgInt("gui.dialog.columns", 1);
+        return Math.max(1, cfgInt("gui.dialog." + key, shared));
+    }
+
     private boolean cfgBool(String path, boolean defaultValue) {
         return platform.getPlugin().getConfig().getBoolean(path, defaultValue);
+    }
+
+    /**
+     * Counts how many buttons actually came out with an icon and a tooltip, so the log
+     * line says whether sprites and store descriptions were resolved without needing the
+     * JSON itself to be read closely.
+     */
+    private String summarise(JsonObject dialogJson) {
+        JsonArray actions = dialogJson.getAsJsonArray("actions");
+        if (actions == null) return "buttons=0";
+
+        int withSprite = 0;
+        int withTooltip = 0;
+        for (int i = 0; i < actions.size(); i++) {
+            JsonObject action = actions.get(i).getAsJsonObject();
+            if (action.has("tooltip")) withTooltip++;
+
+            JsonObject label = action.getAsJsonObject("label");
+            JsonArray extra = label == null ? null : label.getAsJsonArray("extra");
+            if (extra != null && extra.size() > 0 && extra.get(0).isJsonObject()
+                    && extra.get(0).getAsJsonObject().has("atlas")) {
+                withSprite++;
+            }
+        }
+
+        return "buttons=" + actions.size() + ", withSprite=" + withSprite
+                + ", withTooltip=" + withTooltip;
     }
 
     private void dispatchDialog(Player player, JsonObject dialogJson) {
@@ -354,7 +432,10 @@ public class DialogGUI {
 
         // The purchase queue check logs on every poll, so full debug drowns this out.
         // gui.dialog.log-json surfaces it on its own without enabling debug at all.
-        String report = "Dialog for " + player.getName() + " [" + SpriteUtil.describeSupport() + "]: " + json;
+        String report = "Dialog for " + player.getName()
+                + " [cheesecore=" + CheeseCoreSprites.describe()
+                + ", " + SpriteUtil.describeSupport()
+                + ", " + summarise(dialogJson) + "]: " + json;
         if (cfgBool("gui.dialog.log-json", false)) {
             platform.info(report);
         } else {

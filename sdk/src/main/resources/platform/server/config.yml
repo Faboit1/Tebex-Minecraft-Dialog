@@ -63,16 +63,31 @@ gui:
   dialog:
     enabled: true
     sprites: true
+    # Use CheeseCore (https://github.com/Faboit1/CheeseCore) to resolve sprites when it
+    # is installed. Strongly recommended: it knows which atlas holds a texture on each
+    # client version and what a material's sprite is really called (GRASS_BLOCK draws
+    # block/grass_block_side, not block/grass_block), and with ViaVersion it resolves
+    # per player. Without it the built-in resolver guesses from the material name.
+    cheesecore: true
+    # Chests, banners, shulker boxes, mob heads and shields are drawn by a block entity
+    # and have no flat texture, so the best CheeseCore can do is their break-particle
+    # colour, which shows as a solid swatch. Set false to leave those buttons text-only.
+    approximate-sprites: true
     # Sprites need MC 1.21.9+, so they are skipped on older servers. Set this to false
     # to send them anyway — useful for checking whether a fork is reporting its version
-    # in a way the check does not recognise. Run /tebex debug true to log what it saw.
+    # in a way the check does not recognise. Only affects the built-in resolver.
     sprite-version-check: true
     # Logs the exact dialog JSON and the detected server version every time a shop
     # dialog opens. Useful for diagnosing missing sprites without turning on full
     # debug logging, which the purchase queue check floods.
     log-json: false
     button-width: 200
+    # Fallback column count for any view without its own setting below.
     columns: 1
+    # Columns in the top-level category list.
+    home-columns: 1
+    # Columns when viewing the packages inside a category.
+    category-columns: 1
     body-text: "Please select a category:"
     category-body-text: "Select a package to purchase:"
     close-button: "Close"
