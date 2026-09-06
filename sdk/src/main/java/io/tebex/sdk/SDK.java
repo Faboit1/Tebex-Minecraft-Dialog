@@ -692,6 +692,81 @@ public class SDK {
         });
     }
 
+    /**
+     * Fetches category and package descriptions from the Tebex Headless API.
+     *
+     * <p>The plugin API cannot supply these: its {@code /packages} response has no
+     * description field, which is why hover tooltips come out empty on their own. The
+     * Headless API is public and scoped by the webstore identifier rather than the
+     * secret key, so no authentication is sent here.</p>
+     *
+     * @param token the public webstore identifier, not the secret key
+     */
+    public CompletableFuture<StoreDescriptions> getHeadlessDescriptions(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            return CompletableFuture.completedFuture(StoreDescriptions.empty());
+        }
+
+        String url = "https://headless.tebex.io/api/accounts/" + token.trim()
+                + "/categories?includePackages=1";
+
+        return request(url, false).sendAsync().thenApply(response -> {
+            if (response.code() != 200) {
+                platform.warning("Tebex Headless API returned HTTP " + response.code()
+                                + " for the configured headless-token.",
+                        "Check that headless-token in config.yml is your public webstore "
+                                + "identifier from the Tebex panel, not your secret key.");
+                return StoreDescriptions.empty();
+            }
+
+            Map<Integer, String> categories = new HashMap<>();
+            Map<Integer, String> packages = new HashMap<>();
+
+            try {
+                JsonElement body = GSON.fromJson(response.body().string(), JsonElement.class);
+                if (body == null || !body.isJsonObject()) return StoreDescriptions.empty();
+
+                JsonElement data = body.getAsJsonObject().get("data");
+                if (data == null || !data.isJsonArray()) return StoreDescriptions.empty();
+
+                for (JsonElement categoryElement : data.getAsJsonArray()) {
+                    if (!categoryElement.isJsonObject()) continue;
+                    JsonObject category = categoryElement.getAsJsonObject();
+
+                    readDescriptionInto(category, categories);
+
+                    JsonElement categoryPackages = category.get("packages");
+                    if (categoryPackages == null || !categoryPackages.isJsonArray()) continue;
+
+                    for (JsonElement packageElement : categoryPackages.getAsJsonArray()) {
+                        if (!packageElement.isJsonObject()) continue;
+                        readDescriptionInto(packageElement.getAsJsonObject(), packages);
+                    }
+                }
+            } catch (Throwable e) {
+                platform.debug("Failed to read Headless API descriptions: " + e);
+                return StoreDescriptions.empty();
+            }
+
+            platform.debug("Fetched " + categories.size() + " category and " + packages.size()
+                    + " package descriptions from the Headless API.");
+            return new StoreDescriptions(categories, packages);
+        }).exceptionally(throwable -> {
+            platform.debug("Headless API request failed: " + throwable.getMessage());
+            return StoreDescriptions.empty();
+        });
+    }
+
+    private void readDescriptionInto(JsonObject source, Map<Integer, String> target) {
+        if (!source.has("id") || source.get("id").isJsonNull()) return;
+        if (!source.has("description") || source.get("description").isJsonNull()) return;
+
+        String description = source.get("description").getAsString();
+        if (description.isEmpty()) return;
+
+        target.put(source.get("id").getAsInt(), description);
+    }
+
     public CompletableFuture<Map<Integer, JsonObject>> getPackageExtras() {
         if (!platform.isSetup()) {
             CompletableFuture<Map<Integer, JsonObject>> future = new CompletableFuture<>();

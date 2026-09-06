@@ -23,6 +23,18 @@ messages:
   # Sent instead to Bedrock players, who cannot click links in chat.
   checkout-bedrock: "<green>Checkout started! Type this link into your browser: <yellow>%url%"
 
+# Public webstore identifier for the Tebex Headless API.
+#
+# The plugin API this plugin normally uses returns no package descriptions at all, so
+# without this the hover tooltips in the dialog shop have nothing to show. Setting it
+# lets the plugin fetch category and package descriptions from Tebex's public Headless
+# API instead.
+#
+# This is your PUBLIC webstore identifier, not your secret key. Find it in the Tebex
+# creator panel; it looks like "t66x-0123456789abcdef0123456789abcdef01234567".
+# Safe to share. Leave empty to disable.
+headless-token: ''
+
 # Free package settings.
 # A package counts as free when its price (after any sale) is 0.
 free-packages:
@@ -99,11 +111,14 @@ gui:
     sale-color: "<yellow>"
     price-format: "%currency%%price%"
     free-on-cooldown-format: "%currency%0"
-    # Text shown when hovering a button. Store descriptions are used when available,
-    # but the Tebex API does not return them for every store, so you can set the text
-    # yourself here keyed by category or package ID.
+    # Text shown when hovering a button. Descriptions come from the Headless API when
+    # headless-token is set above; anything you set here wins over them, keyed by
+    # category or package ID.
     tooltips:
       enabled: true
+      # Store descriptions are HTML and can run to several paragraphs, which makes an
+      # unreadable hover. Longer text is truncated to this many characters; 0 disables.
+      max-length: 256
       categories: {}
       #  98765: "Our best deals"
       packages: {}

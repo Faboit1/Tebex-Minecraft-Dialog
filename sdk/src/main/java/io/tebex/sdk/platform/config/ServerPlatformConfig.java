@@ -27,6 +27,12 @@ public class ServerPlatformConfig implements IPlatformConfig {
     private String bedrockCheckoutMessage;
 
     /**
+     * Public webstore identifier for the Tebex Headless API, used to fetch the category
+     * and package descriptions shown as dialog tooltips. Not the secret key.
+     */
+    private String headlessToken;
+
+    /**
      * Creates a PlatformConfig instance with the provided configuration version.
      *
      * @param configVersion The configuration version.

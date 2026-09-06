@@ -49,6 +49,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
 
     protected ServerInformation storeInformation;
     protected List<Category> storeCategories = new ArrayList<>();
+    protected volatile StoreDescriptions storeDescriptions = StoreDescriptions.empty();
     protected List<ServerEvent> serverEvents = Collections.synchronizedList(new ArrayList<>());
 
     private final ArrayList<PluginEvent> PLUGIN_EVENTS = new ArrayList<>();
@@ -588,6 +589,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
 
         config.setCheckoutMessage(configFile.getString("messages.checkout", DEFAULT_CHECKOUT_MESSAGE));
         config.setBedrockCheckoutMessage(configFile.getString("messages.checkout-bedrock", DEFAULT_BEDROCK_CHECKOUT_MESSAGE));
+        config.setHeadlessToken(configFile.getString("headless-token", ""));
 
         return config;
     }
@@ -602,6 +604,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         defaults.put("check-interval", 3);
         defaults.put("messages.checkout", DEFAULT_CHECKOUT_MESSAGE);
         defaults.put("messages.checkout-bedrock", DEFAULT_BEDROCK_CHECKOUT_MESSAGE);
+        defaults.put("headless-token", "");
         defaults.put("free-packages.default-cooldown", 0);
         defaults.put("free-packages.cooldowns", new LinkedHashMap<String, Object>());
         defaults.put("free-packages.reminder.enabled", true);
@@ -614,6 +617,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         defaults.put("gui.dialog.category-columns", 1);
         defaults.put("gui.dialog.log-json", false);
         defaults.put("gui.dialog.tooltips.enabled", true);
+        defaults.put("gui.dialog.tooltips.max-length", 256);
         defaults.put("gui.dialog.tooltips.categories", new LinkedHashMap<String, Object>());
         defaults.put("gui.dialog.tooltips.packages", new LinkedHashMap<String, Object>());
 
@@ -636,7 +640,27 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         }
     }
 
+    /**
+     * Descriptions fetched from the Headless API, empty when no {@code headless-token} is
+     * configured. Kept beside the listing rather than merged into it because the listing
+     * models hold their description as a final field.
+     */
+    public final StoreDescriptions getStoreDescriptions() {
+        return storeDescriptions;
+    }
+
     public final void refreshListings() {
+        String headlessToken = getPlatformConfig() instanceof ServerPlatformConfig
+                ? ((ServerPlatformConfig) getPlatformConfig()).getHeadlessToken()
+                : null;
+
+        getSDK().getHeadlessDescriptions(headlessToken)
+                .thenAccept(descriptions -> storeDescriptions = descriptions)
+                .exceptionally(throwable -> {
+                    debug("Failed to refresh store descriptions: " + throwable.getMessage());
+                    return null;
+                });
+
         getSDK().getListing().thenAccept(categories -> {
             setStoreCategories(categories);
             getSDK().getPackageExtras().thenAccept(extras -> {

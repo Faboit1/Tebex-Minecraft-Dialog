@@ -21,7 +21,7 @@ This is a fork of the official [Tebex-Minecraft](https://github.com/tebexio/Tebe
 - **Sale display** with configurable sale suffix, color, and strikethrough pricing
 - **Free package cooldowns** configured per package ID, tracked in a local SQLite database
 - **Free package reminders** that periodically tell players when they have something to claim
-- **Package descriptions** shown as tooltips on hover (fetched from the full `/packages` API)
+- **Package descriptions** shown as tooltips on hover, fetched from the Tebex Headless API
 - **Fully configurable** text, button widths, columns, price formats, and free/sale markers via `config.yml`
 - Falls back to the original chest GUI on servers below 1.21.6
 
@@ -70,8 +70,27 @@ gui:
 
 ### Tooltips
 
-Hovering a button shows the store description for that category or package. The Tebex API does
-not return descriptions for every store, so you can supply the text yourself, keyed by ID:
+Hovering a button shows the store description for that category or package.
+
+**The plugin API cannot supply these.** Its `/packages` response has no description field at
+all — that is why tooltips come out empty on their own, not a formatting problem. Descriptions
+come from Tebex's public **Headless API** instead, which needs your webstore identifier:
+
+```yaml
+headless-token: 't66x-0123456789abcdef0123456789abcdef01234567'
+```
+
+This is the **public** webstore identifier from the Tebex creator panel, not your secret key —
+it is safe to share and safe to commit. With it set, category and package descriptions are
+fetched on every listing refresh (every 5 minutes) and shown on hover.
+
+Descriptions are HTML, so they are converted to plain text: `<br>` and closing block tags
+become line breaks, entities are decoded, and the result is truncated at
+`gui.dialog.tooltips.max-length` (256 characters by default, 0 to disable) because a full
+package description can run to several paragraphs.
+
+You can also set tooltip text yourself, keyed by ID. This wins over the Headless description,
+and works with no token set at all:
 
 ```yaml
 gui:
@@ -84,14 +103,13 @@ gui:
         1234567: "Claimable once every 12 hours"
 ```
 
-Configured text wins over the store description, and supports MiniMessage tags.
+Configured text supports MiniMessage tags; Headless descriptions are plain text after their
+HTML is stripped.
 
-**If no tooltips appear at all**, the store is not returning descriptions. Set
-`gui.dialog.log-json: true` and open the shop: `withTooltip=0` in the log line confirms it, and
-`/tebex debug true` then `/tebex refresh` names each package that arrived without one, along
-with the HTTP status of the request that should have carried them. The Tebex plugin API's
-`/packages` endpoint is deprecated and does not expose descriptions for every store, so the
-config above is the reliable way to set them.
+**If no tooltips appear**, set `gui.dialog.log-json: true` and open the shop — `withTooltip=0`
+in the log line confirms none were attached. Then check, in order: is `headless-token` set, and
+is it the public webstore identifier rather than the secret key? A wrong token logs a warning
+with the HTTP status on the next refresh. Run `/tebex refresh` to retry without a restart.
 
 ### Sprite icons
 
