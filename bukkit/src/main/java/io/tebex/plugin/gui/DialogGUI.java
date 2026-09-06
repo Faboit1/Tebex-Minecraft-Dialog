@@ -12,6 +12,7 @@ import io.tebex.plugin.util.SpriteUtil;
 import io.tebex.sdk.obj.Category;
 import io.tebex.sdk.obj.CategoryPackage;
 import io.tebex.sdk.obj.ICategory;
+import io.tebex.sdk.obj.StoreDescriptions;
 import io.tebex.sdk.obj.SubCategory;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -352,8 +353,21 @@ public class DialogGUI {
     private boolean addTooltip(JsonObject action, String description, String section, int id) {
         if (!cfgBool("gui.dialog.tooltips.enabled", true)) return false;
 
+        // Config first, then the Headless API, then whatever the listing carried. The
+        // plugin API has no description field at all, so on most stores the listing text
+        // is empty and the Headless API is the only source that returns anything.
         String configured = cfg("gui.dialog.tooltips." + section + "." + id, "");
-        String text = configured != null && !configured.isEmpty() ? configured : stripHtml(description);
+        String text;
+        if (configured != null && !configured.isEmpty()) {
+            text = configured;
+        } else {
+            StoreDescriptions descriptions = platform.getStoreDescriptions();
+            String headless = "categories".equals(section)
+                    ? descriptions.forCategory(id)
+                    : descriptions.forPackage(id);
+            text = stripHtml(!headless.isEmpty() ? headless : description);
+        }
+
         if (text.isEmpty()) return false;
 
         action.add("tooltip", ComponentUtil.parse(text));
@@ -374,9 +388,40 @@ public class DialogGUI {
         return exitAction;
     }
 
+    /**
+     * Turns a store description into tooltip text. Headless API descriptions are HTML, so
+     * block breaks become newlines before tags are dropped, entities are decoded, and the
+     * result is capped — a full package description can run to several paragraphs, which
+     * makes for an unusable hover.
+     */
     private String stripHtml(String html) {
         if (html == null || html.isEmpty()) return "";
-        return html.replaceAll("<[^>]*>", "").trim();
+
+        String text = html
+                .replaceAll("(?i)<br\\s*/?>", "\n")
+                .replaceAll("(?i)</(p|div|li|h[1-6])>", "\n")
+                .replaceAll("<[^>]*>", "");
+
+        text = text
+                .replace("&nbsp;", " ")
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'");
+
+        // Collapse the runs of blank lines that stripping block tags leaves behind.
+        text = text.replaceAll("[ \\t]+", " ")
+                .replaceAll(" ?\n ?", "\n")
+                .replaceAll("\n{2,}", "\n")
+                .trim();
+
+        int limit = Math.max(0, cfgInt("gui.dialog.tooltips.max-length", 256));
+        if (limit > 0 && text.length() > limit) {
+            text = text.substring(0, limit).trim() + "...";
+        }
+
+        return text;
     }
 
     private String cfg(String path, String defaultValue) {
