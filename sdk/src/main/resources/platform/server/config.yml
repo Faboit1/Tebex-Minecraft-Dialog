@@ -91,6 +91,26 @@ money-spent:
   # Whether the week starts on Monday. Set false to use the server locale's first day.
   week-starts-monday: true
 
+  # Which identifier the store knows a player by.
+  #
+  #   auto      decide per player (recommended, and correct on a mixed server)
+  #   username  always try the name first
+  #   uuid      always try the UUID first
+  #
+  # 'auto' reads the UUID itself rather than a server-wide online-mode flag. An offline
+  # or cracked server manufactures a player's UUID from their name, producing a version
+  # 3 UUID the store has likely never seen, while a real Mojang account has a version 4
+  # one. A cracked server running premium, proxy-authenticated or Floodgate players
+  # alongside offline ones therefore gets the right answer per player instead of one
+  # answer for everybody. Whichever is tried first, the others are tried after, so a
+  # wrong guess costs a request rather than a missing figure.
+  lookup-by: auto
+
+  # Logs each spend lookup and what it found, at INFO. Turn this on if a player who has
+  # bought things still shows 0: it prints which identifiers were tried against the
+  # store and how many payments came back for each.
+  log-lookups: false
+
 # Automatic reporting of exceptions to Tebex
 auto-report-enabled: true
 

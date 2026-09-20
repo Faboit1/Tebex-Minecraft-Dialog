@@ -61,7 +61,7 @@ public class TebexPlaceholderExpansion extends PlaceholderExpansion {
             return MoneyUtil.currency(config);
         }
 
-        String spend = moneySpent(playerName, params, config);
+        String spend = moneySpent(player, playerName, params, config);
         if (spend != null) return spend;
 
         return null;
@@ -72,7 +72,7 @@ public class TebexPlaceholderExpansion extends PlaceholderExpansion {
      * tracker keeps, because PlaceholderAPI resolves on the main thread and a lookup
      * over HTTP would stall the server.
      */
-    private String moneySpent(String playerName, String params, FileConfiguration config) {
+    private String moneySpent(OfflinePlayer player, String playerName, String params, FileConfiguration config) {
         String key = params.toLowerCase(Locale.ROOT);
         if (!key.startsWith("money_spent")) return null;
 
@@ -83,7 +83,7 @@ public class TebexPlaceholderExpansion extends PlaceholderExpansion {
         SpendTracker tracker = platform.getSpendTracker();
         if (tracker == null) return null;
 
-        SpendTracker.Spend spend = tracker.get(playerName);
+        SpendTracker.Spend spend = tracker.get(playerName, player != null ? player.getUniqueId() : null);
 
         Double amount;
         if (key.equals("money_spent")) {

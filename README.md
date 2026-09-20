@@ -335,6 +335,24 @@ Minecraft server rarely matches its audience.
 boundaries fall. With the default, "this week" starts at midnight on the most recent
 Monday.
 
+### Offline, cracked and mixed-UUID servers
+
+Which identifier your store knows a player by is decided **per player**, not per server.
+
+An offline or cracked server manufactures a player's UUID from their name, which produces a
+version 3 (name-based) UUID the store has likely never seen. A real Mojang account has a
+version 4 (random) one. Reading the UUID in hand is therefore more reliable than any
+server-wide online-mode flag, and it is the only approach that works on a mixed server —
+cracked players alongside premium, proxy-authenticated or Floodgate ones.
+
+Whichever form is tried first, the others are tried after, so a wrong guess costs one extra
+request rather than a missing figure. Override it if you need to:
+
+```yaml
+money-spent:
+  lookup-by: auto   # auto | username | uuid
+```
+
 ### Performance
 
 PlaceholderAPI resolves on the main thread, so these never make a request while rendering:
