@@ -54,6 +54,43 @@ free-packages:
     interval-minutes: 10
     message: "<green>You have free items waiting! Use <yellow>/buy<green> to claim them."
 
+# Money-spent placeholders (%tebex_money_spent%, _this_month, _this_week, _today).
+# Figures come from your store's real payment history, so they include purchases made
+# before this plugin was installed. Refunds and chargebacks are not counted.
+money-spent:
+  enabled: true
+
+  # Currency symbol for %tebex_currency% and the %currency% token in 'format' below.
+  currency: '€'
+
+  # How the placeholders render. %amount% is the number, %currency% the symbol above.
+  # '%amount%'            -> 4,5
+  # '%currency%%amount%'  -> €4,5
+  # '%amount% %currency%' -> 4,5 €
+  format: '%amount%'
+
+  # Number formatting. Separators are set here rather than taken from the server's
+  # locale, which rarely matches the audience.
+  decimal-separator: ','
+  thousands-separator: '.'
+  decimals: 2
+  # Drop trailing zeros, so 4.50 shows as "4,5" rather than "4,50".
+  trim-trailing-zeros: true
+  # Group thousands, so 1234.5 shows as "1.234,5" rather than "1234,5".
+  group-thousands: false
+
+  # How long a player's totals are reused before being fetched again. Lookups run in
+  # the background; placeholders are always served from the cache so they never stall
+  # the server. Minimum 30.
+  cache-seconds: 300
+
+  # Timezone for the today/this week/this month boundaries. Empty uses the server's.
+  # Example: 'Europe/Amsterdam'
+  timezone: ''
+
+  # Whether the week starts on Monday. Set false to use the server locale's first day.
+  week-starts-monday: true
+
 # Automatic reporting of exceptions to Tebex
 auto-report-enabled: true
 

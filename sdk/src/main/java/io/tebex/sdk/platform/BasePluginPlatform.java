@@ -605,6 +605,17 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         defaults.put("messages.checkout", DEFAULT_CHECKOUT_MESSAGE);
         defaults.put("messages.checkout-bedrock", DEFAULT_BEDROCK_CHECKOUT_MESSAGE);
         defaults.put("headless-token", "");
+        defaults.put("money-spent.enabled", true);
+        defaults.put("money-spent.currency", "\u20ac");
+        defaults.put("money-spent.format", "%amount%");
+        defaults.put("money-spent.decimal-separator", ",");
+        defaults.put("money-spent.thousands-separator", ".");
+        defaults.put("money-spent.decimals", 2);
+        defaults.put("money-spent.trim-trailing-zeros", true);
+        defaults.put("money-spent.group-thousands", false);
+        defaults.put("money-spent.cache-seconds", 300);
+        defaults.put("money-spent.timezone", "");
+        defaults.put("money-spent.week-starts-monday", true);
         defaults.put("free-packages.default-cooldown", 0);
         defaults.put("free-packages.cooldowns", new LinkedHashMap<String, Object>());
         defaults.put("free-packages.reminder.enabled", true);
