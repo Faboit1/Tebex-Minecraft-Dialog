@@ -209,9 +209,19 @@ public class SpendTracker {
     }
 
     /**
-     * Identifiers to try, most likely first. Mirrors how the rest of the plugin decides
-     * between a UUID and a username, then falls back to the other forms so a store whose
-     * mode is not what the server reports still resolves.
+     * Identifiers to try, most likely first.
+     *
+     * <p>Which one a store knows a player by is decided per player rather than per
+     * server, because the two can disagree. An offline or cracked server derives a
+     * player's UUID locally from their name, and such a UUID is a version 3 (name-based)
+     * one that Tebex may never have seen; a real Mojang account has a version 4 (random)
+     * UUID. A server can carry both at once — cracked players alongside proxy-
+     * authenticated or Floodgate ones — so reading the version of the UUID in hand beats
+     * any server-wide online-mode flag, which is a single answer for every player.</p>
+     *
+     * <p>Nothing is ever dropped, only ordered: an offline store can still have recorded
+     * the locally-derived UUID, so it is tried after the username rather than skipped.
+     * {@code money-spent.lookup-by} forces the order when the guess is wrong.</p>
      */
     private List<String> identifiersFor(String playerName, UUID uuid) {
         List<String> identifiers = new ArrayList<>();
@@ -227,23 +237,40 @@ public class SpendTracker {
         }
 
         boolean hasUuid = uuid != null && !UUIDUtil.EMPTY_UUID.equals(uuid);
-        // Tebex returns and expects Mojang-style UUIDs, which carry no dashes.
-        String undashed = hasUuid ? uuid.toString().replace("-", "") : null;
-        boolean preferUuid = platform.isOnlineMode() && !platform.isGeyser() && hasUuid;
+        if (!hasUuid) {
+            identifiers.add(playerName);
+            return identifiers;
+        }
 
-        if (preferUuid) {
+        // Tebex returns and expects Mojang-style UUIDs, which carry no dashes.
+        String undashed = uuid.toString().replace("-", "");
+
+        if (uuidFirst(uuid)) {
             identifiers.add(undashed);
             identifiers.add(uuid.toString());
             identifiers.add(playerName);
         } else {
             identifiers.add(playerName);
-            if (hasUuid) {
-                identifiers.add(undashed);
-                identifiers.add(uuid.toString());
-            }
+            identifiers.add(undashed);
+            identifiers.add(uuid.toString());
         }
 
         return identifiers;
+    }
+
+    private boolean uuidFirst(UUID uuid) {
+        String mode = platform.getPlugin().getConfig().getString("money-spent.lookup-by", "auto");
+        if (mode != null) {
+            String normalised = mode.trim().toLowerCase(Locale.ROOT);
+            if (normalised.equals("uuid")) return true;
+            if (normalised.equals("username") || normalised.equals("name")) return false;
+        }
+
+        // Version 3 is a name-based UUID, which is how an offline server manufactures
+        // one, so the store is far more likely to know this player by name.
+        if (uuid.version() == 3) return false;
+
+        return platform.isOnlineMode() && !platform.isGeyser();
     }
 
     private void warnOnce(String playerName, List<String> identifiers) {
