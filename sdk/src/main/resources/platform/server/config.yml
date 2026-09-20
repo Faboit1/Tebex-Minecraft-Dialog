@@ -91,6 +91,11 @@ money-spent:
   # Whether the week starts on Monday. Set false to use the server locale's first day.
   week-starts-monday: true
 
+  # Logs each spend lookup and what it found, at INFO. Turn this on if a player who has
+  # bought things still shows 0: it prints which identifiers were tried against the
+  # store and how many payments came back for each.
+  log-lookups: false
+
 # Automatic reporting of exceptions to Tebex
 auto-report-enabled: true
 

@@ -616,6 +616,7 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         defaults.put("money-spent.cache-seconds", 300);
         defaults.put("money-spent.timezone", "");
         defaults.put("money-spent.week-starts-monday", true);
+        defaults.put("money-spent.log-lookups", false);
         defaults.put("free-packages.default-cooldown", 0);
         defaults.put("free-packages.cooldowns", new LinkedHashMap<String, Object>());
         defaults.put("free-packages.reminder.enabled", true);
