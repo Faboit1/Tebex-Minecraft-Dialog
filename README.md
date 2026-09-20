@@ -22,8 +22,52 @@ This is a fork of the official [Tebex-Minecraft](https://github.com/tebexio/Tebe
 - **Free package cooldowns** configured per package ID, tracked in a local SQLite database
 - **Free package reminders** that periodically tell players when they have something to claim
 - **Package descriptions** shown as tooltips on hover, fetched from the Tebex Headless API
-- **Fully configurable** text, button widths, columns, price formats, and free/sale markers via `config.yml`
+- **Money-spent placeholders** (`%tebex_money_spent%`, this month / week / today) with a
+  configurable currency and number format
+- **Configurable checkout messages**, with a separate one for Bedrock players
+- **Fully configurable** text, button widths, per-view columns, price formats, and free/sale
+  markers via `config.yml`
+- **Upgrade-safe config**: new options are added to an existing `config.yml` automatically,
+  comments intact, without touching values you have changed
 - Falls back to the original chest GUI on servers below 1.21.6
+
+### Contents
+
+- [Quick start](#quick-start)
+- [How It Works](#how-it-works)
+- [Dialog Configuration](#dialog-configuration)
+  - [Tooltips](#tooltips) · [Sprite icons](#sprite-icons) · [Columns](#columns)
+  - [Escape and back navigation](#escape-and-back-navigation) · [Text Formatting](#text-formatting)
+- [Free Packages](#free-packages)
+- [Placeholders](#placeholders)
+- [Messages](#messages)
+- [Installation and Setup](#installation-and-setup)
+- [Usage and Commands](#usage-and-commands)
+- [Compatibility](#compatibility)
+- [Building](#building)
+
+### Quick start
+
+After the normal Tebex setup (`/tebex secret <key>`), three optional settings unlock the
+features this fork adds:
+
+```yaml
+# Package descriptions on hover. PUBLIC webstore identifier, not your secret key.
+headless-token: 't66x-0123456789abcdef0123456789abcdef01234567'
+
+# Free package claimable once every 12 hours, keyed by Tebex package ID.
+free-packages:
+  cooldowns:
+    1234567: 43200
+
+# Currency for the %tebex_money_spent% placeholders.
+money-spent:
+  currency: '€'
+```
+
+For sprite icons on buttons, also install
+[CheeseCore](https://github.com/Faboit1/CheeseCore) — no configuration needed, it is
+detected automatically. See [Sprite icons](#sprite-icons) for why it matters.
 
 ### How It Works
 
@@ -237,6 +281,71 @@ expose package meta for every store, so the config is the reliable place to set 
 
 Claims are recorded in `plugins/Tebex/data.db` (SQLite) per player and package, and expired
 entries are pruned every 10 minutes.
+
+## Placeholders
+
+Requires [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/). The
+expansion registers itself on startup — there is nothing to download from eCloud.
+
+| Placeholder | Shows |
+|---|---|
+| `%tebex_money_spent%` | Total the player has ever spent, e.g. `4,5` |
+| `%tebex_money_spent_this_month%` | Spent since the 1st of this month |
+| `%tebex_money_spent_this_week%` | Spent since the start of this week |
+| `%tebex_money_spent_today%` | Spent since midnight |
+| `%tebex_currency%` | The configured currency symbol, e.g. `€` |
+| `%tebex_free_in_store%` | `true` / `false` — has something free to claim |
+| `%tebex_free_marker%` | The free marker text, or empty when nothing is claimable |
+
+Append `_raw` to any money placeholder for the unformatted number
+(`%tebex_money_spent_raw%` → `4.5`), which is what you want when another plugin needs to
+compare or do maths on the value.
+
+### Where the figures come from
+
+Your store's real payment history, via the Tebex `/user` lookup — not a local tally. So
+they include purchases made before this plugin was installed, survive restarts and world
+resets, and cannot drift out of sync with what Tebex actually charged. **Refunds and
+chargebacks are excluded.**
+
+Amounts are in your store's own currency as charged. If your store bills in more than one
+currency, the totals are summed as-is without conversion.
+
+### Formatting
+
+```yaml
+money-spent:
+  enabled: true
+  currency: '€'
+  format: '%amount%'          # '%currency%%amount%' -> €4,5   '%amount% %currency%' -> 4,5 €
+  decimal-separator: ','
+  thousands-separator: '.'
+  decimals: 2
+  trim-trailing-zeros: true   # 4.50 -> "4,5" rather than "4,50"
+  group-thousands: false      # true -> "1.234,5"
+  cache-seconds: 300
+  timezone: ''                # e.g. 'Europe/Amsterdam'; empty uses the server's
+  week-starts-monday: true    # false uses the server locale's first day of week
+```
+
+Separators are set here rather than read from the server's locale, because the locale of a
+Minecraft server rarely matches its audience.
+
+`timezone` and `week-starts-monday` decide where the today / this week / this month
+boundaries fall. With the default, "this week" starts at midnight on the most recent
+Monday.
+
+### Performance
+
+PlaceholderAPI resolves on the main thread, so these never make a request while rendering:
+lookups run in the background and every read is served from a cache. A player's figures are
+fetched when they join and refreshed at most once per `cache-seconds`, with one in-flight
+request per player however many times the placeholder appears on a scoreboard.
+
+The practical consequence: after a purchase, the total updates within `cache-seconds`
+(5 minutes by default) rather than instantly. Lower it if you want faster updates, at the
+cost of more API calls. A player whose figures have never been fetched shows `0` for the
+moment it takes the first lookup to return.
 
 ## Messages
 

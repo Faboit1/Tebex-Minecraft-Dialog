@@ -20,6 +20,10 @@ public class PlayerJoinListener implements Listener {
         Object playerId = platform.getPlayerId(player.getName(), player.getUniqueId());
         platform.createJoinEvent(player.getUniqueId().toString(), player.getName(), player.getAddress().getAddress().getHostAddress());
 
+        // Warm the spend cache now, so the first scoreboard or tab render that asks for
+        // %tebex_money_spent% has a real figure rather than zero.
+        platform.getSpendTracker().refresh(player.getName());
+
         if(! platform.getQueuedPlayers().containsKey(playerId)) {
             return;
         }
