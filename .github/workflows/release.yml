@@ -5,6 +5,14 @@ name: Release
 on:
   push:
     tags: [ 'v*' ]
+  # Lets a release be cut without pushing a tag locally. The tag is created by the
+  # release step at the checked-out commit, using the workflow token.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release, e.g. v2.5.0. Created if it does not exist.'
+        required: true
+        type: string
 
 jobs:
   release:
@@ -53,6 +61,9 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
+          # github.ref_name is the tag on a tag push, and the branch on a manual run,
+          # so the input takes precedence when one was given.
+          tag_name: ${{ inputs.tag || github.ref_name }}
           files: builds/*.jar
           generate_release_notes: true
           draft: false
