@@ -4,6 +4,7 @@ import dev.dejvokep.boostedyaml.YamlDocument;
 import io.tebex.plugin.gui.BuyGUI;
 import io.tebex.plugin.manager.CooldownManager;
 import io.tebex.plugin.manager.FreePackageTracker;
+import io.tebex.plugin.manager.PurchaseGuard;
 import io.tebex.plugin.manager.SpendTracker;
 import io.tebex.plugin.util.FoliaUtil;
 import io.tebex.plugin.util.MiniMessageUtil;
@@ -32,6 +33,7 @@ public class BukkitPluginPlatform extends BasePluginPlatform {
     private final TebexBukkitPlugin plugin;
     private final FreePackageTracker freePackageTracker;
     private final SpendTracker spendTracker;
+    private final PurchaseGuard purchaseGuard;
     private CooldownManager cooldownManager;
 
     public BukkitPluginPlatform(TebexBukkitPlugin plugin) {
@@ -39,6 +41,11 @@ public class BukkitPluginPlatform extends BasePluginPlatform {
         this.buyGUI = new BuyGUI(this);
         this.freePackageTracker = new FreePackageTracker(this);
         this.spendTracker = new SpendTracker(this);
+        this.purchaseGuard = new PurchaseGuard(this);
+    }
+
+    public PurchaseGuard getPurchaseGuard() {
+        return purchaseGuard;
     }
 
     public SpendTracker getSpendTracker() {

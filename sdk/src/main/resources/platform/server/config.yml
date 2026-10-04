@@ -22,6 +22,11 @@ messages:
   checkout: "<green>Checkout started! Complete payment here: <yellow>%url%"
   # Sent instead to Bedrock players, who cannot click links in chat.
   checkout-bedrock: "<green>Checkout started! Type this link into your browser: <yellow>%url%"
+  # Shown when a checkout is refused. Set any of these to an empty string to stay silent.
+  package-on-cooldown: "<red>You have already claimed this. Check back later."
+  package-unknown: "<red>That package is not available."
+  listing-unavailable: "<red>The store is still loading. Please try again in a moment."
+  purchase-too-fast: "<red>Slow down a moment, then try again."
 
 # Public webstore identifier for the Tebex Headless API.
 #
@@ -47,6 +52,16 @@ free-packages:
   # Common values: 3600 = 1 hour, 43200 = 12 hours, 86400 = 24 hours.
   cooldowns: {}
   #  1234567: 43200
+
+  # Refuse a checkout for a free package that is still on cooldown, rather than only
+  # showing it as priced in the shop. Leave this on: a shop button runs an ordinary
+  # command, so a player can run it by hand as often as they like, and without this the
+  # cooldown is decoration rather than a limit.
+  enforce-cooldown: true
+
+  # Smallest gap between two purchase attempts from the same player, in milliseconds.
+  # Stops a double click or a held macro starting several checkouts at once. 0 disables.
+  purchase-interval-ms: 500
 
   # Reminds online players when they have free packages waiting for them.
   reminder:

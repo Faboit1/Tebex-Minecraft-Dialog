@@ -1,6 +1,7 @@
 package io.tebex.plugin.gui;
 
 import io.tebex.plugin.BukkitPluginPlatform;
+import io.tebex.plugin.manager.PurchaseGuard;
 import io.tebex.plugin.util.MaterialUtil;
 import io.tebex.sdk.obj.Category;
 import io.tebex.sdk.obj.CategoryPackage;
@@ -108,6 +109,19 @@ public class BuyGUI {
         category.getPackages().forEach(
                 categoryPackage -> subListingGui.addItem(getPackageItemBuilder(categoryPackage).asGuiItem(action -> {
                     action.setCancelled(true);
+
+                    // Same authorisation as the dialog shop: the chest GUI had no claim
+                    // tracking at all, so free packages were unlimited here.
+                    PurchaseGuard.Decision decision = platform.getPurchaseGuard()
+                            .authorise(categoryPackage.getId(), player.getName());
+                    if (decision != PurchaseGuard.Decision.ALLOWED) {
+                        String message = platform.getPurchaseGuard().messageFor(decision);
+                        if (!message.isEmpty()) {
+                            player.sendMessage(platform.formatMessage(message));
+                        }
+                        return;
+                    }
+
                     player.closeInventory();
 
                     // Create Checkout Url
