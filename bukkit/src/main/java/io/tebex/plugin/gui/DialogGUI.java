@@ -203,15 +203,16 @@ public class DialogGUI {
         // The button's command is public, so a player can run "buy package <id>" by hand
         // as often as they like. Authorisation has to happen here, not where the label
         // was drawn.
-        PurchaseGuard.Decision decision =
+        PurchaseGuard.Result authorisation =
                 platform.getPurchaseGuard().authorise(packageId, player.getName());
-        if (decision != PurchaseGuard.Decision.ALLOWED) {
-            String message = platform.getPurchaseGuard().messageFor(decision);
-            if (!message.isEmpty()) {
-                player.sendMessage(platform.formatMessage(message));
-            }
+
+        if (!authorisation.getMessage().isEmpty()) {
+            player.sendMessage(platform.formatMessage(authorisation.getMessage()));
+        }
+
+        if (!authorisation.isAllowed()) {
             platform.debug("Refused checkout of package " + packageId + " for "
-                    + player.getName() + ": " + decision);
+                    + player.getName() + ": " + authorisation.getDecision());
             return;
         }
 

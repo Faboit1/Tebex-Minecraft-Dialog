@@ -18,27 +18,59 @@ import java.util.concurrent.ConcurrentHashMap;
  * live only in the code that draws a button are not checks at all — the button's command
  * is public, so anything the button can do, a player can do directly and repeatedly.</p>
  *
- * <p>It enforces three things:</p>
+ * <p>It enforces two things, and warns about a third:</p>
  * <ol>
  *     <li>the package is one the store actually published, so an arbitrary or guessed ID
  *         cannot be turned into a checkout link;</li>
- *     <li>a free package on cooldown is refused rather than merely displayed as priced;</li>
  *     <li>a short per-player interval, so a double click or a held-down macro cannot
- *         start several checkouts before the first has recorded anything.</li>
+ *         start several checkouts at once;</li>
+ *     <li>a free package this plugin believes is still on cooldown is allowed through
+ *         with a warning, because Tebex's own package limits are what actually decide
+ *         it. The plugin's record is a local guess used for display: it is written when
+ *         a checkout link is issued, not when one completes, so it can be wrong in both
+ *         directions. Refusing on it would block purchases the store would have
+ *         honoured. {@code free-packages.on-cooldown-action} can make it a hard block
+ *         for a store that does not set its own limits.</li>
  * </ol>
  */
 public class PurchaseGuard {
     public enum Decision {
         /** Checkout may proceed. The claim, if any, has been recorded. */
         ALLOWED,
+        /** Checkout may proceed, but this plugin thinks the free cooldown has not elapsed. */
+        ALLOWED_ON_COOLDOWN,
         /** No such package in the published listing. */
         UNKNOWN_PACKAGE,
-        /** A free package the player has already claimed within its cooldown. */
+        /** A free package still on cooldown, with on-cooldown-action set to block. */
         ON_COOLDOWN,
         /** Another purchase attempt from this player arrived moments ago. */
         TOO_FAST,
         /** The listing has not been fetched yet, so nothing can be validated. */
         LISTING_UNAVAILABLE
+    }
+
+    /** A decision plus the text to show the player, which either may carry. */
+    public static final class Result {
+        private final Decision decision;
+        private final String message;
+
+        Result(Decision decision, String message) {
+            this.decision = decision;
+            this.message = message == null ? "" : message;
+        }
+
+        public Decision getDecision() {
+            return decision;
+        }
+
+        public boolean isAllowed() {
+            return decision == Decision.ALLOWED || decision == Decision.ALLOWED_ON_COOLDOWN;
+        }
+
+        /** Text to send the player, empty when there is nothing to say. */
+        public String getMessage() {
+            return message;
+        }
     }
 
     private final BukkitPluginPlatform platform;
@@ -55,39 +87,47 @@ public class PurchaseGuard {
      * <p>Deliberately not split into a separate "check" and "record" pair: a caller that
      * checked and then acted a tick later would reopen the race this exists to close.</p>
      */
-    public synchronized Decision authorise(int packageId, String playerName) {
-        if (playerName == null || playerName.isEmpty()) return Decision.UNKNOWN_PACKAGE;
+    public synchronized Result authorise(int packageId, String playerName) {
+        if (playerName == null || playerName.isEmpty()) return refuse(Decision.UNKNOWN_PACKAGE);
 
         List<Category> categories = platform.getStoreCategories();
-        if (categories == null || categories.isEmpty()) return Decision.LISTING_UNAVAILABLE;
+        if (categories == null || categories.isEmpty()) return refuse(Decision.LISTING_UNAVAILABLE);
 
         CategoryPackage pkg = findPackage(categories, packageId);
-        if (pkg == null) return Decision.UNKNOWN_PACKAGE;
+        if (pkg == null) return refuse(Decision.UNKNOWN_PACKAGE);
 
         String key = playerName.toLowerCase(Locale.ROOT);
         long now = System.currentTimeMillis();
         long interval = purchaseIntervalMillis();
         Long previous = lastAttempt.get(key);
         if (previous != null && now - previous < interval) {
-            return Decision.TOO_FAST;
+            return refuse(Decision.TOO_FAST);
         }
 
         FreePackageTracker tracker = platform.getFreePackageTracker();
-        if (enforceCooldown() && pkg.isFree() && !tracker.isClaimable(pkg, playerName)) {
-            // Still rate-limit a refused attempt, so a macro cannot hammer the database.
-            lastAttempt.put(key, now);
-            return Decision.ON_COOLDOWN;
-        }
+        boolean onCooldown = pkg.isFree() && !tracker.isClaimable(pkg, playerName);
 
+        // Rate-limit regardless of the outcome, so a macro cannot hammer the database.
         lastAttempt.put(key, now);
 
-        // Recorded here rather than on delivery because this is the only point the plugin
-        // is told about. The trade is deliberate: a player who abandons checkout burns a
-        // cooldown, which is an annoyance, where the other direction is an unlimited
-        // claim, which is a dupe.
+        if (onCooldown && "block".equals(onCooldownAction())) {
+            return refuse(Decision.ON_COOLDOWN);
+        }
+
+        // Recorded when the link is issued, which is the only moment the plugin is told
+        // about. That makes it a guess rather than a fact, which is why it warns rather
+        // than refuses: the store's own package limits are what decide the claim.
         tracker.recordClaim(pkg, playerName);
 
-        return Decision.ALLOWED;
+        if (onCooldown && !"ignore".equals(onCooldownAction())) {
+            return new Result(Decision.ALLOWED_ON_COOLDOWN, messageFor(Decision.ALLOWED_ON_COOLDOWN));
+        }
+
+        return new Result(Decision.ALLOWED, "");
+    }
+
+    private Result refuse(Decision decision) {
+        return new Result(decision, messageFor(decision));
     }
 
     /** The package as published in the listing, or {@code null} if the store has no such ID. */
@@ -122,6 +162,10 @@ public class PurchaseGuard {
     /** Message to show the player for a refusal, or empty to stay silent. */
     public String messageFor(Decision decision) {
         switch (decision) {
+            case ALLOWED_ON_COOLDOWN:
+                return cfg("messages.package-maybe-on-cooldown",
+                        "<yellow>You may have claimed this recently. If the store still has it "
+                                + "on cooldown for you, the checkout will not deliver.");
             case ON_COOLDOWN:
                 return cfg("messages.package-on-cooldown",
                         "<red>You have already claimed this. Check back later.");
@@ -145,8 +189,11 @@ public class PurchaseGuard {
         lastAttempt.remove(playerName.toLowerCase(Locale.ROOT));
     }
 
-    private boolean enforceCooldown() {
-        return platform.getPlugin().getConfig().getBoolean("free-packages.enforce-cooldown", true);
+    /** One of {@code warn} (default), {@code block} or {@code ignore}. */
+    private String onCooldownAction() {
+        String value = platform.getPlugin().getConfig()
+                .getString("free-packages.on-cooldown-action", "warn");
+        return value == null ? "warn" : value.trim().toLowerCase(Locale.ROOT);
     }
 
     private long purchaseIntervalMillis() {

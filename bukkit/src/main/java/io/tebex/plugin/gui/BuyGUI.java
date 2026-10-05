@@ -112,13 +112,14 @@ public class BuyGUI {
 
                     // Same authorisation as the dialog shop: the chest GUI had no claim
                     // tracking at all, so free packages were unlimited here.
-                    PurchaseGuard.Decision decision = platform.getPurchaseGuard()
+                    PurchaseGuard.Result authorisation = platform.getPurchaseGuard()
                             .authorise(categoryPackage.getId(), player.getName());
-                    if (decision != PurchaseGuard.Decision.ALLOWED) {
-                        String message = platform.getPurchaseGuard().messageFor(decision);
-                        if (!message.isEmpty()) {
-                            player.sendMessage(platform.formatMessage(message));
-                        }
+
+                    if (!authorisation.getMessage().isEmpty()) {
+                        player.sendMessage(platform.formatMessage(authorisation.getMessage()));
+                    }
+
+                    if (!authorisation.isAllowed()) {
                         return;
                     }
 
