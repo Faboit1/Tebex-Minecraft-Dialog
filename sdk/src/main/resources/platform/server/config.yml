@@ -22,6 +22,14 @@ messages:
   checkout: "<green>Checkout started! Complete payment here: <yellow>%url%"
   # Sent instead to Bedrock players, who cannot click links in chat.
   checkout-bedrock: "<green>Checkout started! Type this link into your browser: <yellow>%url%"
+  # Shown when a checkout is refused. Set any of these to an empty string to stay silent.
+  # Shown with on-cooldown-action: warn, before the checkout link.
+  package-maybe-on-cooldown: "<yellow>You may have claimed this recently. If the store still has it on cooldown for you, the checkout will not deliver."
+  # Shown instead with on-cooldown-action: block.
+  package-on-cooldown: "<red>You have already claimed this. Check back later."
+  package-unknown: "<red>That package is not available."
+  listing-unavailable: "<red>The store is still loading. Please try again in a moment."
+  purchase-too-fast: "<red>Slow down a moment, then try again."
 
 # Public webstore identifier for the Tebex Headless API.
 #
@@ -47,6 +55,24 @@ free-packages:
   # Common values: 3600 = 1 hour, 43200 = 12 hours, 86400 = 24 hours.
   cooldowns: {}
   #  1234567: 43200
+
+  # What to do when a player starts a checkout for a free package this plugin thinks is
+  # still on cooldown.
+  #
+  #   warn    allow it, but tell them it may not deliver (default)
+  #   block   refuse the checkout outright
+  #   ignore  allow it silently
+  #
+  # 'warn' is the default because Tebex's own package limits are what actually decide
+  # whether a free claim goes through, and this plugin's record is only a local guess:
+  # it is written when a checkout link is issued, not when one completes, so a player
+  # who opens checkout and walks away looks claimed when they are not. Use 'block' only
+  # if your store does not set its own per-user limits on the package.
+  on-cooldown-action: warn
+
+  # Smallest gap between two purchase attempts from the same player, in milliseconds.
+  # Stops a double click or a held macro starting several checkouts at once. 0 disables.
+  purchase-interval-ms: 500
 
   # Reminds online players when they have free packages waiting for them.
   reminder:

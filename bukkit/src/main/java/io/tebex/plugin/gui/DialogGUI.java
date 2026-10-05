@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.tebex.plugin.BukkitPluginPlatform;
 import io.tebex.plugin.manager.FreePackageTracker;
+import io.tebex.plugin.manager.PurchaseGuard;
 import io.tebex.plugin.util.CheeseCoreSprites;
 import io.tebex.plugin.util.ComponentUtil;
 import io.tebex.plugin.util.FoliaUtil;
@@ -199,9 +200,20 @@ public class DialogGUI {
     }
 
     public void openPackage(Player player, int packageId) {
-        CategoryPackage pkg = findPackageById(packageId);
-        if (pkg != null) {
-            platform.getFreePackageTracker().recordClaim(pkg, player.getName());
+        // The button's command is public, so a player can run "buy package <id>" by hand
+        // as often as they like. Authorisation has to happen here, not where the label
+        // was drawn.
+        PurchaseGuard.Result authorisation =
+                platform.getPurchaseGuard().authorise(packageId, player.getName());
+
+        if (!authorisation.getMessage().isEmpty()) {
+            player.sendMessage(platform.formatMessage(authorisation.getMessage()));
+        }
+
+        if (!authorisation.isAllowed()) {
+            platform.debug("Refused checkout of package " + packageId + " for "
+                    + player.getName() + ": " + authorisation.getDecision());
+            return;
         }
 
         player.closeInventory();

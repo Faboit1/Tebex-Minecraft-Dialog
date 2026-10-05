@@ -619,6 +619,13 @@ public abstract class BasePluginPlatform implements PluginPlatform {
         defaults.put("money-spent.lookup-by", "auto");
         defaults.put("money-spent.log-lookups", false);
         defaults.put("free-packages.default-cooldown", 0);
+        defaults.put("free-packages.on-cooldown-action", "warn");
+        defaults.put("free-packages.purchase-interval-ms", 500);
+        defaults.put("messages.package-maybe-on-cooldown", "<yellow>You may have claimed this recently. If the store still has it on cooldown for you, the checkout will not deliver.");
+        defaults.put("messages.package-on-cooldown", "<red>You have already claimed this. Check back later.");
+        defaults.put("messages.package-unknown", "<red>That package is not available.");
+        defaults.put("messages.listing-unavailable", "<red>The store is still loading. Please try again in a moment.");
+        defaults.put("messages.purchase-too-fast", "<red>Slow down a moment, then try again.");
         defaults.put("free-packages.cooldowns", new LinkedHashMap<String, Object>());
         defaults.put("free-packages.reminder.enabled", true);
         defaults.put("free-packages.reminder.interval-minutes", 10);
