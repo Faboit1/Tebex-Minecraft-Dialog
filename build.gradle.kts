@@ -28,7 +28,7 @@ plugins {
 defaultTasks("collectBuilds")
 
 group = "io.tebex"
-version = "2.5.1"
+version = "2.5.2"
 
 val collectBuilds = tasks.register("collectBuilds", Sync::class.java) {
     group = "build"
